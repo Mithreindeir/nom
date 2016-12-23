@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "cinterp.h"
 
 enum TOKEN_TYPE
 {
@@ -12,6 +13,22 @@ enum TOKEN_TYPE
 	UNKNOWN
 };
 
+/*
+Instruction Set
+push <num>
+pop 
+add
+ifeq <address>
+jump <address>
+print 
+dup
+*/
+
+char * code =
+"push 5\n"
+"push 10\n"
+"add\n"
+"print\n";
 int factor(char * s);
 int term(char * s);
 int expr(char * s);
@@ -19,14 +36,19 @@ int expr(char * s);
 char * strtok_type(char * s);
 char * get_current_tok(char * s);
 
-char operators[] = "+-*&/|%^()";
+char operators[] = "+-*/()";
 int num_operators = 8;
-char symbols[] = ",.\[]{};:`~";
-char string[] = "7 + 3 * (10 / (12 / (3 + 1) - 1)) / (2 + 3) - 5 - 3 + (8)";
+char string[] = "2*3- (6+5) +8";
 int token_type(char c);
+stack mstack;
+cinterp cinterpreter;
 
 int main()
 {
+	stack_init(&cinterpreter.data_stack);
+	execute(&cinterpreter);
+	getch();
+	return;
 	char op;
 	int lhs = 0, rhs = 0;
 	int i = 0;
