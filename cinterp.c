@@ -1,11 +1,45 @@
 #include "cinterp.h"
 
+int get_var_index(cinterp * cinterpreter, char * name)
+{
+	for (int i = 0; i < cinterpreter->num_variables; i++)
+	{
+		if (!strcmp(name, cinterpreter->variables[i].name))
+			return i;
+	}
+	return -1;
+}
+
+void create_var(cinterp * cinterpreter, char * name, int type)
+{
+	nom_variable var;
+	var.name = name;
+	var.type = type;
+	if (var.type == NUM)
+	{
+		var.value = malloc(sizeof(nom_number));
+		*((nom_number*)var.value) = 0;
+	}
+
+	cinterpreter->num_variables++;
+	if (cinterpreter->num_variables == 1)
+	{
+		cinterpreter->variables = malloc(sizeof(nom_variable) * cinterpreter->num_variables);
+
+	}
+	else
+	{
+		cinterpreter->variables = realloc(cinterpreter->variables, sizeof(nom_variable) * cinterpreter->num_variables);
+	}
+	cinterpreter->variables[cinterpreter->num_variables - 1] = var;
+}
+
 void execute(cinterp * cinterp)
 {
 	cinterp->instr_ptr = 0;
-	while (cinterp->instr_ptr < (sizeof(instructions)/sizeof(cinstr)))
+	while (cinterp->instr_ptr < cinterp->num_instructions)
 	{
-		cinstr c = instructions[cinterp->instr_ptr];
+		cinstr c = cinterp->instructions[cinterp->instr_ptr];
 		cinterp->instr_ptr++;
 		if (c.action < 4)
 			operation[c.action](&cinterp->data_stack);
@@ -17,8 +51,8 @@ void execute(cinterp * cinterp)
 			if (c.action == IFEQ)
 			{
 
-				c_number n;
-				pop_store(&cinterp->data_stack, sizeof(c_number), &n);
+				nom_number n;
+				pop_store(&cinterp->data_stack, sizeof(nom_number), &n);
 				if (n == 0)
 					cinterp->instr_ptr = c.operand;
 
@@ -30,17 +64,17 @@ void execute(cinterp * cinterp)
 		}
 		else if (c.action == PUSH)
 		{
-			push_number(&cinterp->data_stack, c.operand);
+			push_number(&cinterp->data_stack, (nom_number)c.operand);
 		}
 		else if (c.action == POP)
 		{
-			pop(&cinterp->data_stack, sizeof(c_number));
+			pop(&cinterp->data_stack, sizeof(nom_number));
 		}
 		else if (c.action == LOAD)
 		{
-			c_number n;
-			store(&cinterp->data_stack, &n, sizeof(c_number), 0);
-			load(&cinterp->data_stack, &n, sizeof(c_number), c.operand);
+			nom_number n;
+			store(&cinterp->data_stack, &n, sizeof(nom_number), 0);
+			load(&cinterp->data_stack, &n, sizeof(nom_number), c.operand);
 		}
 		else if (c.action == DUP)
 		{
@@ -52,9 +86,24 @@ void execute(cinterp * cinterp)
 		}
 		else if (c.action == PRINT)
 		{
-			c_number n;
-			store(&cinterp->data_stack, &n, sizeof(c_number), 0);
-			printf("%f\n", n);
+			if (cinterp->data_stack.stack_ptr > 0)
+			{
+				nom_number n;
+				store(&cinterp->data_stack, &n, sizeof(nom_number), 0);
+				printf("%f", n);
+			}
+		}
+		else if (c.action == LOAD_NAME)
+		{
+			int nbytes = 0;
+			nom_variable var = cinterp->variables[c.operand];
+			if (var.type == NUM) 
+				nbytes = sizeof(nom_number);
+			push_number(&cinterp->data_stack, *((nom_number*)var.value));
+		}
+		else if (c.action == STORE_NAME)
+		{
+			pop_store(&cinterp->data_stack, sizeof(nom_number), cinterp->variables[c.operand].value);
 		}
 	}
 
@@ -178,80 +227,80 @@ void swap(stack * stk)
 	stk->elements[stk->num_elements - 2] = ea;
 }
 
-void push_number(stack * stk, c_number number)
+void push_number(stack * stk, nom_number number)
 {
-	c_number n = number;
-	push(stk, &n, sizeof(c_number));
-	push_element(stk, stk->buff[stk->stack_ptr - sizeof(c_number)], sizeof(c_number), NUM);
+	nom_number n = number;
+	push(stk, &n, sizeof(nom_number));
+	push_element(stk, stk->buff[stk->stack_ptr - sizeof(nom_number)], sizeof(nom_number), NUM_CONST);
 }
 
-c_number pop_number(stack * stk)
+nom_number pop_number(stack * stk)
 {
-	c_number n;
-	pop_store(stk, sizeof(c_number), &n);
+	nom_number n;
+	pop_store(stk, sizeof(nom_number), &n);
 	pop_element(stk);
 	return n;
 }
 
 void add(stack * stk)
 {
-	c_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, a + b);
+	nom_number a = pop_number(stk), b = pop_number(stk);
+	push_number(stk, b + a);
 }
 
 void subtract(stack * stk)
 {
-	c_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, a - b);
+	nom_number a = pop_number(stk), b = pop_number(stk);
+	push_number(stk, b - a);
 }
 
 void multiply(stack * stk)
 {
-	c_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, a * b);
+	nom_number a = pop_number(stk), b = pop_number(stk);
+	push_number(stk, b * a);
 }
 
 void divide(stack * stk)
 {
-	c_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, a / b);
+	nom_number a = pop_number(stk), b = pop_number(stk);
+	push_number(stk, b / a);
 }
 
 void gt(stack * stk)
 {
-	c_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, a > b);
+	nom_number a = pop_number(stk), b = pop_number(stk);
+	push_number(stk, b > a);
 }
 
 void gte(stack * stk)
 {
-	c_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, a >= b);
+	nom_number a = pop_number(stk), b = pop_number(stk);
+	push_number(stk, b >= a);
 }
 
 void lt(stack * stk)
 {
-	c_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, a < b);
+	nom_number a = pop_number(stk), b = pop_number(stk);
+	push_number(stk, b < a);
 }
 
 void lte(stack * stk)
 {
 
-	c_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, a <= b);
+	nom_number a = pop_number(stk), b = pop_number(stk);
+	push_number(stk, b <= a);
 
 }
 
 void eq(stack * stk)
 {
 
-	c_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, a == b);
+	nom_number a = pop_number(stk), b = pop_number(stk);
+	push_number(stk, b == a);
 }
 
 void ne(stack * stk)
 {
-	c_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, a != b);
+	nom_number a = pop_number(stk), b = pop_number(stk);
+	push_number(stk, b != a);
 }

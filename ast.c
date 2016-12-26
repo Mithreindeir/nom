@@ -81,7 +81,7 @@ binop * binop_init_branch(token  op, binop * l, binop * r)
 	return bo;
 }
 
-void parse_string(token * tokens, int num_tokens)
+binop * parse_string(token * tokens, int num_tokens)
 {
 	op_stack * operatorstack = op_stack_init();
 	op_stack * expressionstack = op_stack_init();
@@ -92,7 +92,7 @@ void parse_string(token * tokens, int num_tokens)
 		{
 			op_stack_push(operatorstack, binop_init_op(tok));
 		}
-		else if (tok.type == INT || tok.type == FLOAT)
+		else if (tok.type == INT || tok.type == FLOAT || tok.type == IDENTIFIER)
 		{
 			op_stack_push(expressionstack, binop_init_op(tok));
 		}
@@ -136,6 +136,7 @@ void parse_string(token * tokens, int num_tokens)
 		op_stack_push(expressionstack, binop_init_branch(top->val, netop, etop));
 		free(top);
 	}
-	return op_stack_pop(expressionstack);
+	binop * root = op_stack_pop(expressionstack);
+	//printf("=%d\n", val_traverse(root));
+	return root;
 }
-

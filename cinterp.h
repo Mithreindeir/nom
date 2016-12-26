@@ -4,18 +4,45 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cinstr.h"
+
 //Stack size is 4kb
 #define STACK_SIZE 4*1024
 
-
-enum nom_types
+typedef enum nom_type
 {
 	STR,
 	NUM,
 	BOOL,
 	FUNC,
 	NONE
-};
+} nom_type;
+
+typedef enum const_type
+{
+	STR_CONST,
+	NUM_CONST,
+	BOOL_CONST,
+	FUNC_CONST,
+	VAR_CONST,
+	NONE_CONST
+} const_type;
+
+typedef double nom_number;
+typedef int nom_boolean;
+typedef void* nom_func;
+typedef char* nom_string;
+
+typedef struct nom_variable
+{
+	char * name;
+	void * value;
+	nom_type type;
+	int num_references;
+} nom_variable;
+
+
+
 typedef struct element element;
 
 struct element
@@ -26,7 +53,6 @@ struct element
 	int size;
 };
 
-typedef float c_number;
 typedef struct stack
 {
 	char buff[STACK_SIZE];
@@ -35,50 +61,14 @@ typedef struct stack
 	int base_ptr, stack_ptr;
 } stack;
 
-
-//CrapLang Instruction 1 per line
-typedef struct cinstr
-{
-	int action;
-	int operand;
-} cinstr;
-
-//Operations
-#define ADD 0	//Adds topmost elements and pushes result to stack
-#define SUB 1	//Subtracts topmost 2 elements and pushes result to stack
-#define MUL 2	//Multiplies topmost 2 elements and pushes result to stack
-#define DIV 3	//Divides topmost 2 elements and pushes result to stack
-//Conditions
-#define GT	4	//Compares topmost 2 with > and pushes result to stack
-#define GTE 5	//Compares topmost 2 with >= and pushes result to stack
-#define LT	6	//Compares topmost 2 with < and pushes result to stack
-#define LTE 7	//Compares topmost 2 with <= and pushes result to stack
-#define EQ	8	//Compares topmost 2 with == and pushes result to stack
-#define NE	9	//Compares topmost 2 with != and pushes result to stack
-//Branch
-#define IFEQ 10		//Jumps to x if top of stack is 0
-#define JUMP 11		//Jumps to x
-//Memory
-#define PUSH 12		//Pushes number to stack
-#define POP 13		//Pops top of stack
-#define LOAD 14		//Loads top of stack to other element
-#define DUP 15		//Duplicates top of stack
-#define SWAP 16		//Swaps topmost 2 elements
-//IO
-#define PRINT 17
-
 //Instructions to execute for example
 static const cinstr instructions[] = 
 {
-	{PUSH, 0},
-	{PUSH, 1},
-	{PUSH, 1},
-	{EQ, 0},
-	{IFEQ, 8},
-	{PUSH, 1},
-	{ADD, 0},
+	{PUSH, -1337},
+	{STORE_NAME, 0},
+	{PUSH, 5},
+	{LOAD_NAME, 0},
 	{PRINT, 0},
-	{JUMP, 1}
 };
 
 /*
@@ -100,6 +90,12 @@ GENERATED:
 5: MORE CODE
 */
 
+typedef struct frame
+{
+	stack data_stack;
+	nom_variable * variables;
+};
+
 //NomLang interpreter
 typedef struct cinterp
 {
@@ -107,8 +103,13 @@ typedef struct cinterp
 	cinstr * instructions;
 	int num_instructions;
 	int instr_ptr;
+	nom_variable * variables;
+	int num_variables;
 } cinterp;
 
+
+int get_var_index(cinterp * cinterpreter, char * name);
+void create_var(cinterp * cinterpreter, char * name, int type);
 
 void execute(cinterp* cinterp);
 void stack_init(stack * stk);
@@ -126,8 +127,8 @@ void load(stack * stk, void * val, int size_bytes, int offset);
 void dup(stack * stk);
 void swap(stack * stk);
 
-void push_number(stack * Stk, c_number number);
-c_number pop_number(stack * Stk);
+void push_number(stack * Stk, nom_number number);
+nom_number pop_number(stack * Stk);
 //operations
 void add(stack * stk);
 void subtract(stack * stk);

@@ -58,7 +58,7 @@ token * tokenize(char * file, int * num_tok)
 		//printf("token: %s\t type: %d\n", str, type);
 
 		token ctoken;
-		ctoken.tok = malloc(len);
+		ctoken.tok = malloc(len+1);
 		ctoken.len = len;
 		ctoken.type = type;
 		int i = 0;
@@ -87,33 +87,34 @@ token * tokenize(char * file, int * num_tok)
 
 int token_type(char * tok, int * len)
 {
+	int tlen = strlen(tok);
 	*len = 0;
-	if (!strncmp(tok, "if", 2))
+	if (!strncmp(tok, "if", tlen))
 	{
 		*len = 2;
 		return IF;
 	}
-	else if (!strncmp(tok, "else", 4))
+	else if (!strncmp(tok, "else", tlen))
 	{
 		*len = 4;
 		return ELSE;
 	}
-	else if (!strncmp(tok, "end",3))
+	else if (!strncmp(tok, "end", tlen))
 	{
 		*len = 3;
 		return END;
 	}
-	else if (!strncmp(tok, "for", 3))
+	else if (!strncmp(tok, "for", tlen))
 	{
 		*len = 3;
 		return FOR;
 	}
-	else if (!strncmp(tok, "while", 5))
+	else if (!strncmp(tok, "while", tlen))
 	{
 		*len = 5;
 		return WHILE;
 	}
-	else if (!strncmp(tok, "function", 8))
+	else if (!strncmp(tok, "function", tlen))
 	{
 		*len = 8;
 		return FUNCTION;
@@ -243,7 +244,18 @@ int token_type(char * tok, int * len)
 		*len = 1;
 		return BXOR;
 	}
-
+	else if (!(*tok >= 0x30 && *tok <= 0x39))
+	{
+		int i = 0;
+		char c = *tok;
+		while (i < tlen && ((c >= 0x30 && c <= 0x39) || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'))
+		{
+			i++;
+			c = *(tok + i);
+		}
+		*len = i;
+		return IDENTIFIER;
+	}
 	return 0;
 }
 
@@ -251,11 +263,19 @@ int is_operator(token tok)
 {
 	if (tok.type == PLUS || tok.type == MINUS || tok.type == DIVIDE || tok.type == MULT)
 		return 1;
+	if (tok.type == LESS || tok.type == GREATER || tok.type == LESS_OR_EQ || tok.type == GREATER_OR_EQ || tok.type == IS_EQUAL || tok.type == NOT_EQUAL)
+		return 1;
+	if (tok.type == EQUAL)
+		return 1;
 	return 0;
 }
 
 int token_precedence(token tok)
 {
+	if (tok.type == EQUAL)
+		return -1;
+	if (tok.type == LESS || tok.type == GREATER || tok.type == LESS_OR_EQ || tok.type == GREATER_OR_EQ || tok.type == IS_EQUAL || tok.type == NOT_EQUAL)
+		return 0;
 	if (tok.type == PLUS || tok.type == MINUS)
 		return 1;
 	if (tok.type == MULT || tok.type == DIVIDE)

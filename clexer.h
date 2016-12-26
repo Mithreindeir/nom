@@ -37,7 +37,8 @@ enum TOKEN_TYPES
 	MULT,
 	BAND,
 	BOR,
-	BXOR
+	BXOR,
+	IDENTIFIER
 };
 
 typedef struct token
