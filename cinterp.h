@@ -70,14 +70,35 @@ typedef struct cinstr
 //Instructions to execute for example
 static const cinstr instructions[] = 
 {
+	{PUSH, 0},
 	{PUSH, 1},
 	{PUSH, 1},
 	{EQ, 0},
-	{IFEQ, 5},
-	{PUSH, 1337},
+	{IFEQ, 8},
+	{PUSH, 1},
+	{ADD, 0},
 	{PRINT, 0},
+	{JUMP, 1}
 };
 
+/*
+NOM:
+while 1:
+	print(1337)
+end
+
+WHILE COND:
+
+END
+
+GENERATED:
+1: "SETUP CONDITION"
+2: COMP COND
+3: IFEQ 5
+... code
+4: JUMP 1
+5: MORE CODE
+*/
 
 //NomLang interpreter
 typedef struct cinterp

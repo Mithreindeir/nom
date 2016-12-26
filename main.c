@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cinterp.h"
+#include "clexer.h"
+#include "ast.h"
 
 enum TOKEN_TYPE
 {
@@ -38,13 +40,25 @@ char * get_current_tok(char * s);
 
 char operators[] = "+-*/()";
 int num_operators = 8;
-char string[] = "2*3- (6+5) +8";
-int token_type(char c);
+char string[] = "2 * 3 + 5";
+int ttoken_type(char c);
 stack mstack;
 cinterp cinterpreter;
 
+
 int main()
 {
+	int num_tokens = 0;
+	token * tokens = tokenize(string, &num_tokens);
+	parse_string(tokens, num_tokens);
+	for (int i = 0; i < num_tokens; i++)
+	{
+	//	printf("token: %s\t type: %d\n", tokens[i].tok, tokens[i].type);
+		free(tokens[i].tok);
+	}
+	free(tokens);
+	getch();
+	return;
 	stack_init(&cinterpreter.data_stack);
 	execute(&cinterpreter);
 	getch();
@@ -71,7 +85,7 @@ int factor(char * s)
 			printf("SYNTAX ERROR AT: %s\n", tok);
 			abort();
 	}
-	if (token_type(*tok) == NUMBER)
+	if (ttoken_type(*tok) == NUMBER)
 	{
 		int num = atoi(tok);
 		free(tok);
@@ -170,7 +184,7 @@ int expr(char * s)
 	return result;
 }
 
-int token_type(char c)
+int ttoken_type(char c)
 {
 	if (c >= 0x30 && c <= 0x39)
 	{
@@ -204,11 +218,11 @@ char * get_current_tok(char * s)
 	while (s[i] == ' ')
 		i++;
 
-	int ctype = token_type(s[i]);
+	int ctype = ttoken_type(s[i]);
 
 	while (s[i] != '\0')
 	{
-		if (s[i] == ' ' || token_type(s[i]) != ctype)
+		if (s[i] == ' ' || ttoken_type(s[i]) != ctype)
 		{
 			f[k] = 0;
 			return f;
@@ -233,10 +247,10 @@ char * strtok_type(char * s)
 	while (s[i] == ' ')
 		i++;
 
-	int ctype = token_type(s[i]);
+	int ctype = ttoken_type(s[i]);
 	while (s[i] != '\0')
 	{
-		if (s[i] == ' ' || token_type(s[i]) != ctype )
+		if (s[i] == ' ' || ttoken_type(s[i]) != ctype )
 		{
 			f[k] = 0;
 			cidx = i;

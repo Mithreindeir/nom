@@ -16,10 +16,12 @@ void execute(cinterp * cinterp)
 		{
 			if (c.action == IFEQ)
 			{
+
 				c_number n;
-				store(&cinterp->data_stack, &n, sizeof(c_number), 0);
+				pop_store(&cinterp->data_stack, sizeof(c_number), &n);
 				if (n == 0)
 					cinterp->instr_ptr = c.operand;
+
 			}
 			else if (c.action == JUMP)
 			{
@@ -55,6 +57,7 @@ void execute(cinterp * cinterp)
 			printf("%f\n", n);
 		}
 	}
+
 }
 
 void stack_init(stack * stk)
@@ -123,6 +126,7 @@ void pop_store(stack * stk, int size_bytes, void * buf)
 		cbuf[i] = stk->buff[stk->stack_ptr-size_bytes + i];
 	}
 	stk->stack_ptr -= size_bytes;
+	pop_element(stk);
 }
 
 void store(stack * stk, void * buf, int size_bytes, int offset)
@@ -241,6 +245,7 @@ void lte(stack * stk)
 
 void eq(stack * stk)
 {
+
 	c_number a = pop_number(stk), b = pop_number(stk);
 	push_number(stk, a == b);
 }
