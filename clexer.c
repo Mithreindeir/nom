@@ -37,8 +37,11 @@ char * strtokm(char * s)
 	f[k] = 0;
 	return f;
 }
+//The type of the last token for context related operands (eg: unary_neg vs binary_sub)
+int last_tok_type = -1;
 token * tokenize(char * file, int * num_tok)
 {
+	tcidx = 0;
 	char * tok = strtokm(file, ' ');
 	int num_tokens = 0;
 	token * tokens = NULL;
@@ -66,6 +69,7 @@ token * tokenize(char * file, int * num_tok)
 		ctoken.tok = malloc(len+1);
 		ctoken.len = len;
 		ctoken.type = type;
+		last_tok_type = type;
 		int i = 0;
 		while (i < len)
 		{
@@ -221,8 +225,16 @@ int token_type(char * tok, int * len)
 	}
 	else if (!strncmp(tok, "-", 1))
 	{
-		*len = 1;
-		return MINUS;
+		if (last_tok_type == INT || last_tok_type == FLOAT)
+		{
+			*len = 1;
+			return MINUS;
+		}
+		else
+		{
+			*len = 1;
+			return UNARY_NEG;
+		}
 	}
 	else if (!strncmp(tok, "*", 1))
 	{
@@ -272,6 +284,8 @@ int is_operator(token tok)
 		return 1;
 	if (tok.type == EQUAL)
 		return 1;
+	if (tok.type == UNARY_NEG)
+		return 1;
 	return 0;
 }
 
@@ -285,10 +299,29 @@ int token_precedence(token tok)
 		return 1;
 	if (tok.type == MULT || tok.type == DIVIDE)
 		return 2;
+	if (tok.type == UNARY_NEG)
+		return 3;
 	return 0;
 }
 
 int token_associative(token tok)
 {
+	if (tok.type == UNARY_NEG)
+		return 0;
 	return 1;
+}
+
+int token_operands(token tok)
+{
+	if (tok.type == PLUS || tok.type == MINUS)
+		return 2;
+	if (tok.type == MULT || tok.type == DIVIDE)
+		return 2;
+	if (tok.type == EQUAL)
+		return 2;
+	if (tok.type == LESS || tok.type == GREATER || tok.type == LESS_OR_EQ || tok.type == GREATER_OR_EQ || tok.type == IS_EQUAL || tok.type == NOT_EQUAL)
+		return 2;
+	if (tok.type == UNARY_NEG)
+		return 1;
+	return 0;
 }

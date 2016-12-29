@@ -49,10 +49,17 @@ typedef struct token
 	int type;
 } token;
 
+//Splits string into tokens
 token * tokenize(char * file, int * num_tok);
+//Returns a TOKEN_TYPE
 int token_type(char * tok, int * len);
+//Is this token an operator
 int is_operator(token tok);
+//Returns number of operator precedence. 
 int token_precedence(token tok);
+//Is left associative or is it right associative
 int token_associative(token tok);
+//Returns number of operands (eg: binary, unary, etc)
+int token_operands(token tok);
 
 #endif

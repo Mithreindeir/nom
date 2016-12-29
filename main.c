@@ -6,7 +6,7 @@
 #include "ast.h"
 #include "ncomp.h"
 
-char string[] = "";
+char string[] = "5 * -3.5";
 
 cinterp cinterpreter;
 

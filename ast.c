@@ -8,33 +8,33 @@ op_stack * op_stack_init()
 	return nstack;
 }
 
-binop * op_stack_gettop(op_stack * stack)
+node * op_stack_gettop(op_stack * stack)
 {
 	if (stack->size <= 0)
 		return NULL;
-	binop * top = stack->stack[stack->size - 1];
+	node * top = stack->stack[stack->size - 1];
 	return top;
 }
 
-void op_stack_push(op_stack * stack, binop * nbinop)
+void op_stack_push(op_stack * stack, node * nnode)
 {
 	stack->size++;
 	if (stack->size == 1)
 	{
-		stack->stack = malloc(sizeof(binop*) * stack->size);
+		stack->stack = malloc(sizeof(node*) * stack->size);
 	}
 	else
 	{
-		stack->stack = realloc(stack->stack, sizeof(binop*) * stack->size);
+		stack->stack = realloc(stack->stack, sizeof(node*) * stack->size);
 	}
-	stack->stack[stack->size - 1] = nbinop;
+	stack->stack[stack->size - 1] = nnode;
 }
 
-binop * op_stack_pop(op_stack * stack)
+node * op_stack_pop(op_stack * stack)
 {
 	if (stack->size <= 0)
 		return NULL;
-	binop * top = stack->stack[stack->size - 1];
+	node * top = stack->stack[stack->size - 1];
 	stack->size--;
 	if (stack->size == 0)
 	{
@@ -42,46 +42,49 @@ binop * op_stack_pop(op_stack * stack)
 	}
 	else
 	{
-		stack->stack = realloc(stack->stack, sizeof(binop*) * stack->size);
+		stack->stack = realloc(stack->stack, sizeof(node*) * stack->size);
 	}
 	return top;
 }
 
-num num_init(char * tok)
+node * node_init()
 {
-	num n;
-	n.num = tok;
-	n.value = atoi(tok);
-	return n;
-}
-
-binop * binop_init()
-{
-	binop * bo = malloc(sizeof(binop));
+	node * bo = malloc(sizeof(node));
 	bo->right = NULL;
 	bo->left = NULL;
 	return bo;
 }
 
-binop * binop_init_op(token tok)
+node * node_init_op(token tok)
 {
-	binop * bo = malloc(sizeof(binop));
+	node * bo = malloc(sizeof(node));
 	bo->val = tok;
 	bo->right = NULL;
 	bo->left = NULL;
+	bo->type = LEAF;
 	return bo;
 }
 
-binop * binop_init_branch(token  op, binop * l, binop * r)
+node * node_init_binary(token  op, node * l, node * r)
 {
-	binop * bo = malloc(sizeof(binop));
+	node * bo = malloc(sizeof(node));
 	bo->val = op;
 	bo->left = l;
 	bo->right = r;
+	bo->type = BINARY;
 	return bo;
 }
 
-binop * parse_string(token * tokens, int num_tokens)
+node * node_init_unary(token op, node * n)
+{
+	node * bo = malloc(sizeof(node));
+	bo->val = op;
+	bo->next = n;
+	bo->type = UNARY;
+	return bo;
+}
+
+node * parse_string(token * tokens, int num_tokens)
 {
 	op_stack * operatorstack = op_stack_init();
 	op_stack * expressionstack = op_stack_init();
@@ -90,34 +93,44 @@ binop * parse_string(token * tokens, int num_tokens)
 		token tok = tokens[i];
 		if (tok.type == LPAREN)
 		{
-			op_stack_push(operatorstack, binop_init_op(tok));
+			op_stack_push(operatorstack, node_init_op(tok));
 		}
 		else if (tok.type == INT || tok.type == FLOAT || tok.type == IDENTIFIER)
 		{
-			op_stack_push(expressionstack, binop_init_op(tok));
+			op_stack_push(expressionstack, node_init_op(tok));
 		}
 		else if (is_operator(tok))
 		{
 			while (operatorstack->size > 0 && precedes(tok, op_stack_gettop(operatorstack)->val))
 			{
-				binop * top = op_stack_pop(operatorstack);
-				binop * etop = op_stack_pop(expressionstack);
-				binop * netop = op_stack_pop(expressionstack);
-				op_stack_push(expressionstack, binop_init_branch(top->val, netop, etop));
+				node * top = op_stack_pop(operatorstack);
+				node * etop = op_stack_pop(expressionstack);
+				node * netop = op_stack_pop(expressionstack);
+				op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
 				free(top);
 			}
-			op_stack_push(operatorstack, binop_init_op(tok));
+			op_stack_push(operatorstack, node_init_op(tok));
 			
 		}
 		else if (tok.type == RPAREN)
 		{
 			while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != LPAREN)
 			{				
-				binop * top = op_stack_pop(operatorstack);
-				binop * etop = op_stack_pop(expressionstack);
-				binop * netop = op_stack_pop(expressionstack);
+				node * top = op_stack_pop(operatorstack);
+				int num_operands = token_operands(top->val);
+				if (num_operands == 2)
+				{
+					node * etop = op_stack_pop(expressionstack);
+					node * netop = op_stack_pop(expressionstack);
 
-				op_stack_push(expressionstack, binop_init_branch(top->val, netop, etop));
+					op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+				}
+				else if (num_operands == 1)
+				{
+
+					node * etop = op_stack_pop(expressionstack);
+					op_stack_push(expressionstack, node_init_unary(top->val, etop));
+				}
 
 				free(top);
 			}
@@ -129,14 +142,23 @@ binop * parse_string(token * tokens, int num_tokens)
 	}
 	while (operatorstack->size > 0)
 	{
-		binop * top = op_stack_pop(operatorstack);
-		binop * etop = op_stack_pop(expressionstack);
-		binop * netop = op_stack_pop(expressionstack);
-		//printf("%s and %s and %s\n", top->val.tok, etop->val.tok, netop->val.tok);
-		op_stack_push(expressionstack, binop_init_branch(top->val, netop, etop));
+		node * top = op_stack_pop(operatorstack);
+		int num_operands = token_operands(top->val);
+		if (num_operands == 2)
+		{
+			node * etop = op_stack_pop(expressionstack);
+			node * netop = op_stack_pop(expressionstack);
+
+			op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+		}
+		else if (num_operands == 1)
+		{
+			node * etop = op_stack_pop(expressionstack);
+			op_stack_push(expressionstack, node_init_unary(top->val, etop));
+		}
 		free(top);
 	}
-	binop * root = op_stack_pop(expressionstack);
+	node * root = op_stack_pop(expressionstack);
 	//printf("=%d\n", val_traverse(root));
 	return root;
 }

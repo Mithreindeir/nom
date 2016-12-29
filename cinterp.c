@@ -41,10 +41,10 @@ void execute(cinterp * cinterp)
 	{
 		cinstr c = cinterp->instructions[cinterp->instr_ptr];
 		cinterp->instr_ptr++;
-		if (c.action < 4)
+		if (c.action < 5)
 			operation[c.action](&cinterp->data_stack);
-		else if (c.action < 10) {
-			condition[c.action-4](&cinterp->data_stack);
+		else if (c.action < 11) {
+			condition[c.action-5](&cinterp->data_stack);
 		}
 		else if (c.action < 12)
 		{
@@ -264,6 +264,12 @@ void divide(stack * stk)
 {
 	nom_number a = pop_number(stk), b = pop_number(stk);
 	push_number(stk, b / a);
+}
+
+void negate(stack * stk)
+{
+	nom_number a = pop_number(stk);
+	push_number(stk, -a);
 }
 
 void gt(stack * stk)

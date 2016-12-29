@@ -5,51 +5,60 @@
 #include <stdlib.h>
 #include "clexer.h"
 
-typedef struct unaryop
+enum NODE_TYPE
 {
-	unaryop * next;
-	token val;
-} unaryop;
+	UNARY,
+	BINARY,
+	MULTI,
+	LEAF
+};
 
-typedef struct binop
+typedef struct binop binop;
+
+struct binop
 {
 	binop * left;
 	binop * right;
 	token val;
-} binop;
+};
 
-typedef struct multiop
+typedef struct node node;
+
+struct node
 {
-	multiop ** nodes;
-	int num_nodes;
+	int type;
+	union {
+		struct
+		{
+			node * left;
+			node * right;
+		};
+		node * next;
+		struct
+		{
+			node * branches;
+			int num_branches;
+		};
+	};
 	token val;
-} multiop;
+};
 
 typedef struct op_stack
 {
-	binop ** stack;
+	node ** stack;
 	int size;
 } op_stack;
 
-typedef struct node
-{
-	union
-	{
-		unaryop * unary_node;
-		binop * binary_node;
-		multiop * infiniteop;
-	};
-} node;
-
 op_stack * op_stack_init();
-binop * op_stack_gettop(op_stack * stack);
-void op_stack_push(op_stack * stack, binop * binop);
-binop * op_stack_pop(op_stack * stack);
+node * op_stack_gettop(op_stack * stack);
+void op_stack_push(op_stack * stack, node * node);
+node * op_stack_pop(op_stack * stack);
 
-binop * binop_init();
-binop * binop_init_op(token num);
-binop * binop_init_branch(token  op, binop * l, binop * r);
-binop * parse_string(token * tokens, int num_tokens);
+node * node_init();
+node * node_init_op(token num);
+node * node_init_binary(token  op, node * l, node * r);
+node * node_init_unary(token  op, node * n);
+node * parse_string(token * tokens, int num_tokens);
 int precedes(token tok1, token tok2);
 
 #endif

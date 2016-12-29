@@ -17,132 +17,135 @@ void push_instr(instr_list * instrl, int instr, float op)
 	instrl->instructions[instrl->num_instructions - 1] = c;
 }
 
-instr_list * compile(binop * bop, cinterp * cinterpreter)
+instr_list * compile(node * bop, cinterp * cinterpreter)
 {
 	instr_list * instrl = malloc(sizeof(instr_list));
 	instrl->num_instructions = 0;
 	instrl->instructions = NULL;
 	val_traverse(bop, instrl, cinterpreter);
 	push_instr(instrl, PRINT, 0);
-	traverse(bop);
+	//traverse(bop);
 	//printf("=%f\n", solve_traverse(bop));
 	//tree_traverse(bop);
 
-	getch();
+	//getch();
 	return instrl;
 }
 
 
-void traverse(binop * binop)
+void traverse(node * node)
 {
-	if (binop == NULL)
+	if (node == NULL)
 		return;
-	traverse(binop->left);
-	traverse(binop->right);
+	traverse(node->left);
+	traverse(node->right);
 
-	printf("%s ", binop->val.tok);
+	printf("%s ", node->val.tok);
 }
-void tree_traverse(binop * binop)
+void tree_traverse(node * node)
 {
-	printf(" %s ", binop->val.tok);
-	//if (binop->left || binop->right)
+	printf(" %s ", node->val.tok);
+	//if (node->left || node->right)
 	//	printf("\n");
 
-	if (binop->left) {
+	if (node->left) {
 		printf("L(");
-		tree_traverse(binop->left);
+		tree_traverse(node->left);
 		printf(") ");
 	}
-	if (binop->right) {
+	if (node->right) {
 		printf("R(");
-		tree_traverse(binop->right);
+		tree_traverse(node->right);
 		printf(") ");
 	}
 }
 
-float solve_traverse(binop * binop)
+float solve_traverse(node * node)
 {
-	if (binop->val.type == INT)
-		return (float)atoi(binop->val.tok);
+	if (node->val.type == INT)
+		return (float)atoi(node->val.tok);
 	float a, b, ans;
-	if (binop->left)
-		a = solve_traverse(binop->left);
-	//printf("%s", binop->val);
-	if (binop->right)
-		b = solve_traverse(binop->right);
+	if (node->left)
+		a = solve_traverse(node->left);
+	//printf("%s", node->val);
+	if (node->right)
+		b = solve_traverse(node->right);
 
-	if (binop->val.type == PLUS)
+	if (node->val.type == PLUS)
 	{
 		return a + b;
 	}
-	else if (binop->val.type == MINUS)
+	else if (node->val.type == MINUS)
 	{
 		return a - b;
 	}
-	else if (binop->val.type == MULT)
+	else if (node->val.type == MULT)
 	{
 		return a * b;
 	}
-	else if (binop->val.type == DIVIDE)
+	else if (node->val.type == DIVIDE)
 	{
 		return a / b;
 	}
-	else if (binop->val.type == GREATER)
+	else if (node->val.type == GREATER)
 	{
 		return a > b;
 	}
-	else if (binop->val.type == GREATER_OR_EQ)
+	else if (node->val.type == GREATER_OR_EQ)
 	{
 		return a >= b;
 	}
-	else if (binop->val.type == LESS)
+	else if (node->val.type == LESS)
 	{
 		return a < b;
 	}
-	else if (binop->val.type == LESS_OR_EQ)
+	else if (node->val.type == LESS_OR_EQ)
 	{
 		return a <= b;
 	}
-	else if (binop->val.type == IS_EQUAL)
+	else if (node->val.type == IS_EQUAL)
 	{
 		return a == b;
 	}
-	else if (binop->val.type == NOT_EQUAL)
+	else if (node->val.type == NOT_EQUAL)
 	{
 		return a != b;
 	}
 
 }
 
-void val_traverse(binop * binop, instr_list * instrl, cinterp * cinterpreter)
+void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 {
-	if (binop->val.type == INT)
+	if (!node)
+		return;
+	if (node->val.type == INT)
 	{
-		push_instr(instrl, PUSH, (float)atoi(binop->val.tok));
+
+		push_instr(instrl, PUSH, (float)atoi(node->val.tok));
 		return;
 	}
-	else if (binop->val.type == FLOAT)
+	else if (node->val.type == FLOAT)
 	{
-		push_instr(instrl, PUSH, atof(binop->val.tok));
+		push_instr(instrl, PUSH, atof(node->val.tok));
 		return;
 	}
-	else if (binop->val.type == IDENTIFIER)
+	else if (node->val.type == IDENTIFIER)
 	{
-		int idx = get_var_index(cinterpreter, binop->val.tok);
+		int idx = get_var_index(cinterpreter, node->val.tok);
 		if (idx == -1)
 		{
-			create_var(cinterpreter, binop->val.tok, NUM);
+			create_var(cinterpreter, node->val.tok, NUM);
 			idx = cinterpreter->num_variables - 1;
 		}
 		
 		push_instr(instrl, LOAD_NAME, idx);
 		return;
 	}
-	else if (binop->val.type == EQUAL)
+	else if (node->val.type == EQUAL)
 	{
 		//STORE_NAME
 		//push_instr(instrl, );
-		if (binop->left->val.type != IDENTIFIER)
+		if (node->left->val.type != IDENTIFIER)
 		{
 			printf("LEFT HAND VALUE MUST BE CONSTANT\n");
 			abort();
@@ -150,13 +153,13 @@ void val_traverse(binop * binop, instr_list * instrl, cinterp * cinterpreter)
 		else
 		{
 
-			if (binop->right)
-				val_traverse(binop->right, instrl, cinterpreter);
+			if (node->right)
+				val_traverse(node->right, instrl, cinterpreter);
 
-			int idx = get_var_index(cinterpreter, binop->left->val.tok);
+			int idx = get_var_index(cinterpreter, node->left->val.tok);
 			if (idx == -1)
 			{
-				create_var(cinterpreter, binop->left->val.tok, NUM);
+				create_var(cinterpreter, node->left->val.tok, NUM);
 				idx = cinterpreter->num_variables - 1;
 			}
 
@@ -166,59 +169,73 @@ void val_traverse(binop * binop, instr_list * instrl, cinterp * cinterpreter)
 		}
 		return;
 	}
-	if (binop->left)
-		val_traverse(binop->left, instrl, cinterpreter);
-	if (binop->right)
-		val_traverse(binop->right, instrl, cinterpreter);
 
-	if (binop->val.type == PLUS)
+	if (node->type == BINARY)
+	{
+		if (node->left)
+			val_traverse(node->left, instrl, cinterpreter);
+		if (node->right)
+			val_traverse(node->right, instrl, cinterpreter);
+	}
+	else if (node->type == UNARY)
+	{
+		if (node->next)
+			val_traverse(node->next, instrl, cinterpreter);
+	}
+
+	if (node->val.type == PLUS)
 	{
 		push_instr(instrl, ADD, 0);
 		return;
 	}
-	else if (binop->val.type == MINUS)
+	else if (node->val.type == MINUS)
 	{
 		push_instr(instrl, SUB, 0);
 		return;
 	}
-	else if (binop->val.type == MULT)
+	else if (node->val.type == MULT)
 	{
 		push_instr(instrl, MUL, 0);
 		return;
 	}
-	else if (binop->val.type == DIVIDE)
+	else if (node->val.type == DIVIDE)
 	{
 		push_instr(instrl, DIV, 0);
 		return;
 	}
-	else if (binop->val.type == GREATER)
+	else if (node->val.type == GREATER)
 	{
 		push_instr(instrl, GTE, 0);
 		return;
 	}
-	else if (binop->val.type == GREATER_OR_EQ)
+	else if (node->val.type == GREATER_OR_EQ)
 	{
 		push_instr(instrl, GTE, 0);
 		return;
 	}
-	else if (binop->val.type == LESS)
+	else if (node->val.type == LESS)
 	{
 		push_instr(instrl, LT, 0);
 		return;
 	}
-	else if (binop->val.type == LESS_OR_EQ)
+	else if (node->val.type == LESS_OR_EQ)
 	{
 		push_instr(instrl, LTE, 0);
 		return;
 	}
-	else if (binop->val.type == IS_EQUAL)
+	else if (node->val.type == IS_EQUAL)
 	{
 		push_instr(instrl, EQ, 0);
 		return;
 	}
-	else if (binop->val.type == NOT_EQUAL)
+	else if (node->val.type == NOT_EQUAL)
 	{
 		push_instr(instrl, NE, 0);
+		return;
+	}
+	else if (node->val.type == UNARY_NEG)
+	{
+		push_instr(instrl, NEG, 0);
 		return;
 	}
 }

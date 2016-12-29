@@ -134,6 +134,7 @@ void add(stack * stk);
 void subtract(stack * stk);
 void multiply(stack * stk);
 void divide(stack * stk);
+void negate(stack * stk);
 //Conditions
 void gt(stack * stk);
 void gte(stack * stk);
@@ -142,6 +143,6 @@ void lte(stack * stk);
 void eq(stack * stk);
 void ne(stack * stk);
 
-static void(*operation[4])(stack * stk) = {&add, &subtract, &multiply, &divide};
+static void(*operation[5])(stack * stk) = {&add, &subtract, &multiply, &divide, &negate};
 static void(*condition[6])(stack*stk) = {&gt, &gte, &lt, &lte, &eq, &ne};
 #endif
