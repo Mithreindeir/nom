@@ -35,6 +35,7 @@ enum TOKEN_TYPES
 	MINUS,
 	DIVIDE,
 	MULT,
+	UNARY_NEG,
 	BAND,
 	BOR,
 	BXOR,
@@ -52,5 +53,6 @@ token * tokenize(char * file, int * num_tok);
 int token_type(char * tok, int * len);
 int is_operator(token tok);
 int token_precedence(token tok);
+int token_associative(token tok);
 
 #endif

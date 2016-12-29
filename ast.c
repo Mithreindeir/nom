@@ -98,7 +98,7 @@ binop * parse_string(token * tokens, int num_tokens)
 		}
 		else if (is_operator(tok))
 		{
-			while (operatorstack->size > 0 && token_precedence(tok) < token_precedence(op_stack_gettop(operatorstack)->val))
+			while (operatorstack->size > 0 && precedes(tok, op_stack_gettop(operatorstack)->val))
 			{
 				binop * top = op_stack_pop(operatorstack);
 				binop * etop = op_stack_pop(expressionstack);
@@ -107,12 +107,12 @@ binop * parse_string(token * tokens, int num_tokens)
 				free(top);
 			}
 			op_stack_push(operatorstack, binop_init_op(tok));
-
+			
 		}
 		else if (tok.type == RPAREN)
 		{
 			while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != LPAREN)
-			{
+			{				
 				binop * top = op_stack_pop(operatorstack);
 				binop * etop = op_stack_pop(expressionstack);
 				binop * netop = op_stack_pop(expressionstack);
@@ -123,7 +123,6 @@ binop * parse_string(token * tokens, int num_tokens)
 			}
 
 			op_stack_pop(operatorstack);
-
 		}
 		else return;
 
@@ -133,10 +132,17 @@ binop * parse_string(token * tokens, int num_tokens)
 		binop * top = op_stack_pop(operatorstack);
 		binop * etop = op_stack_pop(expressionstack);
 		binop * netop = op_stack_pop(expressionstack);
+		//printf("%s and %s and %s\n", top->val.tok, etop->val.tok, netop->val.tok);
 		op_stack_push(expressionstack, binop_init_branch(top->val, netop, etop));
 		free(top);
 	}
 	binop * root = op_stack_pop(expressionstack);
 	//printf("=%d\n", val_traverse(root));
 	return root;
+}
+
+int precedes(token tok1, token tok2)
+{
+	int lass = token_associative(tok1);
+	return ((lass && token_precedence(tok1) <= token_precedence(tok2)) || (!lass && token_precedence(tok1) < token_precedence(tok2)));
 }

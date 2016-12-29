@@ -1,6 +1,6 @@
 #include "ncomp.h"
 
-void push_instr(instr_list * instrl, int instr, int op)
+void push_instr(instr_list * instrl, int instr, float op)
 {
 	instrl->num_instructions++;
 	if (instrl->num_instructions == 1)
@@ -24,24 +24,106 @@ instr_list * compile(binop * bop, cinterp * cinterpreter)
 	instrl->instructions = NULL;
 	val_traverse(bop, instrl, cinterpreter);
 	push_instr(instrl, PRINT, 0);
+	traverse(bop);
+	//printf("=%f\n", solve_traverse(bop));
+	//tree_traverse(bop);
+
+	getch();
 	return instrl;
 }
 
 
 void traverse(binop * binop)
 {
+	if (binop == NULL)
+		return;
+	traverse(binop->left);
+	traverse(binop->right);
+
+	printf("%s ", binop->val.tok);
+}
+void tree_traverse(binop * binop)
+{
+	printf(" %s ", binop->val.tok);
+	//if (binop->left || binop->right)
+	//	printf("\n");
+
+	if (binop->left) {
+		printf("L(");
+		tree_traverse(binop->left);
+		printf(") ");
+	}
+	if (binop->right) {
+		printf("R(");
+		tree_traverse(binop->right);
+		printf(") ");
+	}
+}
+
+float solve_traverse(binop * binop)
+{
+	if (binop->val.type == INT)
+		return (float)atoi(binop->val.tok);
+	float a, b, ans;
 	if (binop->left)
-		traverse(binop->left);
-	printf("%s", binop->val);
+		a = solve_traverse(binop->left);
+	//printf("%s", binop->val);
 	if (binop->right)
-		traverse(binop->right);
+		b = solve_traverse(binop->right);
+
+	if (binop->val.type == PLUS)
+	{
+		return a + b;
+	}
+	else if (binop->val.type == MINUS)
+	{
+		return a - b;
+	}
+	else if (binop->val.type == MULT)
+	{
+		return a * b;
+	}
+	else if (binop->val.type == DIVIDE)
+	{
+		return a / b;
+	}
+	else if (binop->val.type == GREATER)
+	{
+		return a > b;
+	}
+	else if (binop->val.type == GREATER_OR_EQ)
+	{
+		return a >= b;
+	}
+	else if (binop->val.type == LESS)
+	{
+		return a < b;
+	}
+	else if (binop->val.type == LESS_OR_EQ)
+	{
+		return a <= b;
+	}
+	else if (binop->val.type == IS_EQUAL)
+	{
+		return a == b;
+	}
+	else if (binop->val.type == NOT_EQUAL)
+	{
+		return a != b;
+	}
+
 }
 
 void val_traverse(binop * binop, instr_list * instrl, cinterp * cinterpreter)
 {
 	if (binop->val.type == INT)
 	{
-		push_instr(instrl, PUSH, atoi(binop->val.tok));
+		push_instr(instrl, PUSH, (float)atoi(binop->val.tok));
+		return;
+	}
+	else if (binop->val.type == FLOAT)
+	{
+		push_instr(instrl, PUSH, atof(binop->val.tok));
 		return;
 	}
 	else if (binop->val.type == IDENTIFIER)
@@ -84,7 +166,6 @@ void val_traverse(binop * binop, instr_list * instrl, cinterp * cinterpreter)
 		}
 		return;
 	}
-	int a, b, ans;
 	if (binop->left)
 		val_traverse(binop->left, instrl, cinterpreter);
 	if (binop->right)

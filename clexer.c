@@ -13,6 +13,11 @@ char * strtokm(char * s)
 	int i = tcidx, k = 0;
 	while (s[i] == ' ')
 		i++;
+	if (s[i] == '\0')
+	{
+		free(f);
+		return NULL;
+	}
 
 	while (s[i] != '\0')
 	{
@@ -281,4 +286,9 @@ int token_precedence(token tok)
 	if (tok.type == MULT || tok.type == DIVIDE)
 		return 2;
 	return 0;
+}
+
+int token_associative(token tok)
+{
+	return 1;
 }

@@ -32,7 +32,7 @@
 typedef struct cinstr
 {
 	int action;
-	int operand;
+	float operand;
 } cinstr;
 
 #endif

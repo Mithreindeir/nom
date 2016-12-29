@@ -1,4 +1,4 @@
-#include <string.h>
+﻿#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "cinterp.h"
@@ -6,7 +6,8 @@
 #include "ast.h"
 #include "ncomp.h"
 
-char string[] = "x= x - 2";
+char string[] = "";
+
 cinterp cinterpreter;
 
 int main()

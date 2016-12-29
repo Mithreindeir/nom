@@ -96,14 +96,14 @@ void execute(cinterp * cinterp)
 		else if (c.action == LOAD_NAME)
 		{
 			int nbytes = 0;
-			nom_variable var = cinterp->variables[c.operand];
+			nom_variable var = cinterp->variables[(int)c.operand];
 			if (var.type == NUM) 
 				nbytes = sizeof(nom_number);
 			push_number(&cinterp->data_stack, *((nom_number*)var.value));
 		}
 		else if (c.action == STORE_NAME)
 		{
-			pop_store(&cinterp->data_stack, sizeof(nom_number), cinterp->variables[c.operand].value);
+			pop_store(&cinterp->data_stack, sizeof(nom_number), cinterp->variables[(int)c.operand].value);
 		}
 	}
 
