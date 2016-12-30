@@ -226,6 +226,11 @@ int token_type(char * tok, int * len)
 		*len = 1;
 		return COLON;
 	}
+	else if (!strncmp(tok, ",", 1))
+	{
+		*len = 1;
+		return COMMA;
+	}
 	else if (!strncmp(tok, "+", 1))
 	{
 		*len = 1;
@@ -233,7 +238,7 @@ int token_type(char * tok, int * len)
 	}
 	else if (!strncmp(tok, "-", 1))
 	{
-		if (last_tok_type == INT || last_tok_type == FLOAT)
+		if (last_tok_type == INT || last_tok_type == FLOAT || last_tok_type == IDENTIFIER)
 		{
 			*len = 1;
 			return MINUS;

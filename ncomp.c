@@ -197,6 +197,24 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 
 		return;
 	}
+	else if (node->val.type == FOR)
+	{
+		if (node->branches[0])
+			val_traverse(node->branches[0], instrl, cinterpreter);
+		start_cond = instrl->num_instructions;
+		if (node->branches[1])
+			val_traverse(node->branches[1], instrl, cinterpreter);
+		int idx = instrl->num_instructions;
+		push_instr(instrl, IFEQ, start_cond);
+		if (node->branches[3])
+			val_traverse(node->branches[3], instrl, cinterpreter);
+		if (node->branches[2])
+			val_traverse(node->branches[2], instrl, cinterpreter);
+		push_instr(instrl, JUMP, start_cond);
+		instrl->instructions[idx].operand = (float)instrl->num_instructions;
+
+		return;
+	}
 
 	if (node->type == BINARY)
 	{
