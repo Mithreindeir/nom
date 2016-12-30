@@ -195,7 +195,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		}
 		else if (tok.type == COLON)
 		{
-
 			while (operatorstack->size > 0 && !is_conditional(op_stack_gettop(operatorstack)->val))
 			{
 				node * top = op_stack_pop(operatorstack);
@@ -257,7 +256,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		{
 			break;
 		}
-
 	}
 	while (operatorstack->size > 0)
 	{
@@ -269,6 +267,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 			node * netop = op_stack_pop(expressionstack);
 
 			op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+
 		}
 		else if (num_operands == 1)
 		{

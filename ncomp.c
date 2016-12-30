@@ -184,6 +184,19 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 
 		return;
 	}
+	else if (node->val.type == IF)
+	{
+		start_cond = instrl->num_instructions;
+		if (node->left)
+			val_traverse(node->left, instrl, cinterpreter);
+		int idx = instrl->num_instructions;
+		push_instr(instrl, IFEQ, start_cond);
+		if (node->right)
+			val_traverse(node->right, instrl, cinterpreter);
+		instrl->instructions[idx].operand = (float)instrl->num_instructions;
+
+		return;
+	}
 
 	if (node->type == BINARY)
 	{
@@ -260,10 +273,6 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 	{
 		push_instr(instrl, NEG, 0);
 		return;
-	}
-	else if (node->val.type == WHILE)
-	{
-		printf("THISasd\n");
 	}
 }
 

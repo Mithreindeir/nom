@@ -62,18 +62,12 @@ token * tokenize(char * file, int * num_tok)
 		int tlen = strlen(tok);
 		int len = 0;
 		int type = token_type(tok, &len);
-		if (len == 0 || type == 0)
+		if (len == 0 || type == -1)
 		{
-			if (tlen <= len) {
-				free((tok - current_idx));
-				tok = strtokm(file, ' ');
-				current_idx = 0;
-			}
-			else {
-				tok += len;
-				current_idx += len;
-			}
-			continue;
+			free((tok - current_idx));
+			tok = NULL;
+			current_idx = 0;
+			break;
 		}
 
 		//printf("token: %s\t type: %d\n", str, type);
@@ -109,35 +103,34 @@ token * tokenize(char * file, int * num_tok)
 
 int token_type(char * tok, int * len)
 {
-
 	int tlen = strlen(tok);
 	*len = 0;
-	if (!strncmp(tok, "if", tlen))
+	if (!strncmp(tok, "if", max(2,tlen)))
 	{
 		*len = 2;
 		return IF;
 	}
-	else if (!strncmp(tok, "else", tlen))
+	else if (!strncmp(tok, "else", max(4, tlen)))
 	{
 		*len = 4;
 		return ELSE;
 	}
-	else if (!strncmp(tok, "end", tlen) || !strncmp(tok, "end\n", 4))
+	else if (!strncmp(tok, "end", max(3, tlen)) || !strncmp(tok, "end\n", 4))
 	{
 		*len = 3;
 		return END;
 	}
-	else if (!strncmp(tok, "for", tlen))
+	else if (!strncmp(tok, "for", max(2, tlen)))
 	{
 		*len = 3;
 		return FOR;
 	}
-	else if (!strncmp(tok, "while", tlen))
+	else if (!strncmp(tok, "while", max(5, tlen)))
 	{
 		*len = 5;
 		return WHILE;
 	}
-	else if (!strncmp(tok, "function", tlen))
+	else if (!strncmp(tok, "function", max(8, tlen)))
 	{
 		*len = 8;
 		return FUNCTION;
@@ -290,11 +283,12 @@ int token_type(char * tok, int * len)
 			i++;
 			c = *(tok + i);
 		}
+		
 		*len = i;
 		return IDENTIFIER;
 	}
 
-	return 0;
+	return -1;
 }
 
 int is_operator(token tok)
