@@ -46,16 +46,15 @@ void execute(cinterp * cinterp)
 		else if (c.action < 11) {
 			condition[c.action-5](&cinterp->data_stack);
 		}
-		else if (c.action < 12)
+		else if (c.action < 13)
 		{
 			if (c.action == IFEQ)
 			{
-
 				nom_number n;
 				pop_store(&cinterp->data_stack, sizeof(nom_number), &n);
+
 				if (n == 0)
 					cinterp->instr_ptr = c.operand;
-
 			}
 			else if (c.action == JUMP)
 			{

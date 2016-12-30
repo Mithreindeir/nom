@@ -7,11 +7,11 @@
 #include "ncomp.h"
 
 char string[] =
-"x = 5*1\n"
-"x = x * x\n"
-"x = 5 * 4\n"
-"y = x * 4 + 3.0/(2 + 4)\n"
-"y\n";
+"x = 50\n"
+"while x >= 10:\n"
+"	x = -x\n"
+"end\n"
+"x\n";
 
 cinterp cinterpreter;
 

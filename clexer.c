@@ -11,7 +11,8 @@ char * strtokm(char * s)
 
 	char * f = malloc(sizeof(char) * 100);
 	int i = tcidx, k = 0;
-	while (s[i] == ' ')
+	//Ignore spaces and tabs
+	while (s[i] == ' ' || s[i] == '\t')
 		i++;
 	if (s[i] == '\0')
 	{
@@ -21,7 +22,7 @@ char * strtokm(char * s)
 
 	while (s[i] != '\0')
 	{
-		if (s[i] == ' ')
+		if (s[i] == ' ' || s[i] == '\t')
 		{
 			f[k] = 0;
 			tcidx = i;
@@ -58,11 +59,23 @@ token * tokenize(char * file, int * num_tok)
 			tokens = realloc(tokens, sizeof(token) * num_tokens);
 		}
 
+		int tlen = strlen(tok);
 		int len = 0;
 		int type = token_type(tok, &len);
-		if (len == 0)
+		if (len == 0 || type == 0)
+		{
+			if (tlen <= len) {
+				free((tok - current_idx));
+				tok = strtokm(file, ' ');
+				current_idx = 0;
+			}
+			else {
+				tok += len;
+				current_idx += len;
+			}
 			continue;
-		int tlen = strlen(tok);
+		}
+
 		//printf("token: %s\t type: %d\n", str, type);
 
 		token ctoken;
@@ -96,6 +109,7 @@ token * tokenize(char * file, int * num_tok)
 
 int token_type(char * tok, int * len)
 {
+
 	int tlen = strlen(tok);
 	*len = 0;
 	if (!strncmp(tok, "if", tlen))
@@ -108,7 +122,7 @@ int token_type(char * tok, int * len)
 		*len = 4;
 		return ELSE;
 	}
-	else if (!strncmp(tok, "end", tlen))
+	else if (!strncmp(tok, "end", tlen) || !strncmp(tok, "end\n", 4))
 	{
 		*len = 3;
 		return END;
@@ -292,6 +306,13 @@ int is_operator(token tok)
 	if (tok.type == EQUAL)
 		return 1;
 	if (tok.type == UNARY_NEG)
+		return 1;
+	return 0;
+}
+
+int is_conditional(token tok)
+{
+	if (tok.type == WHILE || tok.type == FOR || tok.type == IF)
 		return 1;
 	return 0;
 }

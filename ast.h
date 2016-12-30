@@ -65,6 +65,8 @@ node * node_init_binary(token  op, node * l, node * r);
 node * node_init_unary(token  op, node * n);
 //Creates a root node and generates a ast for each line of code
 node * parse_string(token * tokens, int num_tokens);
+//Creates a block node and ends at if it reads an END token. Returns token after END
+node * block_ast(token * tokens, int start, int num_tokens, int * tokens_used);
 //Generates a ast from a line of code. Breaks on newline and sets tokens_used amount of tokens used
 node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used);
 //Returns if the operator precedes the other operator, using their token

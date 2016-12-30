@@ -119,6 +119,7 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 {
 	if (!node)
 		return;
+	int start_cond = 0;
 	//printf("%s\n", node->val.tok);
 
 	if (node->val.type == INT)
@@ -167,6 +168,20 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 
 			push_instr(instrl, STORE_NAME, idx);
 		}
+		return;
+	}
+	else if (node->val.type == WHILE)
+	{
+		start_cond = instrl->num_instructions;
+		if (node->left)
+			val_traverse(node->left, instrl, cinterpreter);
+		int idx = instrl->num_instructions;
+		push_instr(instrl, IFEQ, start_cond);
+		if (node->right)
+			val_traverse(node->right, instrl, cinterpreter);
+		push_instr(instrl, JUMP, start_cond);
+		instrl->instructions[idx].operand = (float)instrl->num_instructions;
+
 		return;
 	}
 
@@ -245,6 +260,10 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 	{
 		push_instr(instrl, NEG, 0);
 		return;
+	}
+	else if (node->val.type == WHILE)
+	{
+		printf("THISasd\n");
 	}
 }
 

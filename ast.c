@@ -113,6 +113,43 @@ node * parse_string(token * tokens, int num_tokens)
 	return base;
 }
 
+node * block_ast(token * tokens, int start, int num_tokens, int * tokens_used)
+{
+	int current_used = start;
+
+	node * base = node_init();
+	base->val.type = -1;
+	base->type = MULTI;
+	base->branches = NULL;
+	base->num_branches = 0;
+
+	int end_tok = start;
+	for (; end_tok < num_tokens; end_tok++)
+	{
+		if (tokens[end_tok].type == END)
+			break;
+	}
+
+	while (current_used < end_tok)
+	{
+		node* branch = single_ast(tokens, current_used, end_tok, &current_used);
+
+		base->num_branches++;
+		if (base->num_branches == 1)
+		{
+			base->branches = malloc(sizeof(node*));
+		}
+		else
+		{
+			base->branches = realloc(base->branches, base->num_branches * sizeof(node*));
+		}
+		base->branches[base->num_branches - 1] = branch;
+	}
+	*tokens_used = current_used+1;
+
+	return base;
+}
+
 node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 {
 	op_stack * operatorstack = op_stack_init();
@@ -121,8 +158,11 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 	{
 		token tok = tokens[i];
 		*tokens_used = i+1;
-
 		if (tok.type == LPAREN)
+		{
+			op_stack_push(operatorstack, node_init_op(tok));
+		}
+		else if (is_conditional(tok))
 		{
 			op_stack_push(operatorstack, node_init_op(tok));
 		}
@@ -132,16 +172,61 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		}
 		else if (is_operator(tok))
 		{
-			while (operatorstack->size > 0 && precedes(tok, op_stack_gettop(operatorstack)->val))
+			while (operatorstack->size > 0 && !is_conditional(op_stack_gettop(operatorstack)->val) && precedes(tok, op_stack_gettop(operatorstack)->val))
 			{
 				node * top = op_stack_pop(operatorstack);
-				node * etop = op_stack_pop(expressionstack);
-				node * netop = op_stack_pop(expressionstack);
-				op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+				int num_operands = token_operands(top->val);
+				if (num_operands == 2)
+				{
+					node * etop = op_stack_pop(expressionstack);
+					node * netop = op_stack_pop(expressionstack);
+
+					op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+				}
+				else if (num_operands == 1)
+				{
+					node * etop = op_stack_pop(expressionstack);
+					op_stack_push(expressionstack, node_init_unary(top->val, etop));
+				}
 				free(top);
 			}
 			op_stack_push(operatorstack, node_init_op(tok));
 
+		}
+		else if (tok.type == COLON)
+		{
+
+			while (operatorstack->size > 0 && !is_conditional(op_stack_gettop(operatorstack)->val))
+			{
+				node * top = op_stack_pop(operatorstack);
+
+				int num_operands = token_operands(top->val);
+				if (num_operands == 2)
+				{
+					node * etop = op_stack_pop(expressionstack);
+					node * netop = op_stack_pop(expressionstack);
+
+					op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+				}
+				else if (num_operands == 1)
+				{
+
+					node * etop = op_stack_pop(expressionstack);
+					op_stack_push(expressionstack, node_init_unary(top->val, etop));
+				}
+
+				free(top);
+			}
+			if (operatorstack->size > 0) {
+				int f = i;
+				node * cb = block_ast(tokens, i + 1, num_tokens, &f);
+				i = f - 1;
+				*tokens_used = f;
+				op_stack_gettop(operatorstack)->type = BINARY;
+				op_stack_gettop(operatorstack)->left = op_stack_pop(expressionstack);
+				op_stack_gettop(operatorstack)->right = cb;
+				op_stack_push(expressionstack, op_stack_pop(operatorstack));
+			}
 		}
 		else if (tok.type == RPAREN)
 		{
@@ -168,7 +253,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 
 			op_stack_pop(operatorstack);
 		}
-		else if (tok.type == NEWLINE)
+		else if (tok.type == NEWLINE && i != start)
 		{
 			break;
 		}

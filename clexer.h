@@ -56,6 +56,8 @@ token * tokenize(char * file, int * num_tok);
 int token_type(char * tok, int * len);
 //Is this token an operator
 int is_operator(token tok);
+//Is this token a conditional 
+int is_conditional(token tok);
 //Returns number of operator precedence. 
 int token_precedence(token tok);
 //Is left associative or is it right associative
