@@ -1,4 +1,5 @@
-﻿#include <string.h>
+#define _CRT_SECURE_NO_DEPRECATE 1
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "cinterp.h"
@@ -12,8 +13,7 @@ int main()
 {
 	char * buffer = 0;
 	long length;
-	FILE * f;
-	int err = fopen_s(&f, "test.nom", "r");
+	FILE * f = fopen("test.nom", "r");
 
 	if (f)
 	{
