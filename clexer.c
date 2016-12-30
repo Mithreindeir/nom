@@ -2,6 +2,11 @@
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS 1
 #endif
+
+int max(int a, int b)
+{
+	return a > b ? a : b;
+}
 int tcidx = 0;
 
 char * strtokm(char * s)
@@ -43,7 +48,7 @@ int last_tok_type = -1;
 token * tokenize(char * file, int * num_tok)
 {
 	tcidx = 0;
-	char * tok = strtokm(file, ' ');
+	char * tok = strtokm(file);
 	int num_tokens = 0;
 	token * tokens = NULL;
 	int current_idx = 0;
@@ -88,7 +93,7 @@ token * tokenize(char * file, int * num_tok)
 
 		if (tlen <= len) {
 			free((tok - current_idx));
-			tok = strtokm(file, ' ');
+			tok = strtokm(file);
 			current_idx = 0;
 		}
 		else {
