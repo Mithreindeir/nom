@@ -39,7 +39,8 @@ enum TOKEN_TYPES
 	BAND,
 	BOR,
 	BXOR,
-	IDENTIFIER
+	IDENTIFIER,
+	NEWLINE
 };
 
 typedef struct token

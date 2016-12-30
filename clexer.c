@@ -200,6 +200,7 @@ int token_type(char * tok, int * len)
 	}
 	else if (*tok >= 0x30 && *tok <= 0x39)
 	{
+
 		int i = 0;
 		int t = INT;
 		char c = *tok;
@@ -261,6 +262,11 @@ int token_type(char * tok, int * len)
 		*len = 1;
 		return BXOR;
 	}
+	else if (*tok == '\n')
+	{
+		*len = 1;
+		return NEWLINE;
+	}
 	else if (!(*tok >= 0x30 && *tok <= 0x39))
 	{
 		int i = 0;
@@ -273,6 +279,7 @@ int token_type(char * tok, int * len)
 		*len = i;
 		return IDENTIFIER;
 	}
+
 	return 0;
 }
 

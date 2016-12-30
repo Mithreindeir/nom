@@ -10,7 +10,8 @@ enum NODE_TYPE
 	UNARY,
 	BINARY,
 	MULTI,
-	LEAF
+	LEAF,
+	EMPTY
 };
 
 typedef struct binop binop;
@@ -36,7 +37,7 @@ struct node
 		node * next;
 		struct
 		{
-			node * branches;
+			node ** branches;
 			int num_branches;
 		};
 	};
@@ -54,11 +55,21 @@ node * op_stack_gettop(op_stack * stack);
 void op_stack_push(op_stack * stack, node * node);
 node * op_stack_pop(op_stack * stack);
 
+//Allocates a node and sets nothing
 node * node_init();
+//Creates a leaf
 node * node_init_op(token num);
+//Creates a node with a binary operator and two children
 node * node_init_binary(token  op, node * l, node * r);
+//Creates a node with a unary operator and a child
 node * node_init_unary(token  op, node * n);
+//Creates a root node and generates a ast for each line of code
 node * parse_string(token * tokens, int num_tokens);
+//Generates a ast from a line of code. Breaks on newline and sets tokens_used amount of tokens used
+node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used);
+//Returns if the operator precedes the other operator, using their token
 int precedes(token tok1, token tok2);
+//Frees all memory in an AST
+void free_nodes(node * root);
 
 #endif

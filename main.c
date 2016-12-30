@@ -6,7 +6,12 @@
 #include "ast.h"
 #include "ncomp.h"
 
-char string[] = "5 * -3.5";
+char string[] =
+"x = 5*1\n"
+"x = x * x\n"
+"x = 5 * 4\n"
+"y = x * 4 + 3.0/(2 + 4)\n"
+"y\n";
 
 cinterp cinterpreter;
 
@@ -33,6 +38,12 @@ int main()
 	//return;
 	stack_init(&cinterpreter.data_stack);
 	execute(&cinterpreter);
+
+	for (int i = 0; i < cinterpreter.num_variables; i++)
+	{
+		free(cinterpreter.variables[i].value);
+	}
+	if (cinterpreter.variables) free(cinterpreter.variables);
 	getch();
 	return;
 }

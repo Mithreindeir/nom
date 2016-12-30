@@ -28,7 +28,7 @@ typedef enum const_type
 	NONE_CONST
 } const_type;
 
-typedef double nom_number;
+typedef float nom_number;
 typedef int nom_boolean;
 typedef void* nom_func;
 typedef char* nom_string;

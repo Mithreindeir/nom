@@ -29,6 +29,7 @@ instr_list * compile(node * bop, cinterp * cinterpreter)
 	//tree_traverse(bop);
 
 	//getch();
+	free_nodes(bop);
 	return instrl;
 }
 
@@ -118,9 +119,10 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 {
 	if (!node)
 		return;
+	//printf("%s\n", node->val.tok);
+
 	if (node->val.type == INT)
 	{
-
 		push_instr(instrl, PUSH, (float)atoi(node->val.tok));
 		return;
 	}
@@ -147,7 +149,7 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 		//push_instr(instrl, );
 		if (node->left->val.type != IDENTIFIER)
 		{
-			printf("LEFT HAND VALUE MUST BE CONSTANT\n");
+			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->left->val.tok);
 			abort();
 		}
 		else
@@ -164,8 +166,6 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 			}
 
 			push_instr(instrl, STORE_NAME, idx);
-			push_instr(instrl, LOAD_NAME, idx);
-
 		}
 		return;
 	}
@@ -181,6 +181,14 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 	{
 		if (node->next)
 			val_traverse(node->next, instrl, cinterpreter);
+	}
+	else if (node->type == MULTI)
+	{
+		for (int i = 0; i < node->num_branches; i++)
+		{
+			if (node->branches[i])
+				val_traverse(node->branches[i], instrl, cinterpreter);
+		}
 	}
 
 	if (node->val.type == PLUS)
