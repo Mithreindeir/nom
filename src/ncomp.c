@@ -175,6 +175,57 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		}
 		return;
 	}
+	else if (node->val.type == INC)
+	{
+		//STORE_NAME
+		//push_instr(instrl, );
+		if (node->next->val.type != IDENTIFIER)
+		{
+			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->next->val.tok);
+			abort();
+		}
+		else
+		{
+
+			int idx = get_var_index(currentframe, node->next->val.tok);
+			if (idx == -1)
+			{
+				create_var(currentframe, node->next->val.tok, NONE);
+				idx = currentframe->num_variables - 1;
+			}
+			push_instr(instrl, LOAD_NAME, idx);
+			push_instr(instrl, PUSH, 1);
+			push_instr(instrl, ADD, 0);
+			push_instr(instrl, STORE_NAME, idx);
+		}
+		return;
+	}
+	else if (node->val.type == DEC)
+	{
+
+		//STORE_NAME
+		//push_instr(instrl, );
+		if (node->next->val.type != IDENTIFIER)
+		{
+			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->next->val.tok);
+			abort();
+		}
+		else
+		{
+
+			int idx = get_var_index(currentframe, node->next->val.tok);
+			if (idx == -1)
+			{
+				create_var(currentframe, node->next->val.tok, NONE);
+				idx = currentframe->num_variables - 1;
+			}
+			push_instr(instrl, LOAD_NAME, idx);
+			push_instr(instrl, PUSH, -1);
+			push_instr(instrl, ADD, 0);
+			push_instr(instrl, STORE_NAME, idx);
+		}
+		return;
+	}
 	else if (node->val.type == WHILE)
 	{
 		start_cond = instrl->num_instructions;

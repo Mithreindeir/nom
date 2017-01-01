@@ -19,17 +19,6 @@ typedef enum nom_type
 	NONE
 } nom_type;
 
-typedef float nom_number;
-typedef int nom_boolean;
-typedef void* nom_func;
-typedef struct nom_string
-{
-	int num_characters;
-	char  * str;
-} nom_string;
-
-const static int nom_type_size[] = { sizeof(nom_string), sizeof(nom_number), sizeof(nom_boolean), sizeof(nom_func), 0 };
-
 typedef struct nom_variable
 {
 	char * name;
@@ -56,7 +45,9 @@ typedef struct stack
 	int base_ptr, stack_ptr;
 } stack;
 
-typedef struct frame
+typedef struct frame frame;
+
+struct frame
 {
 	stack data_stack;
 	cinstr * instructions;
@@ -64,7 +55,23 @@ typedef struct frame
 	int instr_ptr;
 	nom_variable * variables;
 	int num_variables;
-} frame;
+};
+
+typedef float nom_number;
+typedef int nom_boolean;
+typedef struct nom_func
+{
+	frame * frame;
+	frame * global;
+	frame * parent;
+} nom_func;
+typedef struct nom_string
+{
+	int num_characters;
+	char  * str;
+} nom_string;
+
+const static int nom_type_size[] = { sizeof(nom_string), sizeof(nom_number), sizeof(nom_boolean), sizeof(nom_func), 0 };
 
 //NomLang interpreter
 typedef struct nom_interp
@@ -75,6 +82,7 @@ typedef struct nom_interp
 //Interpreter functions
 nom_interp * nom_interp_init();
 void nom_interp_destroy(nom_interp * nom);
+
 
 //Frame functions
 void exit_frame(frame * frame);

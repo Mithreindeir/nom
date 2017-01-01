@@ -1,0 +1,8 @@
+# Test file for whatever I am currently working on
+
+
+func = function():
+  return 5
+end
+
+x = 5

@@ -177,6 +177,11 @@ int token_type(char * tok, int * len)
 		*len = 3;
 		return END;
 	}
+	else if (!strncmp(tok, "return", max(6, tlen)) || !strncmp(tok, "return\n", 7))
+	{
+		*len = 6;
+		return RETURN;
+	}
 	else if (!strncmp(tok, "for", max(3, tlen)))
 	{
 		*len = 3;
@@ -323,10 +328,29 @@ int token_type(char * tok, int * len)
 		*len = 1;
 		return COMMA;
 	}
+	else if (!strncmp(tok, "++", 2))
+	{
+		*len = 2;
+		return INC;
+	}
 	else if (!strncmp(tok, "+", 1))
 	{
 		*len = 1;
 		return PLUS;
+	}
+	else if (!strncmp(tok, "--", 2))
+	{
+
+		if (last_tok_type == IDENTIFIER)
+		{
+			*len = 2;
+			return DEC;
+		}
+		else
+		{
+			*len = 1;
+			return MINUS;
+		}
 	}
 	else if (!strncmp(tok, "-", 1))
 	{
@@ -396,7 +420,7 @@ int is_operator(token tok)
 		return 1;
 	if (tok.type == EQUAL)
 		return 1;
-	if (tok.type == UNARY_NEG)
+	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC)
 		return 1;
 	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
 		return 1;
@@ -422,7 +446,7 @@ int token_precedence(token tok)
 		return 1;
 	if (tok.type == MULT || tok.type == DIVIDE)
 		return 2;
-	if (tok.type == UNARY_NEG)
+	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC)
 		return 3;
 
 	return 0;
@@ -445,7 +469,7 @@ int token_operands(token tok)
 		return 2;
 	if (tok.type == LESS || tok.type == GREATER || tok.type == LESS_OR_EQ || tok.type == GREATER_OR_EQ || tok.type == IS_EQUAL || tok.type == NOT_EQUAL)
 		return 2;
-	if (tok.type == UNARY_NEG)
+	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC)
 		return 1;
 	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
 		return 2;
