@@ -10,6 +10,7 @@ Example factorial program written in Nom (Interpreter can't run this yet) which 
     function factorial(n):
       if n <= 1:
         return n
+      end
       else:
         return n * factorial(n-1)
       end
