@@ -4,11 +4,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "nerr.h"
 
 enum TOKEN_TYPES
 {
 	IF,
+	IFELSE,
 	ELSE,
+	ELSEIF,
+	ELSEIFELSE,
 	FOR,
 	END,
 	WHILE,
@@ -40,6 +44,10 @@ enum TOKEN_TYPES
 	BAND,
 	BOR,
 	BXOR,
+	LAND,
+	LNAND,
+	LOR,
+	LNOR,
 	IDENTIFIER,
 	NEWLINE
 };
@@ -49,6 +57,8 @@ typedef struct token
 	char * tok;
 	int len;
 	int type;
+	//For Errors
+	int col, row;
 } token;
 
 //Splits string into tokens

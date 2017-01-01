@@ -9,6 +9,10 @@ enum OPCODES
 	MUL,	//Multiplies topmost 2 elements and pushes result to stack
 	DIV,	//Divides topmost 2 elements and pushes result to stack
 	NEG,	//Negates the top of the stack and pushes it back
+	AND,	//Ands topmost elements and pushes result to stack
+	OR,		//Ors topmost elements and pushes result to stack
+	NOR,	//Norss topmost elements and pushes result to stack
+	NAND,	//Nands topmost elements and pushes result to stack
 	//Conditions
 	GT,		//Compares topmost 2 with > and pushes result to stack
 	GTE,	//Compares topmost 2 with >= and pushes result to stack
@@ -22,6 +26,8 @@ enum OPCODES
 	//Memory
 	PUSH,	//Pushes number to stack
 	POP,	//Pops top of stack
+	PUSH_STR,	//Pushes string to stack
+	POP_STR,	//Pops string of top of stack
 	LOAD,	//Loads top of stack to other element
 	DUP,	//Duplicates top of stack
 	SWAP,	//Swaps topmost 2 elements

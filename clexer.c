@@ -3,11 +3,16 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
+#ifdef max
+#undef max
+#endif
+
 int max(int a, int b)
 {
 	return a > b ? a : b;
 }
 int tcidx = 0;
+int col = 0, row = 0;
 
 char * strtokm(char * s)
 {
@@ -17,8 +22,10 @@ char * strtokm(char * s)
 	char * f = malloc(sizeof(char) * 100);
 	int i = tcidx, k = 0;
 	//Ignore spaces and tabs
-	while (s[i] == ' ' || s[i] == '\t')
+	while (s[i] == ' ' || s[i] == '\t') {
 		i++;
+		col++;
+	}
 	if (s[i] == '\0')
 	{
 		free(f);
@@ -27,6 +34,12 @@ char * strtokm(char * s)
 
 	while (s[i] != '\0')
 	{
+		col++;
+		if (s[i] == '\n')
+		{
+			col = 0;
+			row++;
+		}
 		if (s[i] == ' ' || s[i] == '\t')
 		{
 			f[k] = 0;
@@ -78,17 +91,35 @@ token * tokenize(char * file, int * num_tok)
 		//printf("token: %s\t type: %d\n", str, type);
 
 		token ctoken;
-		ctoken.tok = malloc(len+1);
+		ctoken.col = col;
+		ctoken.row = row;
+		if (type == STRING)
+		{
+			ctoken.tok = malloc(len - 1);
+		}
+		else ctoken.tok = malloc(len+1);
 		ctoken.len = len;
 		ctoken.type = type;
 		last_tok_type = type;
-		int i = 0;
-		while (i < len)
+		if (type == STRING)
 		{
-			ctoken.tok[i] = tok[i];
-			i++;
+			int i = 0;
+			while (i < (len-2))
+			{
+				ctoken.tok[i] = tok[i+1];
+				i++;
+			}
+			ctoken.tok[i] = '\0';
 		}
-		ctoken.tok[i] = '\0';
+		else {
+			int i = 0;
+			while (i < len)
+			{
+				ctoken.tok[i] = tok[i];
+				i++;
+			}
+			ctoken.tok[i] = '\0';
+		}
 		tokens[num_tokens-1] = ctoken;
 
 		if (tlen <= len) {
@@ -109,23 +140,29 @@ token * tokenize(char * file, int * num_tok)
 int token_type(char * tok, int * len)
 {
 	int tlen = strlen(tok);
+
 	*len = 0;
 	if (!strncmp(tok, "if", max(2,tlen)))
 	{
 		*len = 2;
 		return IF;
 	}
-	else if (!strncmp(tok, "else", max(4, tlen)))
+	else if (!strncmp(tok, "else", max(4, tlen)) || !strncmp(tok, "else:", 5))
 	{
 		*len = 4;
 		return ELSE;
+	}
+	else if (!strncmp(tok, "elseif", max(6, tlen)))
+	{
+		*len = 6;
+		return ELSEIF;
 	}
 	else if (!strncmp(tok, "end", max(3, tlen)) || !strncmp(tok, "end\n", 4))
 	{
 		*len = 3;
 		return END;
 	}
-	else if (!strncmp(tok, "for", max(2, tlen)))
+	else if (!strncmp(tok, "for", max(3, tlen)))
 	{
 		*len = 3;
 		return FOR;
@@ -139,6 +176,27 @@ int token_type(char * tok, int * len)
 	{
 		*len = 8;
 		return FUNCTION;
+	}
+	else if (!strncmp(tok, "or", max(2, tlen)))
+	{
+		*len = 2;
+		return LOR;
+	}
+	else if (!strncmp(tok, "nor", max(3, tlen)))
+	{
+
+		*len = 3;
+		return LNOR;
+	}
+	else if (!strncmp(tok, "and", max(3, tlen)))
+	{
+		*len = 3;
+		return LAND;
+	}
+	else if (!strncmp(tok, "nand", max(4, tlen)))
+	{
+		*len = 4;
+		return LNAND;
 	}
 	else if (!strncmp(tok, "==", 2))
 	{
@@ -205,10 +263,19 @@ int token_type(char * tok, int * len)
 		*len = 1;
 		return LCBRACK;
 	}
-	else if (!strncmp(tok, "\"", 1))
+	else if (*tok == '"')
 	{
-		*len = 1;
-		return QUOTATION;
+		int i = 0;
+		char c = *(tok+1);
+		while (c != '\0' && c != '"')
+		{
+			i++;
+			c = *(tok + i + 1);
+		}
+		if (c == '\0')
+			syntax_error(tok, col, row, "NO ENDING QUOTATION");
+		*len = i+2;
+		return STRING;
 	}
 	else if (*tok >= 0x30 && *tok <= 0x39)
 	{
@@ -311,12 +378,14 @@ int is_operator(token tok)
 		return 1;
 	if (tok.type == UNARY_NEG)
 		return 1;
+	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
+		return 1;
 	return 0;
 }
 
 int is_conditional(token tok)
 {
-	if (tok.type == WHILE || tok.type == FOR || tok.type == IF)
+	if (tok.type == WHILE || tok.type == FOR || tok.type == IF || tok.type == ELSE || tok.type == ELSEIF)
 		return 1;
 	return 0;
 }
@@ -325,6 +394,8 @@ int token_precedence(token tok)
 {
 	if (tok.type == EQUAL)
 		return -1;
+	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
+		return 0;
 	if (tok.type == LESS || tok.type == GREATER || tok.type == LESS_OR_EQ || tok.type == GREATER_OR_EQ || tok.type == IS_EQUAL || tok.type == NOT_EQUAL)
 		return 0;
 	if (tok.type == PLUS || tok.type == MINUS)
@@ -333,6 +404,7 @@ int token_precedence(token tok)
 		return 2;
 	if (tok.type == UNARY_NEG)
 		return 3;
+
 	return 0;
 }
 
@@ -355,5 +427,7 @@ int token_operands(token tok)
 		return 2;
 	if (tok.type == UNARY_NEG)
 		return 1;
+	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
+		return 2;
 	return 0;
 }

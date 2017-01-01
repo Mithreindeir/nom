@@ -124,10 +124,20 @@ node * block_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 	base->num_branches = 0;
 
 	int end_tok = start;
+	int nested = 1;
 	for (; end_tok < num_tokens; end_tok++)
 	{
-		if (tokens[end_tok].type == END)
+		if (tokens[end_tok].type == END || tokens[end_tok].type == ELSE)
+			nested--;
+		if (tokens[end_tok].type == COLON)
+			nested++;
+		if (nested <= 0)
 			break;
+	}
+
+	if (tokens[end_tok].type != END && tokens[end_tok].type != ELSE)
+	{
+		syntax_error(tokens[start].tok, tokens[start].col, tokens[start].row, "NO END STATEMENT AFTER BLOCK");
 	}
 
 	while (current_used < end_tok)
@@ -154,6 +164,15 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 {
 	op_stack * operatorstack = op_stack_init();
 	op_stack * expressionstack = op_stack_init();
+
+	/*Variables for Syntax Errors
+	-1 means no error
+	0 means syntax found
+	1 means throw error unless found
+	Errors are handled at NEWLINE
+	*/
+	int colon_with_cond = -1;
+	int colon_without_cond = 0;
 	for (int i = start; i < num_tokens; i++)
 	{
 		token tok = tokens[i];
@@ -184,9 +203,12 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		}
 		else if (is_conditional(tok))
 		{
+
+			colon_with_cond = 1;
+			colon_without_cond = -1;
 			op_stack_push(operatorstack, node_init_op(tok));
 		}
-		else if (tok.type == INT || tok.type == FLOAT || tok.type == IDENTIFIER)
+		else if (tok.type == INT || tok.type == FLOAT || tok.type == IDENTIFIER || tok.type == STRING)
 		{
 			op_stack_push(expressionstack, node_init_op(tok));
 		}
@@ -216,10 +238,12 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		}
 		else if (tok.type == COLON)
 		{
+
+			colon_with_cond = 0;
+			colon_without_cond = colon_without_cond == 0 ? 1 : -1;
 			while (operatorstack->size > 0 && !is_conditional(op_stack_gettop(operatorstack)->val))
 			{
 				node * top = op_stack_pop(operatorstack);
-
 				int num_operands = token_operands(top->val);
 				if (num_operands == 2)
 				{
@@ -237,6 +261,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				free(top);
 			}
 			if (operatorstack->size > 0) {
+
 				int f = i;
 				node * cb = block_ast(tokens, i + 1, num_tokens, &f);
 				i = f - 1;
@@ -251,6 +276,28 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 					op_stack_gettop(operatorstack)->branches[2] = op_stack_pop(expressionstack);
 					op_stack_gettop(operatorstack)->branches[1] = op_stack_pop(expressionstack);
 					op_stack_gettop(operatorstack)->branches[0] = op_stack_pop(expressionstack);
+					op_stack_push(expressionstack, op_stack_pop(operatorstack));
+				}
+				else if (op_stack_gettop(operatorstack)->val.type == ELSE)
+				{
+					op_stack_gettop(operatorstack)->type = UNARY;
+					op_stack_gettop(operatorstack)->next = cb;
+					op_stack_push(expressionstack, op_stack_pop(operatorstack));
+				}
+				else  if (op_stack_gettop(operatorstack)->val.type == IF) 
+				{
+					if ((i+2) < num_tokens && (tokens[i + 2].type == ELSE || tokens[i + 2].type == ELSEIF)) op_stack_gettop(operatorstack)->val.type = IFELSE;
+					op_stack_gettop(operatorstack)->type = BINARY;
+					op_stack_gettop(operatorstack)->left = op_stack_pop(expressionstack);
+					op_stack_gettop(operatorstack)->right = cb;
+					op_stack_push(expressionstack, op_stack_pop(operatorstack));
+				}
+				else  if (op_stack_gettop(operatorstack)->val.type == ELSEIF)
+				{
+					if ((i + 2) < num_tokens && (tokens[i + 2].type == ELSE || tokens[i + 2].type == ELSEIF)) op_stack_gettop(operatorstack)->val.type = ELSEIFELSE;
+					op_stack_gettop(operatorstack)->type = BINARY;
+					op_stack_gettop(operatorstack)->left = op_stack_pop(expressionstack);
+					op_stack_gettop(operatorstack)->right = cb;
 					op_stack_push(expressionstack, op_stack_pop(operatorstack));
 				}
 				else {
@@ -283,11 +330,22 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 
 				free(top);
 			}
-
+			if (operatorstack->size == 0)
+			{
+				syntax_error(tokens[i].tok, tokens[i].col, tokens[i].row, "NO MATCHING PARENTHESES BLOCK");
+			}
 			op_stack_pop(operatorstack);
 		}
 		else if (tok.type == NEWLINE && i != start)
 		{
+			if (colon_with_cond == 1)
+			{
+				syntax_error(tokens[i].tok, tokens[i].col, tokens[i].row, "NO COLON AFTER EXPR FOR CONDITIONAL OR LOOP");
+			}
+			if (colon_without_cond == 1)
+			{
+				syntax_error(tokens[i].tok, tokens[i].col, tokens[i].row, "COLON BUT NO CONDITIONAL OR LOOP");
+			}
 			break;
 		}
 	}

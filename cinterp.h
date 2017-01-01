@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cinstr.h"
+#include "nerr.h"
 
 //Stack size is 4kb
 #define STACK_SIZE 4*1024
@@ -28,10 +29,17 @@ typedef enum const_type
 	NONE_CONST
 } const_type;
 
+
 typedef float nom_number;
 typedef int nom_boolean;
 typedef void* nom_func;
-typedef char* nom_string;
+typedef struct nom_string
+{
+	int num_characters;
+	char  * str;
+} nom_string;
+
+const static int nom_type_size[] = { sizeof(nom_string), sizeof(nom_number), sizeof(nom_boolean), sizeof(nom_func), 0 };
 
 typedef struct nom_variable
 {
@@ -108,6 +116,9 @@ typedef struct cinterp
 } cinterp;
 
 
+//Variable functions
+void resize_string(nom_string * str, char * nstr, int size);
+void change_type(nom_variable * old, int ntype);
 int get_var_index(cinterp * cinterpreter, char * name);
 void create_var(cinterp * cinterpreter, char * name, int type);
 
@@ -129,6 +140,11 @@ void swap(stack * stk);
 
 void push_number(stack * Stk, nom_number number);
 nom_number pop_number(stack * Stk);
+void push_bool(stack * stk, nom_boolean boolean);
+nom_boolean pop_bool(stack * stk);
+void push_string(stack * stk, nom_string str);
+void push_raw_string(stack * stack, char * str);
+nom_string pop_string(stack * stk);
 //operations
 void add(stack * stk);
 void subtract(stack * stk);
@@ -142,7 +158,12 @@ void lt(stack * stk);
 void lte(stack * stk);
 void eq(stack * stk);
 void ne(stack * stk);
+//Logical operations
+void and(stack * stk);
+void nand(stack * stk);
+void or(stack * stk);
+void nor(stack * stk);
 
-static void(*operation[5])(stack * stk) = {&add, &subtract, &multiply, &divide, &negate};
+static void(*operation[9])(stack * stk) = {&add, &subtract, &multiply, &divide, &negate, &and, &or, &nor, &nand};
 static void(*condition[6])(stack*stk) = {&gt, &gte, &lt, &lte, &eq, &ne};
 #endif
