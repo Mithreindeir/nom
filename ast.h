@@ -15,15 +15,6 @@ enum NODE_TYPE
 	EMPTY
 };
 
-typedef struct binop binop;
-
-struct binop
-{
-	binop * left;
-	binop * right;
-	token val;
-};
-
 typedef struct node node;
 
 struct node

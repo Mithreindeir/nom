@@ -24,11 +24,6 @@ instr_list * compile(node * bop, frame * currentframe)
 	instrl->instructions = NULL;
 	val_traverse(bop, instrl, currentframe);
 	push_instr(instrl, PRINT, 0);
-	//traverse(bop);
-	//printf("=%f\n", solve_traverse(bop));
-	//tree_traverse(bop);
-
-	//getch();
 	free_nodes(bop);
 	return instrl;
 }

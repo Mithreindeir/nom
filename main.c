@@ -7,11 +7,12 @@
 #include "ast.h"
 #include "ncomp.h"
 
-nom_interp * nom;
 
 int main()
 {
-	getch();
+
+	nom_interp * nom;
+	//getch();
 	char * buffer = 0;
 	long length;
 	FILE * f = fopen("test.nom", "r");
@@ -21,7 +22,7 @@ int main()
 		fseek(f, 0, SEEK_END);
 		length = ftell(f);
 		fseek(f, 0, SEEK_SET);
-		buffer = malloc(length+1);
+		buffer = malloc(length + 1);
 		memset(buffer, 0, length + 1);
 		if (buffer)
 		{
@@ -35,12 +36,12 @@ int main()
 
 		int num_tokens = 0;
 		token * tokens = tokenize(buffer, &num_tokens);
-		binop * bop = parse_string(tokens, num_tokens);
+		node * bop = parse_string(tokens, num_tokens);
 		instr_list * l = compile(bop, nom->global_frame);
 		nom->global_frame->instructions = l->instructions;
 		nom->global_frame->num_instructions = l->num_instructions;
 		free(l);
-		getch();
+		//getch();
 		for (int i = 0; i < num_tokens; i++)
 		{
 			//printf("token: %s\t type: %d\n", tokens[i].tok, tokens[i].type);

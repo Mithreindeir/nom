@@ -408,6 +408,11 @@ void free_nodes(node * root)
 		if (root->branches) free(root->branches);
 		root->type = EMPTY;
 	}
+	else if (root->type == LEAF)
+	{
+		free_nodes(root->next);
+		root->type = EMPTY;
+	}
 
 	if (root->type == EMPTY)
 	{
