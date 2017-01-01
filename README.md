@@ -7,9 +7,10 @@ Nom lang is a dynamically typed lightweight functional language focusing on simp
 Example factorial program written in Nom (Interpreter can't run this yet) which computes the factorial of 5 and prints it.
 
 
-    function factorial(n):
+    factorial = function(n):
       if n <= 1:
         return n
+      end
       else:
         return n * factorial(n-1)
       end
