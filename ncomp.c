@@ -17,12 +17,12 @@ void push_instr(instr_list * instrl, int instr, float op)
 	instrl->instructions[instrl->num_instructions - 1] = c;
 }
 
-instr_list * compile(node * bop, cinterp * cinterpreter)
+instr_list * compile(node * bop, frame * currentframe)
 {
 	instr_list * instrl = malloc(sizeof(instr_list));
 	instrl->num_instructions = 0;
 	instrl->instructions = NULL;
-	val_traverse(bop, instrl, cinterpreter);
+	val_traverse(bop, instrl, currentframe);
 	push_instr(instrl, PRINT, 0);
 	//traverse(bop);
 	//printf("=%f\n", solve_traverse(bop));
@@ -115,7 +115,7 @@ float solve_traverse(node * node)
 
 }
 
-void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
+void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 {
 	if (!node)
 		return;
@@ -145,11 +145,11 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 	}
 	else if (node->val.type == IDENTIFIER)
 	{
-		int idx = get_var_index(cinterpreter, node->val.tok);
+		int idx = get_var_index(currentframe, node->val.tok);
 		if (idx == -1)
 		{
-			create_var(cinterpreter, node->val.tok, NUM);
-			idx = cinterpreter->num_variables - 1;
+			create_var(currentframe, node->val.tok, NUM);
+			idx = currentframe->num_variables - 1;
 		}
 		
 		push_instr(instrl, LOAD_NAME, idx);
@@ -168,13 +168,13 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 		{
 
 			if (node->right)
-				val_traverse(node->right, instrl, cinterpreter);
+				val_traverse(node->right, instrl, currentframe);
 
-			int idx = get_var_index(cinterpreter, node->left->val.tok);
+			int idx = get_var_index(currentframe, node->left->val.tok);
 			if (idx == -1)
 			{
-				create_var(cinterpreter, node->left->val.tok, NONE);
-				idx = cinterpreter->num_variables - 1;
+				create_var(currentframe, node->left->val.tok, NONE);
+				idx = currentframe->num_variables - 1;
 			}
 			push_instr(instrl, STORE_NAME, idx);
 		}
@@ -184,11 +184,11 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 	{
 		start_cond = instrl->num_instructions;
 		if (node->left)
-			val_traverse(node->left, instrl, cinterpreter);
+			val_traverse(node->left, instrl, currentframe);
 		int idx = instrl->num_instructions;
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
-			val_traverse(node->right, instrl, cinterpreter);
+			val_traverse(node->right, instrl, currentframe);
 		push_instr(instrl, JUMP, start_cond);
 		instrl->instructions[idx].operand = (float)instrl->num_instructions;
 
@@ -198,11 +198,11 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 	{
 		start_cond = instrl->num_instructions;
 		if (node->left)
-			val_traverse(node->left, instrl, cinterpreter);
+			val_traverse(node->left, instrl, currentframe);
 		int idx = instrl->num_instructions;
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
-			val_traverse(node->right, instrl, cinterpreter);
+			val_traverse(node->right, instrl, currentframe);
 		instrl->instructions[idx].operand = (float)instrl->num_instructions;
 
 		return;
@@ -211,11 +211,11 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 	{
 		start_cond = instrl->num_instructions;
 		if (node->left)
-			val_traverse(node->left, instrl, cinterpreter);
+			val_traverse(node->left, instrl, currentframe);
 		int idx = instrl->num_instructions;
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
-			val_traverse(node->right, instrl, cinterpreter);
+			val_traverse(node->right, instrl, currentframe);
 		instrl->instructions[idx].operand = (float)instrl->num_instructions+1;
 
 		return;
@@ -226,11 +226,11 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 		int idx2 = instrl->num_instructions;
 		push_instr(instrl, JUMP, start_cond);
 		if (node->left)
-			val_traverse(node->left, instrl, cinterpreter);
+			val_traverse(node->left, instrl, currentframe);
 		int idx = instrl->num_instructions;
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
-			val_traverse(node->right, instrl, cinterpreter);
+			val_traverse(node->right, instrl, currentframe);
 		instrl->instructions[idx].operand = (float)instrl->num_instructions;
 		instrl->instructions[idx2].operand = (float)instrl->num_instructions;
 
@@ -242,14 +242,13 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 		int idx2 = instrl->num_instructions;
 		push_instr(instrl, JUMP, start_cond);
 		if (node->left)
-			val_traverse(node->left, instrl, cinterpreter);
+			val_traverse(node->left, instrl, currentframe);
 		int idx = instrl->num_instructions;
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
-			val_traverse(node->right, instrl, cinterpreter);
+			val_traverse(node->right, instrl, currentframe);
 		instrl->instructions[idx].operand = (float)instrl->num_instructions + 1;
 		instrl->instructions[idx2].operand = (float)instrl->num_instructions;
-
 		return;
 	}
 	else if (node->val.type == ELSE)
@@ -258,7 +257,7 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 		int idx = instrl->num_instructions;
 		push_instr(instrl, JUMP, start_cond);
 		if (node->next)
-			val_traverse(node->next, instrl, cinterpreter);
+			val_traverse(node->next, instrl, currentframe);
 		instrl->instructions[idx].operand = (float)instrl->num_instructions;
 
 		return;
@@ -266,16 +265,16 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 	else if (node->val.type == FOR)
 	{
 		if (node->branches[0])
-			val_traverse(node->branches[0], instrl, cinterpreter);
+			val_traverse(node->branches[0], instrl, currentframe);
 		start_cond = instrl->num_instructions;
 		if (node->branches[1])
-			val_traverse(node->branches[1], instrl, cinterpreter);
+			val_traverse(node->branches[1], instrl, currentframe);
 		int idx = instrl->num_instructions;
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->branches[3])
-			val_traverse(node->branches[3], instrl, cinterpreter);
+			val_traverse(node->branches[3], instrl, currentframe);
 		if (node->branches[2])
-			val_traverse(node->branches[2], instrl, cinterpreter);
+			val_traverse(node->branches[2], instrl, currentframe);
 		push_instr(instrl, JUMP, start_cond);
 		instrl->instructions[idx].operand = (float)instrl->num_instructions;
 
@@ -285,21 +284,21 @@ void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter)
 	if (node->type == BINARY)
 	{
 		if (node->left)
-			val_traverse(node->left, instrl, cinterpreter);
+			val_traverse(node->left, instrl, currentframe);
 		if (node->right)
-			val_traverse(node->right, instrl, cinterpreter);
+			val_traverse(node->right, instrl, currentframe);
 	}
 	else if (node->type == UNARY)
 	{
 		if (node->next)
-			val_traverse(node->next, instrl, cinterpreter);
+			val_traverse(node->next, instrl, currentframe);
 	}
 	else if (node->type == MULTI)
 	{
 		for (int i = 0; i < node->num_branches; i++)
 		{
 			if (node->branches[i])
-				val_traverse(node->branches[i], instrl, cinterpreter);
+				val_traverse(node->branches[i], instrl, currentframe);
 		}
 	}
 

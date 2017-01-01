@@ -1,5 +1,6 @@
 #include "ast.h"
 
+
 op_stack * op_stack_init()
 {
 	op_stack * nstack = malloc(sizeof(op_stack));
@@ -390,12 +391,12 @@ void free_nodes(node * root)
 	{
 		free_nodes(root->left);
 		free_nodes(root->right);
-		root->type == EMPTY;
+		root->type = EMPTY;
 	}
 	else if (root->type == UNARY)
 	{
 		free_nodes(root->next);
-		root->type == EMPTY;
+		root->type = EMPTY;
 	}
 	else if (root->type == MULTI)
 	{
@@ -405,7 +406,7 @@ void free_nodes(node * root)
 				free_nodes(root->branches[i]);
 		}
 		if (root->branches) free(root->branches);
-		root->type == EMPTY;
+		root->type = EMPTY;
 	}
 
 	if (root->type == EMPTY)

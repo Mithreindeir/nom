@@ -19,17 +19,6 @@ typedef enum nom_type
 	NONE
 } nom_type;
 
-typedef enum const_type
-{
-	STR_CONST,
-	NUM_CONST,
-	BOOL_CONST,
-	FUNC_CONST,
-	VAR_CONST,
-	NONE_CONST
-} const_type;
-
-
 typedef float nom_number;
 typedef int nom_boolean;
 typedef void* nom_func;
@@ -49,8 +38,6 @@ typedef struct nom_variable
 	int num_references;
 } nom_variable;
 
-
-
 typedef struct element element;
 
 struct element
@@ -69,43 +56,7 @@ typedef struct stack
 	int base_ptr, stack_ptr;
 } stack;
 
-//Instructions to execute for example
-static const cinstr instructions[] = 
-{
-	{PUSH, -1337},
-	{STORE_NAME, 0},
-	{PUSH, 5},
-	{LOAD_NAME, 0},
-	{PRINT, 0},
-};
-
-/*
-NOM:
-while 1:
-	print(1337)
-end
-
-WHILE COND:
-
-END
-
-GENERATED:
-1: "SETUP CONDITION"
-2: COMP COND
-3: IFEQ 5
-... code
-4: JUMP 1
-5: MORE CODE
-*/
-
 typedef struct frame
-{
-	stack data_stack;
-	nom_variable * variables;
-};
-
-//NomLang interpreter
-typedef struct cinterp
 {
 	stack data_stack;
 	cinstr * instructions;
@@ -113,16 +64,29 @@ typedef struct cinterp
 	int instr_ptr;
 	nom_variable * variables;
 	int num_variables;
-} cinterp;
+} frame;
 
+//NomLang interpreter
+typedef struct nom_interp
+{
+	frame * global_frame;
+} nom_interp;
+
+//Interpreter functions
+nom_interp * nom_interp_init();
+void nom_interp_destroy(nom_interp * nom);
+
+//Frame functions
+void exit_frame(frame * frame);
+void destroy_frame(frame * frame);
 
 //Variable functions
 void resize_string(nom_string * str, char * nstr, int size);
 void change_type(nom_variable * old, int ntype);
-int get_var_index(cinterp * cinterpreter, char * name);
-void create_var(cinterp * cinterpreter, char * name, int type);
+int get_var_index(frame * currentframe, char * name);
+void create_var(frame * currentframe, char * name, int type);
 
-void execute(cinterp* cinterp);
+void execute(frame * currentframe);
 void stack_init(stack * stk);
 
 //Elements

@@ -1,18 +1,12 @@
-r = 0
-if 1==1:
-	r = 1
-end
+# This is a comment
+# I like comments
+# Be sure to make comments that
+# Explain what you are doing
+# And have a clear purpose :D
 
-if r==0:
-	r = 5
+n = 7
+ans = 1
+for i=n, i>=2, i=i-1:
+  ans = ans * i
 end
-elseif r==2:
-	r = 10
-end
-elseif r==1:
-	r = 20
-end
-else:
-	r = 7
-end
-r
+ans

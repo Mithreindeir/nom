@@ -31,16 +31,19 @@ char * strtokm(char * s)
 		free(f);
 		return NULL;
 	}
-
+	//If it is in quotations, keep whitespace
+	int quotations = 0;
 	while (s[i] != '\0')
 	{
+		if (s[i] == '"')
+			quotations = !quotations;
 		col++;
 		if (s[i] == '\n')
 		{
 			col = 0;
 			row++;
 		}
-		if (s[i] == ' ' || s[i] == '\t')
+		if (!quotations && (s[i] == ' ' || s[i] == '\t'))
 		{
 			f[k] = 0;
 			tcidx = i;
@@ -65,21 +68,14 @@ token * tokenize(char * file, int * num_tok)
 	int num_tokens = 0;
 	token * tokens = NULL;
 	int current_idx = 0;
+	int comment = 0;
 	while (tok != NULL)
 	{
-		num_tokens++;
-		if (num_tokens == 1)
-		{
-			tokens = malloc(sizeof(token) * num_tokens);
-		}
-		else
-		{
-			tokens = realloc(tokens, sizeof(token) * num_tokens);
-		}
 
 		int tlen = strlen(tok);
 		int len = 0;
 		int type = token_type(tok, &len);
+
 		if (len == 0 || type == -1)
 		{
 			free((tok - current_idx));
@@ -89,39 +85,58 @@ token * tokenize(char * file, int * num_tok)
 		}
 
 		//printf("token: %s\t type: %d\n", str, type);
-
-		token ctoken;
-		ctoken.col = col;
-		ctoken.row = row;
-		if (type == STRING)
+		if (type == NEWLINE)
 		{
-			ctoken.tok = malloc(len - 1);
+			comment = 0;
 		}
-		else ctoken.tok = malloc(len+1);
-		ctoken.len = len;
-		ctoken.type = type;
-		last_tok_type = type;
-		if (type == STRING)
+		if (type == COMMENT)
 		{
-			int i = 0;
-			while (i < (len-2))
-			{
-				ctoken.tok[i] = tok[i+1];
-				i++;
-			}
-			ctoken.tok[i] = '\0';
+			comment = 1;
 		}
-		else {
-			int i = 0;
-			while (i < len)
-			{
-				ctoken.tok[i] = tok[i];
-				i++;
-			}
-			ctoken.tok[i] = '\0';
-		}
-		tokens[num_tokens-1] = ctoken;
 
+		if (!comment)
+		{
+			token ctoken;
+			ctoken.col = col;
+			ctoken.row = row;
+			if (type == STRING)
+			{
+				ctoken.tok = malloc(len - 1);
+			}
+			else ctoken.tok = malloc(len + 1);
+			ctoken.len = len;
+			ctoken.type = type;
+			last_tok_type = type;
+			if (type == STRING)
+			{
+				int i = 0;
+				while (i < (len - 2))
+				{
+					ctoken.tok[i] = tok[i + 1];
+					i++;
+				}
+				ctoken.tok[i] = '\0';
+			}
+			else {
+				int i = 0;
+				while (i < len)
+				{
+					ctoken.tok[i] = tok[i];
+					i++;
+				}
+				ctoken.tok[i] = '\0';
+			}
+			num_tokens++;
+			if (num_tokens == 1)
+			{
+				tokens = malloc(sizeof(token) * num_tokens);
+			}
+			else
+			{
+				tokens = realloc(tokens, sizeof(token) * num_tokens);
+			}
+			tokens[num_tokens - 1] = ctoken;
+		}
 		if (tlen <= len) {
 			free((tok - current_idx));
 			tok = strtokm(file);
@@ -176,6 +191,11 @@ int token_type(char * tok, int * len)
 	{
 		*len = 8;
 		return FUNCTION;
+	}
+	else if (*tok == '#')
+	{
+		*len = 1;
+		return COMMENT;
 	}
 	else if (!strncmp(tok, "or", max(2, tlen)))
 	{
@@ -393,9 +413,9 @@ int is_conditional(token tok)
 int token_precedence(token tok)
 {
 	if (tok.type == EQUAL)
-		return -1;
+		return -2;
 	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
-		return 0;
+		return -1;
 	if (tok.type == LESS || tok.type == GREATER || tok.type == LESS_OR_EQ || tok.type == GREATER_OR_EQ || tok.type == IS_EQUAL || tok.type == NOT_EQUAL)
 		return 0;
 	if (tok.type == PLUS || tok.type == MINUS)

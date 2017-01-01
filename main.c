@@ -7,14 +7,15 @@
 #include "ast.h"
 #include "ncomp.h"
 
-cinterp cinterpreter;
+nom_interp * nom;
 
 int main()
 {
+	getch();
 	char * buffer = 0;
 	long length;
 	FILE * f = fopen("test.nom", "r");
-
+	nom = nom_interp_init();
 	if (f)
 	{
 		fseek(f, 0, SEEK_END);
@@ -31,16 +32,15 @@ int main()
 	}
 	if (buffer)
 	{
-		cinterpreter.variables = NULL;
-		cinterpreter.num_variables = 0;
 
 		int num_tokens = 0;
 		token * tokens = tokenize(buffer, &num_tokens);
 		binop * bop = parse_string(tokens, num_tokens);
-		instr_list * l = compile(bop, &cinterpreter);
-		cinterpreter.instructions = l->instructions;
-		cinterpreter.num_instructions = l->num_instructions;
-
+		instr_list * l = compile(bop, nom->global_frame);
+		nom->global_frame->instructions = l->instructions;
+		nom->global_frame->num_instructions = l->num_instructions;
+		free(l);
+		getch();
 		for (int i = 0; i < num_tokens; i++)
 		{
 			//printf("token: %s\t type: %d\n", tokens[i].tok, tokens[i].type);
@@ -48,14 +48,12 @@ int main()
 		}
 		free(tokens);
 		//return;
-		stack_init(&cinterpreter.data_stack);
-		execute(&cinterpreter);
-		for (int i = 0; i < cinterpreter.num_variables; i++)
-		{
-			free(cinterpreter.variables[i].value);
-		}
-		if (cinterpreter.variables) free(cinterpreter.variables);
-		getch();
+		stack_init(&nom->global_frame->data_stack);
+		execute(nom->global_frame);
 	}
+	free(buffer);
+	nom_interp_destroy(nom);
+	getch();
+
 	return;
 }

@@ -13,12 +13,12 @@ typedef struct instr_list
 
 void push_instr(instr_list * instrl, int instr, float op);
 
-instr_list * compile(node * bop, cinterp * cinterpreter);
+instr_list * compile(node * bop, frame * currentframe);
 void traverse(node * node);
 void tree_traverse(node * node);
 
 float solve_traverse(node * node);
 
-void val_traverse(node * node, instr_list * instrl, cinterp * cinterpreter);
+void val_traverse(node * node, instr_list * instrl, frame * currentframe);
 
 #endif
