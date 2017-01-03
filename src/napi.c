@@ -26,10 +26,7 @@ void nom_run_file(char * file)
 		int num_tokens = 0;
 		token * tokens = tokenize(buffer, &num_tokens);
 		node * bop = parse_string(tokens, num_tokens);
-		instr_list * l = compile(bop, nom->global_frame);
-		nom->global_frame->instructions = l->instructions;
-		nom->global_frame->num_instructions = l->num_instructions;
-		free(l);
+		compile(bop, nom->global_frame);
 		//getch();
 		for (int i = 0; i < num_tokens; i++)
 		{
@@ -82,10 +79,8 @@ void nom_repl()
 		{
 
 			node * bop = parse_string(tokens, num_tokens);
-			instr_list * l = compile(bop, nom->global_frame);
-			nom->global_frame->instructions = l->instructions;
-			nom->global_frame->num_instructions = l->num_instructions;
-			free(l);
+			compile(bop, nom->global_frame);
+
 			//getch();
 			for (int i = 0; i < num_tokens; i++)
 			{

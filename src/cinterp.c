@@ -3,13 +3,7 @@
 nom_interp * nom_interp_init()
 {
 	nom_interp * nom = malloc(sizeof(nom_interp));
-	nom->global_frame = malloc(sizeof(frame));
-	stack_init(&nom->global_frame->data_stack);
-	nom->global_frame->instructions = NULL;
-	nom->global_frame->instr_ptr = 0;
-	nom->global_frame->num_instructions = 0;
-	nom->global_frame->variables = NULL;
-	nom->global_frame->num_variables = 0;
+	nom->global_frame = frame_init();
 	return nom;
 }
 
@@ -20,21 +14,63 @@ void nom_interp_destroy(nom_interp * nom)
 	free(nom);
 }
 
+frame *  frame_init()
+{
+	frame * cframe = malloc(sizeof(frame));
+	cframe->data_stack = stack_init();
+	cframe->instructions = NULL;
+	cframe->instr_ptr = 0;
+	cframe->num_instructions = 0;
+	cframe->variables = NULL;
+	cframe->num_variables = 0;
+	cframe->constants = NULL;
+	cframe->num_constants = 0;
+
+	return cframe;
+}
+
 void exit_frame(frame * frame)
 {
-	free(frame->data_stack.elements);
+	free(frame->data_stack->buff);
+	free(frame->data_stack->elements);
+	free(frame->data_stack);
+
 	for (int i = 0; i < frame->num_variables; i++)
 	{
 		free(frame->variables[i].value);
 	}
 	if (frame->variables) free(frame->variables);
+	for (int i = 0; i < frame->num_constants; i++)
+	{
+		free(frame->constants[i]);
+	}
+	if (frame->constants) free(frame->constants);
 	free(frame->instructions);
 
 }
 
 void destroy_frame(frame * frame)
 {
+}
+
+int add_const(frame * frame, void * val)
+{
+
+	frame->num_constants++;
+	if (frame->num_constants == 1)
+	{
+		frame->constants = malloc(sizeof(void*) * frame->num_constants);
+
+	}
+	else
+	{
+		frame->constants = realloc(frame->constants, sizeof(void*) * frame->num_constants);
+	}
 	
+	int idx = frame->num_constants - 1;
+	frame->constants[idx] = val;
+
+	return idx;
 }
 
 void resize_string(nom_string * str, char * nstr, int size)
@@ -114,68 +150,80 @@ void execute(frame * currentframe)
 		cinstr c = currentframe->instructions[currentframe->instr_ptr];
 		currentframe->instr_ptr++;
 		if (c.action < 9)
-			operation[c.action](&currentframe->data_stack);
+			operation[c.action](currentframe->data_stack);
 		else if (c.action < 15) {
-			condition[c.action-9](&currentframe->data_stack);
+			condition[c.action-9](currentframe->data_stack);
 		}
 		else if (c.action < 17)
 		{
 			if (c.action == IFEQ)
 			{
 				nom_number n;
-				pop_store(&currentframe->data_stack, sizeof(nom_number), &n);
+				pop_store(currentframe->data_stack, sizeof(nom_number), &n);
 
 				if (n == 0)
-					currentframe->instr_ptr = c.operand;
+					currentframe->instr_ptr = c.idx;
 			}
 			else if (c.action == JUMP)
 			{
-				currentframe->instr_ptr = c.operand;
+				currentframe->instr_ptr = c.idx;
 			}
 		}
 		else if (c.action == PUSH)
 		{
-			push_number(&currentframe->data_stack, (nom_number)c.operand);
+			nom_number * num = currentframe->constants[c.idx];
+			push_number(currentframe->data_stack, *num);
 		}
 		else if (c.action == POP)
 		{
-			pop(&currentframe->data_stack, sizeof(nom_number));
+			pop(currentframe->data_stack, sizeof(nom_number));
 		}
 		else if (c.action == PUSH_STR)
 		{
-			push_raw_string(&currentframe->data_stack, (char*)((int)c.operand));
+			char * str = currentframe->constants[c.idx];
+
+			push_raw_string(currentframe->data_stack, str);
 		}
 		else if (c.action == POP_STR)
 		{
-			pop(&currentframe->data_stack, sizeof(nom_string));
+			pop(currentframe->data_stack, sizeof(nom_string));
+		}
+		else if (c.action == PUSH_FUNC)
+		{
+			nom_func * func = currentframe->constants[c.idx];
+			push_func(currentframe->data_stack, *func);
+		}
+		else if (c.action == POP_FUNC)
+		{
+			pop(currentframe->data_stack, sizeof(nom_func));
 		}
 		else if (c.action == LOAD)
 		{
 			nom_number n;
-			store(&currentframe->data_stack, &n, sizeof(nom_number), 0);
-			load(&currentframe->data_stack, &n, sizeof(nom_number), c.operand);
+			store(currentframe->data_stack, &n, sizeof(nom_number), 0);
+			load(currentframe->data_stack, &n, sizeof(nom_number), c.idx);
 		}
 		else if (c.action == DUP)
 		{
-			dup(&currentframe->data_stack);
+			dup(currentframe->data_stack);
 		}
 		else if (c.action == SWAP)
 		{
-			swap(&currentframe->data_stack);
+			swap(currentframe->data_stack);
 		}
 		else if (c.action == PRINT)
 		{
-			if (currentframe->data_stack.stack_ptr > 0)
+			if (currentframe->data_stack->stack_ptr > 0)
 			{
-				element e = currentframe->data_stack.elements[currentframe->data_stack.num_elements - 1];
+				element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
 				if (e.type == NUM) {
 					nom_number n;
-					store(&currentframe->data_stack, &n, sizeof(nom_number), 0);
+					store(currentframe->data_stack, &n, sizeof(nom_number), 0);
 					printf("%f", n);
 				}
 				else if (e.type == BOOL) {
 					nom_boolean n;
-					store(&currentframe->data_stack, &n, sizeof(nom_boolean), 0);
+					store(currentframe->data_stack, &n, sizeof(nom_boolean), 0);
 					if (n)
 						printf("True");
 					else
@@ -184,57 +232,68 @@ void execute(frame * currentframe)
 				else if (e.type == STR)
 				{
 					nom_string str;
-					store(&currentframe->data_stack, &str, sizeof(nom_string), 0);
+					store(currentframe->data_stack, &str, sizeof(nom_string), 0);
 					printf("%s", str.str);
 				}
 			}
 		}
 		else if (c.action == LOAD_NAME)
 		{
-			nom_variable * var = &currentframe->variables[(int)c.operand];
+			nom_variable * var = &currentframe->variables[(int)c.idx];
 			if (var->type == NUM) {
-				push_number(&currentframe->data_stack, *((nom_number*)var->value));
+				push_number(currentframe->data_stack, *((nom_number*)var->value));
 			}
 			else if (var->type == BOOL) {
-				push_bool(&currentframe->data_stack, *((nom_boolean*)var->value));
+				push_bool(currentframe->data_stack, *((nom_boolean*)var->value));
 			}
 			else if (var->type == STR)
 			{
-				push_string(&currentframe->data_stack, *((nom_string*)var->value));
-
+				push_string(currentframe->data_stack, *((nom_string*)var->value));
+			}
+			else if (var->type == FUNC)
+			{
+				nom_func f = *((nom_func*)var->value);
+				execute(f.frame);
+				push_func(currentframe->data_stack, *((nom_func*)var->value));
 			}
 		}
 		else if (c.action == STORE_NAME)
 		{
-			nom_variable * var = &currentframe->variables[(int)c.operand];
-			element e = currentframe->data_stack.elements[currentframe->data_stack.num_elements - 1];
-			change_type(&currentframe->variables[(int)c.operand], e.type);
+			nom_variable * var = &currentframe->variables[(int)c.idx];
+			element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
+			change_type(&currentframe->variables[(int)c.idx], e.type);
 
 			if (var->type == NUM) {
-				*((nom_number*)var->value) = pop_number(&currentframe->data_stack);
+				*((nom_number*)var->value) = pop_number(currentframe->data_stack);
 			}
 			else if (var->type == BOOL) {
-				*((nom_boolean*)var->value) = pop_bool(&currentframe->data_stack);
+				*((nom_boolean*)var->value) = pop_bool(currentframe->data_stack);
 			}
 			else if (var->type == STR)
 			{
-				*((nom_string*)var->value) = pop_string(&currentframe->data_stack);
-
+				*((nom_string*)var->value) = pop_string(currentframe->data_stack);
+			}
+			else if (var->type == FUNC)
+			{
+				*((nom_func*)var->value) = pop_func(currentframe->data_stack);
 			}
 		}
 	}
 
 }
 
-void stack_init(stack * stk)
+stack * stack_init()
 {
+	stack * stk = malloc(sizeof(stack));
 	stk->base_ptr = 0;
 	stk->stack_ptr = 0;
+	stk->buff = malloc(STACK_SIZE);
 	for (int i = 0; i < STACK_SIZE; i++)
 	{
 		stk->buff[i] = 0;
 	}
 	stk->num_elements = 0;
+	return stk;
 }
 
 void push_element(stack * stk, char * data, int size, int type)
@@ -397,6 +456,20 @@ nom_string pop_string(stack * stk)
 	pop_store(stk, sizeof(nom_string), &str);
 	pop_element(stk);
 	return str;
+}
+
+void push_func(stack * stack, nom_func func)
+{
+	push(stack, &func, sizeof(nom_func));
+	push_element(stack, stack->buff[stack->stack_ptr - sizeof(nom_func)], sizeof(nom_func), FUNC);
+}
+
+nom_func pop_func(stack * stk)
+{
+	nom_func func;
+	pop_store(stk, sizeof(nom_func), &func);
+	pop_element(stk);
+	return func;
 }
 
 void add(stack * stk)

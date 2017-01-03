@@ -7,7 +7,8 @@
 int main()
 {
 
-	nom_run_file("tests/factorial.nom");
+	//nom_run_file("tests/factorial.nom");
+	nom_run_file("tests/test.nom");
 	getch();
 
 	return;

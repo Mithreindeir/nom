@@ -1,8 +1,6 @@
 # Test file for whatever I am currently working on
 
-
-func = function():
-  return 5
+test = function ():
+  5 + 4
 end
-
-x = 5
+test

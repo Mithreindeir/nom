@@ -13,7 +13,7 @@ typedef struct instr_list
 
 void push_instr(instr_list * instrl, int instr, float op);
 
-instr_list * compile(node * bop, frame * currentframe);
+void compile(node * bop, frame * currentframe);
 void traverse(node * node);
 void tree_traverse(node * node);
 

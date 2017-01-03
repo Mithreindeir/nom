@@ -77,7 +77,7 @@ int is_conditional(token tok);
 int token_precedence(token tok);
 //Is left associative or is it right associative
 int token_associative(token tok);
-//Returns number of operands (eg: binary, unary, etc)
-int token_operands(token tok);
+//Returns number of idxs (eg: binary, unary, etc)
+int token_idxs(token tok);
 
 #endif

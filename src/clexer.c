@@ -59,7 +59,7 @@ char * strtokm(char * s)
 	f[k] = 0;
 	return f;
 }
-//The type of the last token for context related operands (eg: unary_neg vs binary_sub)
+//The type of the last token for context related idxs (eg: unary_neg vs binary_sub)
 int last_tok_type = -1;
 token * tokenize(char * file, int * num_tok)
 {
@@ -192,7 +192,7 @@ int token_type(char * tok, int * len)
 		*len = 5;
 		return WHILE;
 	}
-	else if (!strncmp(tok, "function", max(8, tlen)))
+	else if (!strncmp(tok, "function", max(8, tlen)) || !strncmp(tok, "function(", 9))
 	{
 		*len = 8;
 		return FUNCTION;
@@ -459,7 +459,7 @@ int token_associative(token tok)
 	return 1;
 }
 
-int token_operands(token tok)
+int token_idxs(token tok)
 {
 	if (tok.type == PLUS || tok.type == MINUS)
 		return 2;

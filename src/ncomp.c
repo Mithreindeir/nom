@@ -13,11 +13,11 @@ void push_instr(instr_list * instrl, int instr, float op)
 	}
 	cinstr c;
 	c.action = instr;
-	c.operand = op;
+	c.idx = op;
 	instrl->instructions[instrl->num_instructions - 1] = c;
 }
 
-instr_list * compile(node * bop, frame * currentframe)
+void  compile(node * bop, frame * currentframe)
 {
 	instr_list * instrl = malloc(sizeof(instr_list));
 	instrl->num_instructions = 0;
@@ -25,7 +25,10 @@ instr_list * compile(node * bop, frame * currentframe)
 	val_traverse(bop, instrl, currentframe);
 	push_instr(instrl, PRINT, 0);
 	free_nodes(bop);
-	return instrl;
+
+	currentframe->instructions = instrl->instructions;
+	currentframe->num_instructions = instrl->num_instructions;
+	free(instrl);
 }
 
 
@@ -114,16 +117,34 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 {
 	if (!node)
 		return;
-
 	int start_cond = 0;
-	if (node->val.type == INT)
+
+	if (node->val.type == FUNCTION)
 	{
-		push_instr(instrl, PUSH, (float)atoi(node->val.tok));
+		frame * nf = frame_init();
+		compile(node->branches[0], nf);
+		nom_func * func = malloc(sizeof(nom_func));
+		func->arg_count = node->num_branches - 1;
+		func->frame = nf;
+		func->parent = currentframe;
+
+		push_instr(instrl, PUSH_FUNC, add_const(currentframe, func));
+		
+		return;
+	}
+	else if (node->val.type == INT)
+	{
+
+		nom_number * val = malloc(sizeof(nom_number));
+		*val = (float)atoi(node->val.tok);
+		push_instr(instrl, PUSH, add_const(currentframe, val));
 		return;
 	}
 	else if (node->val.type == FLOAT)
 	{
-		push_instr(instrl, PUSH, atof(node->val.tok));
+		nom_number * val = malloc(sizeof(nom_number));
+		*val = atof(node->val.tok);
+		push_instr(instrl, PUSH, add_const(currentframe, val));
 		return;
 	}
 	else if (node->val.type == STRING)
@@ -136,7 +157,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 			str[i] = node->val.tok[i];
 		}
 		str[size] = '\0';
-		push_instr(instrl, PUSH_STR, (float)(int)str);
+		push_instr(instrl, PUSH_STR, add_const(currentframe, str));
 	}
 	else if (node->val.type == IDENTIFIER)
 	{
@@ -194,7 +215,9 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 				idx = currentframe->num_variables - 1;
 			}
 			push_instr(instrl, LOAD_NAME, idx);
-			push_instr(instrl, PUSH, 1);
+			nom_number * val = malloc(sizeof(nom_number));
+			*val = 1;
+			push_instr(instrl, PUSH, add_const(currentframe, val));
 			push_instr(instrl, ADD, 0);
 			push_instr(instrl, STORE_NAME, idx);
 		}
@@ -220,7 +243,9 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 				idx = currentframe->num_variables - 1;
 			}
 			push_instr(instrl, LOAD_NAME, idx);
-			push_instr(instrl, PUSH, -1);
+			nom_number * val = malloc(sizeof(nom_number));
+			*val = -1;
+			push_instr(instrl, PUSH, add_const(currentframe, val));
 			push_instr(instrl, ADD, 0);
 			push_instr(instrl, STORE_NAME, idx);
 		}
@@ -236,7 +261,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		if (node->right)
 			val_traverse(node->right, instrl, currentframe);
 		push_instr(instrl, JUMP, start_cond);
-		instrl->instructions[idx].operand = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = (float)instrl->num_instructions;
 
 		return;
 	}
@@ -249,7 +274,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
 			val_traverse(node->right, instrl, currentframe);
-		instrl->instructions[idx].operand = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = (float)instrl->num_instructions;
 
 		return;
 	}
@@ -262,7 +287,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
 			val_traverse(node->right, instrl, currentframe);
-		instrl->instructions[idx].operand = (float)instrl->num_instructions+1;
+		instrl->instructions[idx].idx = (float)instrl->num_instructions+1;
 
 		return;
 	}
@@ -277,8 +302,8 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
 			val_traverse(node->right, instrl, currentframe);
-		instrl->instructions[idx].operand = (float)instrl->num_instructions;
-		instrl->instructions[idx2].operand = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = (float)instrl->num_instructions;
+		instrl->instructions[idx2].idx = (float)instrl->num_instructions;
 
 		return;
 	}
@@ -293,8 +318,8 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
 			val_traverse(node->right, instrl, currentframe);
-		instrl->instructions[idx].operand = (float)instrl->num_instructions + 1;
-		instrl->instructions[idx2].operand = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = (float)instrl->num_instructions + 1;
+		instrl->instructions[idx2].idx = (float)instrl->num_instructions;
 		return;
 	}
 	else if (node->val.type == ELSE)
@@ -304,7 +329,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, JUMP, start_cond);
 		if (node->next)
 			val_traverse(node->next, instrl, currentframe);
-		instrl->instructions[idx].operand = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = (float)instrl->num_instructions;
 
 		return;
 	}
@@ -322,7 +347,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		if (node->branches[2])
 			val_traverse(node->branches[2], instrl, currentframe);
 		push_instr(instrl, JUMP, start_cond);
-		instrl->instructions[idx].operand = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = (float)instrl->num_instructions;
 
 		return;
 	}

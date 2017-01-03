@@ -28,6 +28,8 @@ enum OPCODES
 	POP,	//Pops top of stack
 	PUSH_STR,	//Pushes string to stack
 	POP_STR,	//Pops string of top of stack
+	PUSH_FUNC,	//Pushes func to stack
+	POP_FUNC,	//Pops func of top of stack
 	LOAD,	//Loads top of stack to other element
 	DUP,	//Duplicates top of stack
 	SWAP,	//Swaps topmost 2 elements
@@ -36,13 +38,16 @@ enum OPCODES
 	//Variable handling
 	LOAD_NAME,	//Loads variable to top of stack
 	STORE_NAME,	//Stores top of stack in variable
+	//Functions
+	CALL,	//Enters a new frame. Top of stack is num_args, and args are below it
+	RET	//Returns from a function, and pushes return value (if there is one) to parent stack
 };
 
 //CrapLang Instruction 1 per line
 typedef struct cinstr
 {
 	int action;
-	float operand;
+	int idx;
 } cinstr;
 
 #endif

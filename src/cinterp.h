@@ -39,7 +39,7 @@ struct element
 
 typedef struct stack
 {
-	char buff[STACK_SIZE];
+	char * buff;
 	element * elements;
 	int num_elements;
 	int base_ptr, stack_ptr;
@@ -49,12 +49,14 @@ typedef struct frame frame;
 
 struct frame
 {
-	stack data_stack;
+	stack * data_stack;
 	cinstr * instructions;
 	int num_instructions;
 	int instr_ptr;
 	nom_variable * variables;
 	int num_variables;
+	void ** constants;
+	int num_constants;
 };
 
 typedef float nom_number;
@@ -64,6 +66,7 @@ typedef struct nom_func
 	frame * frame;
 	frame * global;
 	frame * parent;
+	int arg_count;
 } nom_func;
 typedef struct nom_string
 {
@@ -85,8 +88,13 @@ void nom_interp_destroy(nom_interp * nom);
 
 
 //Frame functions
+frame * frame_init();
 void exit_frame(frame * frame);
 void destroy_frame(frame * frame);
+
+//Constant functions
+
+int add_const(frame * frame, void * val);
 
 //Variable functions
 void resize_string(nom_string * str, char * nstr, int size);
@@ -95,7 +103,7 @@ int get_var_index(frame * currentframe, char * name);
 void create_var(frame * currentframe, char * name, int type);
 
 void execute(frame * currentframe);
-void stack_init(stack * stk);
+stack * stack_init();
 
 //Elements
 void push_element(stack * stk, char * data, int size, int type);
@@ -117,6 +125,8 @@ nom_boolean pop_bool(stack * stk);
 void push_string(stack * stk, nom_string str);
 void push_raw_string(stack * stack, char * str);
 nom_string pop_string(stack * stk);
+void push_func(stack * stack, nom_func func);
+nom_func pop_func(stack * stk);
 //operations
 void add(stack * stk);
 void subtract(stack * stk);
