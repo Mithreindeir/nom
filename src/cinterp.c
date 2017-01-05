@@ -31,6 +31,14 @@ frame *  frame_init()
 	return cframe;
 }
 
+//Copy constants and variables from a frame 
+frame * frame_cpy(frame * original)
+{
+	frame * cframe = frame_init();
+	/* TODO */
+	return cframe;
+}
+
 void exit_frame(frame * frame)
 {
 	free(frame->data_stack->buff);
@@ -284,6 +292,8 @@ void execute(frame * currentframe)
 		{
 			nom_variable * var = &currentframe->variables[(int)c.idx];
 			nom_func f = *((nom_func*)var->value);
+
+			
 
 			for (int i = 0; i < f.frame->num_variables; i++)
 			{

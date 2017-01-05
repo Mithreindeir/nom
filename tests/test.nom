@@ -1,10 +1,18 @@
 
+# TODO
+# For this two work, I need to check parent frame for
+# Variable definitions (fact is undefined when its called inside fact)
+# And make frames save themselves when they are stepped into
+# and then restore themselves when they are exited
+# This will allow recursion
+
+# Currently this throws "undefined function" error
 fact = function(n):
-  if n<=4:
+  if n<=1:
     return 1
   end
   else:
-    return fact(n-1)
+    return n * fact(n-1)
   end
 end
 

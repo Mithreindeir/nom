@@ -89,11 +89,11 @@ void nom_interp_destroy(nom_interp * nom);
 
 //Frame functions
 frame * frame_init();
+frame * frame_cpy(frame * original);
 void exit_frame(frame * frame);
 void destroy_frame(frame * frame);
 
 //Constant functions
-
 int add_const(frame * frame, void * val);
 
 //Variable functions

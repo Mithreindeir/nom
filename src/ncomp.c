@@ -162,6 +162,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		int idx = get_var_index(currentframe, node->branches[0]->val.tok);
 		if (idx == -1)
 		{
+			syntax_error(node->branches[0]->val.tok, node->branches[0]->val.col, node->branches[0]->val.row, "Undefined function");
 			create_var(currentframe, node->branches[0]->val.tok, NUM);
 			idx = currentframe->num_variables - 1;
 		}
