@@ -49,6 +49,7 @@ typedef struct frame frame;
 
 struct frame
 {
+	frame * parent;
 	stack * data_stack;
 	cinstr * instructions;
 	int num_instructions;
@@ -65,7 +66,6 @@ typedef struct nom_func
 {
 	frame * frame;
 	frame * global;
-	frame * parent;
 	int arg_count;
 } nom_func;
 typedef struct nom_string

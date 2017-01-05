@@ -424,6 +424,8 @@ int is_operator(token tok)
 		return 1;
 	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
 		return 1;
+	if (tok.type == RETURN)
+		return 1;
 	return 0;
 }
 
@@ -437,6 +439,8 @@ int is_conditional(token tok)
 int token_precedence(token tok)
 {
 	if (tok.type == EQUAL)
+		return -2;
+	if (tok.type == RETURN)
 		return -2;
 	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
 		return -1;
@@ -456,6 +460,8 @@ int token_associative(token tok)
 {
 	if (tok.type == UNARY_NEG)
 		return 0;
+	if (tok.type == RETURN)
+		return 0;
 	return 1;
 }
 
@@ -467,6 +473,8 @@ int token_idxs(token tok)
 		return 2;
 	if (tok.type == EQUAL)
 		return 2;
+	if (tok.type == RETURN)
+		return 1;
 	if (tok.type == LESS || tok.type == GREATER || tok.type == LESS_OR_EQ || tok.type == GREATER_OR_EQ || tok.type == IS_EQUAL || tok.type == NOT_EQUAL)
 		return 2;
 	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC)

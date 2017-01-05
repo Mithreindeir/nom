@@ -53,7 +53,8 @@ enum TOKEN_TYPES
 	LNOR,
 	IDENTIFIER,
 	NEWLINE,
-	COMMENT
+	COMMENT,
+	FUNC_CALL
 };
 
 typedef struct token

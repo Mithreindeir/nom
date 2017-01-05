@@ -122,19 +122,55 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	if (node->val.type == FUNCTION)
 	{
 		frame * nf = frame_init();
-		compile(node->branches[0], nf);
+
 		nom_func * func = malloc(sizeof(nom_func));
 		func->arg_count = node->num_branches - 1;
 		func->frame = nf;
-		func->parent = currentframe;
+		nf->parent = currentframe;
+		for (int i = 1; i < node->num_branches; i++)
+		{
+			if (node->branches[i])
+			{
+				if (node->branches[i]->val.type == IDENTIFIER)
+				{
+					int idx = get_var_index(nf, node->branches[i]->val.tok);
+					if (idx == -1)
+					{
+						create_var(nf, node->branches[i]->val.tok, NUM);
+						idx = nf->num_variables - 1;
+					}
+
+				}
+				else
+					syntax_error(node->val.tok, node->val.col, node->val.row, "Function has invalid parameters");
+			}
+		}
+
+		compile(node->branches[0], nf);
+		node->branches[0] = NULL;
 
 		push_instr(instrl, PUSH_FUNC, add_const(currentframe, func));
-		
+		return;
+	}
+	else if (node->val.type == FUNC_CALL)
+	{
+		for (int i = 1; i < node->num_branches; i++)
+		{
+			if (node->branches[i])
+				val_traverse(node->branches[i], instrl, currentframe);
+		}
+		int idx = get_var_index(currentframe, node->branches[0]->val.tok);
+		if (idx == -1)
+		{
+			create_var(currentframe, node->branches[0]->val.tok, NUM);
+			idx = currentframe->num_variables - 1;
+		}
+
+		push_instr(instrl, CALL, idx);
 		return;
 	}
 	else if (node->val.type == INT)
 	{
-
 		nom_number * val = malloc(sizeof(nom_number));
 		*val = (float)atoi(node->val.tok);
 		push_instr(instrl, PUSH, add_const(currentframe, val));
@@ -152,9 +188,33 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		int size = strlen(node->val.tok);
 		char * str = malloc(size+1);
 		memset(str, 0, size + 1);
+		int j = 0;
 		for (int i = 0; i < size; i++)
 		{
-			str[i] = node->val.tok[i];
+
+			char c = node->val.tok[j];
+			if (c == '\\')
+			{
+				j++;
+				switch (node->val.tok[j])
+				{
+				case 'n':
+					c = '\n';
+					break;
+				case 'r':
+					c = '\r';
+					break;
+				case 't':
+					c = '\t';
+					break;
+				default:
+					j--;
+					break;
+				}
+								
+			}
+			str[i] = c;
+			j++;
 		}
 		str[size] = '\0';
 		push_instr(instrl, PUSH_STR, add_const(currentframe, str));
@@ -167,7 +227,6 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 			create_var(currentframe, node->val.tok, NUM);
 			idx = currentframe->num_variables - 1;
 		}
-		
 		push_instr(instrl, LOAD_NAME, idx);
 		return;
 	}
@@ -446,6 +505,11 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	else if (node->val.type == LNOR)
 	{
 		push_instr(instrl, NOR, 0);
+		return;
+	}
+	else if (node->val.type == RETURN)
+	{
+		push_instr(instrl, RET, 0);
 		return;
 	}
 }

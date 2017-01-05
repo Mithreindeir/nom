@@ -1,9 +1,11 @@
 # For loop test
 # This calculates the factorial of n without recursion
 
-n = 7
-ans = 1
-for i=n, i>=2, i--:
-  ans = ans * i
+factorial = function(n):
+  n = 7
+  ans = 1
+  for i=n, i>=2, i--:
+    ans = ans * i
+  end
+  return ans
 end
-ans

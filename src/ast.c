@@ -132,7 +132,7 @@ node * block_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 			nested--;
 		if (tokens[end_tok].type == COLON)
 			nested++;
-		if (nested <= 0)
+		if (nested <= 0 && tokens[end_tok+1].type != COLON)
 			break;
 	}
 
@@ -174,17 +174,28 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 	*/
 	int colon_with_cond = -1;
 	int colon_without_cond = 0;
+
+	//Parentheses can mean a order of op thing, or for functions. This flag is on if it is for functions
+	int func = 0;
 	for (int i = start; i < num_tokens; i++)
 	{
 		token tok = tokens[i];
 		*tokens_used = i+1;
 		if (tok.type == LPAREN)
 		{
+			if (i > start)
+			{
+				token t2 = tokens[i - 1];
+				if (t2.type == IDENTIFIER) {
+					func = 1;
+					tok.type = FUNC_CALL;
+				}
+			}
 			op_stack_push(operatorstack, node_init_op(tok));
 		}
 		else if (tok.type == COMMA)
 		{
-			if (operatorstack->size > 0 && !is_conditional(op_stack_gettop(operatorstack)->val) && op_stack_gettop(operatorstack)->val.type != LPAREN)
+			if (operatorstack->size > 0 && !is_conditional(op_stack_gettop(operatorstack)->val) && op_stack_gettop(operatorstack)->val.type != LPAREN &&  op_stack_gettop(operatorstack)->val.type != FUNC_CALL)
 			{
 				node * top = op_stack_pop(operatorstack);
 
@@ -205,7 +216,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		}
 		else if (is_conditional(tok) || tok.type == FUNCTION)
 		{
-
 			colon_with_cond = 1;
 			colon_without_cond = -1;
 			op_stack_push(operatorstack, node_init_op(tok));
@@ -240,7 +250,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		}
 		else if (tok.type == COLON)
 		{
-			int num_args = 0;
 			colon_with_cond = 0;
 			colon_without_cond = colon_without_cond == 0 ? 1 : -1;
 			while (operatorstack->size > 0 && !is_conditional(op_stack_gettop(operatorstack)->val) && op_stack_gettop(operatorstack)->val.type != FUNCTION)
@@ -259,7 +268,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 					node * etop = op_stack_pop(expressionstack);
 					op_stack_push(expressionstack, node_init_unary(top->val, etop));
 				}
-				num_args++;
 				free(top);
 			}
 			if (operatorstack->size > 0 && is_conditional(op_stack_gettop(operatorstack)->val)) {
@@ -310,49 +318,118 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 			}
 			else if (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type == FUNCTION)
 			{
+				int num_args = 0;
+				int total_toks = 0;
+				for (int j = i; j >= start; j--)
+				{
+					token t = tokens[j];
+					if (t.type == FUNCTION)
+						break;
+					if (t.type == COMMA)
+						num_args++;
+					total_toks++;
+				}
+				if (total_toks > 2)
+					num_args++;
 				int f = i;
 				node * cb = block_ast(tokens, i + 1, num_tokens, &f);
 				i = f - 1;
 				*tokens_used = f;
-				op_stack_gettop(operatorstack)->num_branches = num_args+1;
+
+				op_stack_gettop(operatorstack)->num_branches = num_args + 1;
 				op_stack_gettop(operatorstack)->branches = malloc(sizeof(node*) * (num_args+1));
 				op_stack_gettop(operatorstack)->type = MULTI;
 
 				op_stack_gettop(operatorstack)->branches[0] = cb;
-				for (int i = 1; i < num_args + 1; i++)
+				for (int i = 0; i < num_args && expressionstack->size > 0; i++)
 				{
-					op_stack_gettop(operatorstack)->branches[i] = op_stack_pop(expressionstack);
+					op_stack_gettop(operatorstack)->branches[i+1] = op_stack_pop(expressionstack);
 				}
+
 				op_stack_push(expressionstack, op_stack_pop(operatorstack));
 			}
 		}
 		else if (tok.type == RPAREN)
 		{
-			while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != LPAREN)
+			if (func)
 			{
-				node * top = op_stack_pop(operatorstack);
-				int num_idxs = token_idxs(top->val);
-				if (num_idxs == 2)
-				{
-					node * etop = op_stack_pop(expressionstack);
-					node * netop = op_stack_pop(expressionstack);
-
-					op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
-				}
-				else if (num_idxs == 1)
+				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != FUNC_CALL)
 				{
 
-					node * etop = op_stack_pop(expressionstack);
-					op_stack_push(expressionstack, node_init_unary(top->val, etop));
+					node * top = op_stack_pop(operatorstack);
+					int num_idxs = token_idxs(top->val);
+					if (num_idxs == 2)
+					{
+						node * etop = op_stack_pop(expressionstack);
+						node * netop = op_stack_pop(expressionstack);
+						op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+					}
+					else if (num_idxs == 1)
+					{
+
+						node * etop = op_stack_pop(expressionstack);
+						op_stack_push(expressionstack, node_init_unary(top->val, etop));
+					}
+					free(top);
 				}
 
-				free(top);
+				node * func_call = op_stack_pop(operatorstack);
+
+				int num_args = 0;
+				int total_toks = 0;
+				for (int j = i; j >= start; j--)
+				{
+					token t = tokens[j];
+					if (t.type == FUNCTION)
+						break;
+					if (t.type == COMMA)
+						num_args++;
+					total_toks++;
+				}
+				if (total_toks > 2)
+					num_args++;
+
+
+				func_call->num_branches = num_args + 1;
+				func_call->branches = malloc(sizeof(node*) * (num_args + 1));
+				func_call->type = MULTI;
+
+				for (int i = 0; i < num_args && expressionstack->size > 0; i++)
+				{
+					func_call->branches[i + 1] = op_stack_pop(expressionstack);
+				}
+				func_call->branches[0] = op_stack_pop(expressionstack);
+
+				op_stack_push(expressionstack, func_call);
+
 			}
-			if (operatorstack->size == 0)
-			{
-				syntax_error(tokens[i].tok, tokens[i].col, tokens[i].row, "NO MATCHING PARENTHESES BLOCK");
+			else {
+				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != LPAREN)
+				{
+					node * top = op_stack_pop(operatorstack);
+					int num_idxs = token_idxs(top->val);
+					if (num_idxs == 2)
+					{
+						node * etop = op_stack_pop(expressionstack);
+						node * netop = op_stack_pop(expressionstack);
+
+						op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+					}
+					else if (num_idxs == 1)
+					{
+
+						node * etop = op_stack_pop(expressionstack);
+						op_stack_push(expressionstack, node_init_unary(top->val, etop));
+					}
+
+					free(top);
+				}
+				if (operatorstack->size == 0)
+				{
+					syntax_error(tokens[i].tok, tokens[i].col, tokens[i].row, "NO MATCHING PARENTHESES BLOCK");
+				}
+				op_stack_pop(operatorstack);
 			}
-			op_stack_pop(operatorstack);
 		}
 		else if (tok.type == NEWLINE && i != start)
 		{
@@ -371,6 +448,10 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 	{
 		node * top = op_stack_pop(operatorstack);
 		int num_idxs = token_idxs(top->val);
+		if (expressionstack->size < num_idxs)
+		{
+			syntax_error(top->val.tok, top->val.col, top->val.row, "INCORRECT OPERATOR OPERANDS");
+		}
 		if (num_idxs == 2)
 		{
 			node * etop = op_stack_pop(expressionstack);

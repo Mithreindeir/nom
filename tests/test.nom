@@ -1,6 +1,11 @@
-# Test file for whatever I am currently working on
 
-test = function ():
-  5 + 4
+fact = function(n):
+  if n<=4:
+    return 1
+  end
+  else:
+    return fact(n-1)
+  end
 end
-test
+
+fact(5)

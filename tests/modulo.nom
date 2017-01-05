@@ -1,0 +1,33 @@
+# Test program showing off functions and printing
+
+# Currently, leaving an expression at the end of a function or
+# File will make the interpreter print it
+print = function(v):
+  v
+end
+
+modulo = function (n, x):
+  m = n / x
+  n = m
+
+  if n < 0:
+    n = -n
+  end
+
+  while n > 1:
+    n = n - 1
+  end
+
+  return n * x
+end
+
+for i=0, i<10, i++:
+  if modulo(i, 2) == 0:
+      print(i)
+      print("is an even number\n")
+  end
+  else:
+    print(i)
+    print("is an odd number\n")
+  end
+end

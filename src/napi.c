@@ -5,7 +5,7 @@ void nom_run_file(char * file)
 	nom_interp * nom;
 	char * buffer = 0;
 	long length;
-	FILE * f = fopen(file, "r");
+	FILE * f = fopen(file, "r+");
 	if (f)
 	{
 		fseek(f, 0, SEEK_END);

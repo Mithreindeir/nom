@@ -1,4 +1,5 @@
 #include "cinterp.h"
+#include <math.h>
 
 nom_interp * nom_interp_init()
 {
@@ -17,6 +18,7 @@ void nom_interp_destroy(nom_interp * nom)
 frame *  frame_init()
 {
 	frame * cframe = malloc(sizeof(frame));
+	cframe->parent = NULL;
 	cframe->data_stack = stack_init();
 	cframe->instructions = NULL;
 	cframe->instr_ptr = 0;
@@ -127,13 +129,12 @@ void create_var(frame * currentframe, char * name, int type)
 {
 	nom_variable var;
 	var.name = name;
-	var.type = type;
+	var.type = NONE;
 
 	currentframe->num_variables++;
 	if (currentframe->num_variables == 1)
 	{
 		currentframe->variables = malloc(sizeof(nom_variable) * currentframe->num_variables);
-
 	}
 	else
 	{
@@ -219,7 +220,10 @@ void execute(frame * currentframe)
 				if (e.type == NUM) {
 					nom_number n;
 					store(currentframe->data_stack, &n, sizeof(nom_number), 0);
-					printf("%f", n);
+					if (floorf(n) == n)
+						printf("%d", (int)n);
+					else
+						printf("%f", n);
 				}
 				else if (e.type == BOOL) {
 					nom_boolean n;
@@ -252,9 +256,7 @@ void execute(frame * currentframe)
 			}
 			else if (var->type == FUNC)
 			{
-				nom_func f = *((nom_func*)var->value);
-				execute(f.frame);
-				push_func(currentframe->data_stack, *((nom_func*)var->value));
+				push_number(currentframe->data_stack, 0);
 			}
 		}
 		else if (c.action == STORE_NAME)
@@ -277,6 +279,60 @@ void execute(frame * currentframe)
 			{
 				*((nom_func*)var->value) = pop_func(currentframe->data_stack);
 			}
+		}
+		else if (c.action == CALL)
+		{
+			nom_variable * var = &currentframe->variables[(int)c.idx];
+			nom_func f = *((nom_func*)var->value);
+
+			for (int i = 0; i < f.frame->num_variables; i++)
+			{
+				nom_variable * v = &f.frame->variables[(f.frame->num_variables -1)-i];
+				element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
+				change_type(v, e.type);
+
+				if (v->type == NUM) {
+					*((nom_number*)v->value) = pop_number(currentframe->data_stack);
+				}
+				else if (v->type == BOOL) {
+					*((nom_boolean*)v->value) = pop_bool(currentframe->data_stack);
+				}
+				else if (v->type == STR)
+				{
+					*((nom_string*)v->value) = pop_string(currentframe->data_stack);
+				}
+				else if (v->type == FUNC)
+				{
+					*((nom_func*)v->value) = pop_func(currentframe->data_stack);
+				}
+			}
+			execute(f.frame);
+			//push_func(currentframe->data_stack, *((nom_func*)var->value));
+		}
+		else if (c.action == RET)
+		{
+			if (currentframe->data_stack->stack_ptr > 0 && currentframe->parent)
+			{
+				element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
+				if (e.type == NUM) {
+					nom_number n;
+					store(currentframe->data_stack, &n, sizeof(nom_number), 0);
+					push_number(currentframe->parent->data_stack, n);
+				}
+				else if (e.type == BOOL) {
+					nom_boolean n;
+					store(currentframe->data_stack, &n, sizeof(nom_boolean), 0);
+					push_bool(currentframe->parent->data_stack, n);
+
+				}
+				else if (e.type == STR)
+				{
+					nom_string str;
+					store(currentframe->data_stack, &str, sizeof(nom_string), 0);
+					push_string(currentframe->parent->data_stack, str);
+				}
+			}
+			return;
 		}
 	}
 
@@ -414,7 +470,6 @@ nom_number pop_number(stack * stk)
 {
 	nom_number n;
 	pop_store(stk, sizeof(nom_number), &n);
-	pop_element(stk);
 	return n;
 }
 
@@ -430,7 +485,6 @@ nom_boolean pop_bool(stack * stk)
 {
 	nom_boolean n;
 	pop_store(stk, sizeof(nom_boolean), &n);
-	pop_element(stk);
 	return n;
 }
 
@@ -454,7 +508,6 @@ nom_string pop_string(stack * stk)
 {
 	nom_string str;
 	pop_store(stk, sizeof(nom_string), &str);
-	pop_element(stk);
 	return str;
 }
 
@@ -468,7 +521,6 @@ nom_func pop_func(stack * stk)
 {
 	nom_func func;
 	pop_store(stk, sizeof(nom_func), &func);
-	pop_element(stk);
 	return func;
 }
 
