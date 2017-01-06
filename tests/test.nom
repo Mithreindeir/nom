@@ -7,13 +7,24 @@
 # This will allow recursion
 
 # Currently this throws "undefined function" error
+print = function(n):
+  n
+end
+# UNSTABLE
+
 fact = function(n):
-  if n<=1:
+  if n <= 1:
     return 1
   end
   else:
-    return n * fact(n-1)
+    print(n)
+    print("\t")
+    x = n * fact(n-1)
+    print(x)
+    print("\n")
+    return x
   end
 end
 
-fact(5)
+# fact(5)
+"Don't Run This - In testing"

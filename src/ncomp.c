@@ -162,7 +162,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		int idx = get_var_index(currentframe, node->branches[0]->val.tok);
 		if (idx == -1)
 		{
-			syntax_error(node->branches[0]->val.tok, node->branches[0]->val.col, node->branches[0]->val.row, "Undefined function");
+			//syntax_error(node->branches[0]->val.tok, node->branches[0]->val.col, node->branches[0]->val.row, "Undefined function");
 			create_var(currentframe, node->branches[0]->val.tok, NUM);
 			idx = currentframe->num_variables - 1;
 		}
@@ -242,16 +242,15 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		}
 		else
 		{
-
-			if (node->right)
-				val_traverse(node->right, instrl, currentframe);
-
 			int idx = get_var_index(currentframe, node->left->val.tok);
 			if (idx == -1)
 			{
 				create_var(currentframe, node->left->val.tok, NONE);
 				idx = currentframe->num_variables - 1;
 			}
+			if (node->right)
+				val_traverse(node->right, instrl, currentframe);
+
 			push_instr(instrl, STORE_NAME, idx);
 		}
 		return;

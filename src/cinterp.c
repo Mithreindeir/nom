@@ -55,7 +55,7 @@ void exit_frame(frame * frame)
 		free(frame->constants[i]);
 	}
 	if (frame->constants) free(frame->constants);
-	free(frame->instructions);
+	if (frame->instructions) free(frame->instructions);
 
 }
 
@@ -125,6 +125,8 @@ void change_type(nom_variable * old, int ntype)
 
 int get_var_index(frame * currentframe, char * name)
 {
+	if (currentframe == NULL)
+		return;
 	for (int i = 0; i < currentframe->num_variables; i++)
 	{
 		if (!strcmp(name, currentframe->variables[i].name))
@@ -292,12 +294,31 @@ void execute(frame * currentframe)
 		{
 			nom_variable * var = &currentframe->variables[(int)c.idx];
 			nom_func f = *((nom_func*)var->value);
+			//Keep copy of frame
+			frame * oldf = f.frame;
+			//Make copy of mutable data and point to old immutable data for function
+			// (So make new variables and stack)
+			frame * newf = frame_init();
+			//For recursive functions, this just alters the caller of the first times stack, not any of the other
+			/* TODO */
+			newf->parent = oldf->parent;
+			newf->constants = oldf->constants;
+			newf->num_constants = oldf->num_constants;
+			newf->num_instructions = oldf->num_instructions;
+			newf->instructions = oldf->instructions;
 
-			
-
-			for (int i = 0; i < f.frame->num_variables; i++)
+			for (int i = 0; i < oldf->num_variables; i++)
 			{
-				nom_variable * v = &f.frame->variables[(f.frame->num_variables -1)-i];
+				nom_variable v = oldf->variables[i];
+				create_var(newf, v.name, NONE);
+			}
+			f.frame = newf;
+
+			//Set top of stack to function args
+			int args = f.arg_count;
+			for (int i = 0; i < args; i++)
+			{
+				nom_variable * v = &f.frame->variables[(args - 1)-i];
 				element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
 				change_type(v, e.type);
 
@@ -316,7 +337,46 @@ void execute(frame * currentframe)
 					*((nom_func*)v->value) = pop_func(currentframe->data_stack);
 				}
 			}
+			//Set variables in function to ones out of its scope
+			for (int i = args; i < f.frame->num_variables; i++)
+			{
+				nom_variable * v = &f.frame->variables[i];
+				nom_variable * rv = NULL;
+				frame * fp = currentframe;
+				while (fp)
+				{
+					int idx = get_var_index(fp, v->name);
+					if (idx != -1)
+						rv = &fp->variables[idx];
+					fp = fp->parent;
+				}
+				if (rv)
+				{
+					change_type(v, rv->type);
+
+					if (v->type == NUM) {
+						*((nom_number*)v->value) = *((nom_number*)rv->value);
+					}
+					else if (v->type == BOOL) {
+						*((nom_boolean*)v->value) = *((nom_boolean*)rv->value);
+					}
+					else if (v->type == STR)
+					{
+						*((nom_string*)v->value) = *((nom_string*)rv->value);
+					}
+					else if (v->type == FUNC)
+					{
+						*((nom_func*)v->value) = *((nom_func*)rv->value);
+					}
+				}
+			}
 			execute(f.frame);
+			newf->constants = NULL;
+			newf->num_constants = 0;
+			newf->num_instructions = 0;
+			newf->instructions = NULL;
+			destroy_frame(newf);
+			f.frame = oldf;
 			//push_func(currentframe->data_stack, *((nom_func*)var->value));
 		}
 		else if (c.action == RET)
