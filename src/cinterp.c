@@ -48,6 +48,7 @@ void exit_frame(frame * frame)
 	for (int i = 0; i < frame->num_variables; i++)
 	{
 		free(frame->variables[i].value);
+		free(frame->variables[i].name);
 	}
 	if (frame->variables) free(frame->variables);
 	for (int i = 0; i < frame->num_constants; i++)
@@ -138,13 +139,13 @@ int get_var_index(frame * currentframe, char * name)
 void create_var(frame * currentframe, char * name, int type)
 {
 	nom_variable var;
-	var.name = name;
+	var.name = _strdup(name);
 	var.type = NONE;
 
 	currentframe->num_variables++;
 	if (currentframe->num_variables == 1)
 	{
-		currentframe->variables = malloc(sizeof(nom_variable) * currentframe->num_variables);
+		currentframe->variables = malloc(sizeof(nom_variable));
 	}
 	else
 	{
@@ -301,7 +302,7 @@ void execute(frame * currentframe)
 			frame * newf = frame_init();
 			//For recursive functions, this just alters the caller of the first times stack, not any of the other
 			/* TODO */
-			newf->parent = oldf->parent;
+			newf->parent = currentframe;
 			newf->constants = oldf->constants;
 			newf->num_constants = oldf->num_constants;
 			newf->num_instructions = oldf->num_instructions;

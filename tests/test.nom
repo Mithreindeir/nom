@@ -1,30 +1,17 @@
-
-# TODO
-# For this two work, I need to check parent frame for
-# Variable definitions (fact is undefined when its called inside fact)
-# And make frames save themselves when they are stepped into
-# and then restore themselves when they are exited
-# This will allow recursion
-
-# Currently this throws "undefined function" error
-print = function(n):
-  n
+print = function(v):
+  v
 end
-# UNSTABLE
 
 fact = function(n):
   if n <= 1:
     return 1
   end
   else:
-    print(n)
-    print("\t")
-    x = n * fact(n-1)
-    print(x)
-    print("\n")
-    return x
+    return n * fact(n-1)
   end
 end
 
-# fact(5)
-"Don't Run This - In testing"
+for i=2,i<10,i++:
+  print(fact(i))
+  print("\n")
+end
