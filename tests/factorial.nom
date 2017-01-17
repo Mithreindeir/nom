@@ -1,11 +1,17 @@
-# For loop test
-# This calculates the factorial of n without recursion
+print = function(v):
+  v
+end
 
-factorial = function(n):
-  n = 7
-  ans = 1
-  for i=n, i>=2, i--:
-    ans = ans * i
+fact = function(n):
+  if n <= 1:
+    return 1
   end
-  return ans
+  else:
+    return n * fact(n-1)
+  end
+end
+
+for i=2,i<10,i++:
+  print(fact(i))
+  print("\n")
 end

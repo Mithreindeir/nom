@@ -1,3 +1,4 @@
+#FUNC.
 print = function(v):
   v
 end

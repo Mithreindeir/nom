@@ -76,12 +76,12 @@ token * tokenize(char * file, int * num_tok)
 		int len = 0;
 		int type = token_type(tok, &len);
 
-		if (len == 0 || type == -1)
+		if (len == 0)
 		{
-			free((tok - current_idx));
-			tok = NULL;
-			current_idx = 0;
-			break;
+			tok += 1;
+			current_idx += 1;
+
+			continue;
 		}
 
 		//printf("token: %s\t type: %d\n", str, type);
@@ -408,7 +408,6 @@ int token_type(char * tok, int * len)
 		*len = i;
 		return IDENTIFIER;
 	}
-
 	return -1;
 }
 
