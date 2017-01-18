@@ -127,7 +127,8 @@ void change_type(nom_variable * old, int ntype)
 int get_var_index(frame * currentframe, char * name)
 {
 	if (currentframe == NULL)
-		return;
+		return -1;
+
 	for (int i = 0; i < currentframe->num_variables; i++)
 	{
 		if (!strcmp(name, currentframe->variables[i].name))
@@ -139,7 +140,7 @@ int get_var_index(frame * currentframe, char * name)
 void create_var(frame * currentframe, char * name, int type)
 {
 	nom_variable var;
-	var.name = _strdup(name);
+	var.name = strdup(name);
 	var.type = NONE;
 
 	currentframe->num_variables++;
@@ -463,7 +464,7 @@ void push(stack * stk, void * val, int size_bytes)
 void  pop(stack * stk, int size_bytes)
 {
 	if (size_bytes > (stk->stack_ptr - stk->base_ptr))
-		return NULL;
+		return;
 	
 	stk->stack_ptr -= size_bytes;
 }
@@ -471,7 +472,7 @@ void  pop(stack * stk, int size_bytes)
 void pop_store(stack * stk, int size_bytes, void * buf)
 {
 	if (size_bytes > (stk->stack_ptr - stk->base_ptr))
-		return NULL;
+		return;
 	char * cbuf = buf;
 	for (int i = 0; i < size_bytes && stk->stack_ptr < STACK_SIZE; i++)
 	{
@@ -484,7 +485,7 @@ void pop_store(stack * stk, int size_bytes, void * buf)
 void store(stack * stk, void * buf, int size_bytes, int offset)
 {
 	if (size_bytes > (stk->stack_ptr - stk->base_ptr))
-		return NULL;
+		return;
 	char * cbuf = buf;
 	for (int i = 0; i < size_bytes && stk->stack_ptr < STACK_SIZE; i++)
 	{
@@ -510,7 +511,7 @@ void dup(stack * stk)
 	char * val = malloc(e.size);
 	store(stk, val, e.size, 0);
 	push(stk, val, e.size);
-	push_element(stk, stk->buff[stk->stack_ptr - e.size], e.size, e.type);
+	push_element(stk, &stk->buff[stk->stack_ptr - e.size], e.size, e.type);
 	free(val);
 }
 
@@ -534,7 +535,7 @@ void push_number(stack * stk, nom_number number)
 {
 	nom_number n = number;
 	push(stk, &n, sizeof(nom_number));
-	push_element(stk, stk->buff[stk->stack_ptr - sizeof(nom_number)], sizeof(nom_number), NUM);
+	push_element(stk, &stk->buff[stk->stack_ptr - sizeof(nom_number)], sizeof(nom_number), NUM);
 }
 
 nom_number pop_number(stack * stk)
@@ -549,7 +550,7 @@ void push_bool(stack * stk, nom_boolean boolean)
 	nom_boolean n = boolean;
 	push(stk, &n, sizeof(nom_boolean));
 
-	push_element(stk, stk->buff[stk->stack_ptr - sizeof(nom_boolean)], sizeof(nom_boolean), BOOL);
+	push_element(stk, &stk->buff[stk->stack_ptr - sizeof(nom_boolean)], sizeof(nom_boolean), BOOL);
 }
 
 nom_boolean pop_bool(stack * stk)
@@ -562,7 +563,7 @@ nom_boolean pop_bool(stack * stk)
 void push_string(stack * stk, nom_string str)
 {
 	push(stk, &str, sizeof(nom_string));
-	push_element(stk, stk->buff[stk->stack_ptr - sizeof(nom_string)], sizeof(nom_string), STR);
+	push_element(stk, &stk->buff[stk->stack_ptr - sizeof(nom_string)], sizeof(nom_string), STR);
 }
 
 void push_raw_string(stack * stack, char * string)
@@ -572,7 +573,7 @@ void push_raw_string(stack * stack, char * string)
 	str.str = NULL;
 	resize_string(&str, string, strlen(string));
 	push(stack, &str, sizeof(nom_string));
-	push_element(stack, stack->buff[stack->stack_ptr - sizeof(nom_string)], sizeof(nom_string), STR);
+	push_element(stack, &stack->buff[stack->stack_ptr - sizeof(nom_string)], sizeof(nom_string), STR);
 }
 
 nom_string pop_string(stack * stk)
@@ -585,7 +586,7 @@ nom_string pop_string(stack * stk)
 void push_func(stack * stack, nom_func func)
 {
 	push(stack, &func, sizeof(nom_func));
-	push_element(stack, stack->buff[stack->stack_ptr - sizeof(nom_func)], sizeof(nom_func), FUNC);
+	push_element(stack, &stack->buff[stack->stack_ptr - sizeof(nom_func)], sizeof(nom_func), FUNC);
 }
 
 nom_func pop_func(stack * stk)

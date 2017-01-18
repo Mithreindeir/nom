@@ -4,15 +4,17 @@
 #include "napi.h"
 
 
-int main()
+int main(int argc, char ** argv)
 {
 
-	//nom_run_file("tests/factorial.nom");
-	nom_run_file("tests/test.nom");
-	getch();
+	if (argc < 2) {
+		printf("usage: %s filename\n", argv[0]);
+		return 1;
+	}
 
+	nom_run_file(argv[1]);
 
 	//
 
-	return;
+	return 0;
 }
