@@ -1,4 +1,5 @@
-#FUNC.
+#THIS . THIS . :"@"
+
 print = function(v):
   v
 end

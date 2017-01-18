@@ -1,6 +1,12 @@
 #include "cinterp.h"
 #include <math.h>
 
+#ifdef __linux__
+#define STRDUP strdup
+#elif _WIN32
+#define STRDUP _strdup
+#endif
+
 nom_interp * nom_interp_init()
 {
 	nom_interp * nom = malloc(sizeof(nom_interp));
@@ -140,7 +146,7 @@ int get_var_index(frame * currentframe, char * name)
 void create_var(frame * currentframe, char * name, int type)
 {
 	nom_variable var;
-	var.name = strdup(name);
+	var.name = STRDUP(name);
 	var.type = NONE;
 
 	currentframe->num_variables++;
