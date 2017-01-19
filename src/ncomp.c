@@ -23,7 +23,7 @@ void  compile(node * bop, frame * currentframe)
 	instrl->num_instructions = 0;
 	instrl->instructions = NULL;
 	val_traverse(bop, instrl, currentframe);
-	push_instr(instrl, PRINT, 0);
+	//push_instr(instrl, PRINT, 0);
 	free_nodes(bop);
 
 	currentframe->instructions = instrl->instructions;
@@ -124,6 +124,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		frame * nf = frame_init();
 
 		nom_func * func = malloc(sizeof(nom_func));
+		func->external = 0;
 		func->arg_count = node->num_branches - 1;
 		func->frame = nf;
 		nf->parent = currentframe;
@@ -166,7 +167,6 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 			create_var(currentframe, node->branches[0]->val.tok, NUM);
 			idx = currentframe->num_variables - 1;
 		}
-
 		push_instr(instrl, CALL, idx);
 		return;
 	}

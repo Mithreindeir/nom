@@ -1,5 +1,6 @@
 #include "napi.h"
 
+
 void nom_run_file(char * file)
 {
 	nom_interp * nom;
@@ -23,6 +24,9 @@ void nom_run_file(char * file)
 	if (buffer)
 	{
 		nom = nom_interp_init();
+		nom_register_func(nom, "print", &nom_print);
+		nom_register_func(nom, "input", &nom_input);
+
 		int num_tokens = 0;
 		token * tokens = tokenize(buffer, &num_tokens);
 		node * bop = parse_string(tokens, num_tokens);
@@ -106,5 +110,22 @@ void nom_repl()
 		}
 	}
 	nom_interp_destroy(nom);
+
+}
+
+void nom_register_func(nom_interp * nom, char * name, nom_external_func func)
+{
+	int idx = get_var_index(nom->global_frame, name);
+	if (idx == -1)
+	{
+		create_var(nom->global_frame, name, FUNC);
+		idx = nom->global_frame->num_variables - 1;
+	}
+	nom_func * nfunc = malloc(sizeof(nom_func));
+	nfunc->external = 1;
+	nfunc->func = func;
+	nom_variable * nf = &nom->global_frame->variables[idx];
+	nf->value = nfunc;
+	nf->type = FUNC;
 
 }

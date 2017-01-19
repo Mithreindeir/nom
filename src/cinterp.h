@@ -62,12 +62,17 @@ struct frame
 
 typedef float nom_number;
 typedef int nom_boolean;
+typedef int(*nom_external_func)(frame * cf);
+
 typedef struct nom_func
 {
 	frame * frame;
 	frame * global;
 	int arg_count;
+	int external;
+	nom_external_func func;
 } nom_func;
+
 typedef struct nom_string
 {
 	int num_characters;
@@ -81,6 +86,7 @@ typedef struct nom_interp
 {
 	frame * global_frame;
 } nom_interp;
+
 
 //Interpreter functions
 nom_interp * nom_interp_init();

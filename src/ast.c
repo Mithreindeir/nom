@@ -189,6 +189,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				if (t2.type == IDENTIFIER) {
 					func = 1;
 					tok.type = FUNC_CALL;
+					tokens[i].type = FUNC_CALL;
 				}
 			}
 			op_stack_push(operatorstack, node_init_op(tok));
@@ -270,6 +271,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				}
 				free(top);
 			}
+
 			if (operatorstack->size > 0 && is_conditional(op_stack_gettop(operatorstack)->val)) {
 				int f = i;
 				node * cb = block_ast(tokens, i + 1, num_tokens, &f);
@@ -318,6 +320,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 			}
 			else if (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type == FUNCTION)
 			{
+
 				int num_args = 0;
 				int total_toks = 0;
 				for (int j = i; j >= start; j--)
@@ -329,8 +332,9 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 						num_args++;
 					total_toks++;
 				}
-				if (total_toks > 2)
+				if (total_toks > 3)
 					num_args++;
+
 				int f = i;
 				node * cb = block_ast(tokens, i + 1, num_tokens, &f);
 				i = f - 1;
@@ -351,11 +355,11 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		}
 		else if (tok.type == RPAREN)
 		{
+
 			if (func)
 			{
 				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != FUNC_CALL)
 				{
-
 					node * top = op_stack_pop(operatorstack);
 					int num_idxs = token_idxs(top->val);
 					if (num_idxs == 2)
@@ -374,21 +378,20 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				}
 
 				node * func_call = op_stack_pop(operatorstack);
-
+			
 				int num_args = 0;
 				int total_toks = 0;
 				for (int j = i; j >= start; j--)
 				{
 					token t = tokens[j];
-					if (t.type == FUNCTION)
+					if (t.type == FUNC_CALL)
 						break;
 					if (t.type == COMMA)
 						num_args++;
 					total_toks++;
 				}
-				if (total_toks > 2)
+				if (total_toks > 1)
 					num_args++;
-
 
 				func_call->num_branches = num_args + 1;
 				func_call->branches = malloc(sizeof(node*) * (num_args + 1));
@@ -401,7 +404,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				func_call->branches[0] = op_stack_pop(expressionstack);
 
 				op_stack_push(expressionstack, func_call);
-
 			}
 			else {
 				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != LPAREN)

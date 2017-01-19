@@ -1,19 +1,4 @@
-#THIS . THIS . :"@"
-
-print = function(v):
-  v
-end
-
-fact = function(n):
-  if n <= 1:
-    return 1
-  end
-  else:
-    return n * fact(n-1)
-  end
-end
-
-for i=2,i<10,i++:
-  print(fact(i))
-  print("\n")
-end
+print("What is your name?\n")
+name = input()
+print("Hello ")
+print(name)
