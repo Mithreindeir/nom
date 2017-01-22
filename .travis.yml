@@ -5,4 +5,4 @@ os:
 compiler:
   - gcc
 script:
-  - gcc -o nom src/*.c -lm
+  - gcc -o nom src/*.c -lm --std=gnu99
