@@ -1,4 +1,18 @@
-print("What is your name?\n")
-name = input()
-print("Hello ")
-print(name)
+seed(time()*10)
+
+hi = function():
+  return 5
+end
+
+print("Random Number Between 1 and 10\n")
+x = random(0, 10)
+print(x)
+print("\n")
+print("Time since epoch\n")
+x = time()
+print(x)
+print("\nSeconds since program start\n")
+x = clock()
+print(x)
+print("\n")
+input()

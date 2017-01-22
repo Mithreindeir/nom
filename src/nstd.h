@@ -26,8 +26,12 @@
 
 void nom_print(frame * currentframe);
 void nom_input(frame * currentframe);
-void nom_sleep(frame * currentframe);
-
-
+void nom_seed(frame * currentframe);
+void nom_random(frame * currentframe);
+void nom_time(frame * currentframe);
+void nom_clock(frame * currentframe);
+void nom_abs(frame * currentframe);
+void nom_floor(frame * currentframe);
+void nom_ceil(frame * currentframe);
 
 #endif

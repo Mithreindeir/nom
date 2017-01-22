@@ -208,6 +208,7 @@ void execute(frame * currentframe)
 		}
 		else if (c.action == PUSH)
 		{
+
 			nom_number * num = currentframe->constants[c.idx];
 			push_number(currentframe->data_stack, *num);
 		}

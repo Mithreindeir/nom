@@ -29,7 +29,7 @@
 
 void nom_run_file(char * file);
 void nom_repl();
-void nom_register_func(nom_interp * nom, char * name, nom_external_func func);
+void nom_register_func(nom_interp * nom, char * name, nom_external_func func, int args);
 
 
 #endif

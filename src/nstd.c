@@ -18,6 +18,9 @@
 
 #include "nstd.h"
 #include <math.h>
+#include <time.h>
+
+#pragma warning(disable:4996)
 
 void nom_print(frame * currentframe)
 {
@@ -71,4 +74,48 @@ void nom_input(frame * currentframe)
 	else {
 		push_raw_string(currentframe->data_stack, mstr);
 	}
+}
+
+void nom_seed(frame * currentframe)
+{
+	if (currentframe->data_stack->num_elements < 1)
+		return;
+	element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
+	if (e.type == NUM) {
+		nom_number n;
+		store(currentframe->data_stack, &n, sizeof(nom_number), 0);
+		srand((int)n);
+	}
+}
+
+void nom_random(frame * currentframe)
+{
+	int min = (int)(pop_number(currentframe->data_stack));
+	int max = (int)(pop_number(currentframe->data_stack));
+	push_number(currentframe->data_stack, (rand() % (max - min)) + min);
+}
+
+void nom_time(frame * currentframe)
+{
+	float t = difftime(time(NULL), 0);
+	push_number(currentframe->data_stack, t);
+}
+
+void nom_clock(frame * currentframe)
+{
+	int c = clock();
+	float sec = (float)(c) / CLOCKS_PER_SEC;
+	push_number(currentframe->data_stack, sec);
+}
+
+void nom_abs(frame * currentframe)
+{
+}
+
+void nom_floor(frame * currentframe)
+{
+}
+
+void nom_ceil(frame * currentframe)
+{
 }
