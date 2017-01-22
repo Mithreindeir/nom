@@ -62,7 +62,7 @@ struct frame
 
 typedef float nom_number;
 typedef int nom_boolean;
-typedef int(*nom_external_func)(frame * cf);
+typedef void(*nom_external_func)(frame * cf);
 
 typedef struct nom_func
 {

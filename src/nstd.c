@@ -1,4 +1,5 @@
 #include "nstd.h"
+#include <math.h>
 
 void nom_print(frame * currentframe)
 {
@@ -32,7 +33,7 @@ void nom_print(frame * currentframe)
 
 void nom_input(frame * currentframe)
 {	
-	char * str[256];
+	char str[256];
 	memset(str, 0, 255);
 	fgets(str, 255, stdin);
 
@@ -40,5 +41,17 @@ void nom_input(frame * currentframe)
 	char * mstr = malloc(s+1);
 	memcpy(mstr, str, s);
 	mstr[s] = '\0';
-	push_raw_string(currentframe->data_stack, mstr);
+	int len = 0;
+	int type = token_type(mstr, &len);
+
+	if (type == INT) {
+		push_number(currentframe->data_stack, atoi(mstr));
+	}
+	else if (type == FLOAT) {
+		push_number(currentframe->data_stack, atof(mstr));
+	}
+	else {
+		push_raw_string(currentframe->data_stack, mstr);
+	}
+
 }
