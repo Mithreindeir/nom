@@ -5,4 +5,4 @@ os:
 compiler:
   - gcc
 script:
-  - ./install.sh
+  - sudo ./install.sh
