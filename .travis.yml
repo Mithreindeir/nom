@@ -5,4 +5,4 @@ os:
 compiler:
   - gcc
 script:
-  - sudo ./install.sh
+  - gcc -o nom src/*.c -lm
