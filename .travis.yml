@@ -1,0 +1,8 @@
+sudo: required
+language: c
+os:
+  - linux
+compiler:
+  - gcc
+script:
+  - ./install.sh
