@@ -1,7 +1,7 @@
 # Nom
 
 [![Build Status](https://upload.wikimedia.org/wikipedia/commons/f/f8/License_icon-mit-88x31-2.svg)]()
-[![Build Status](https://travis-ci.org/Mithreindeir/VelocityRaptor.svg?branch=master)](https://travis-ci.org/Mithreindeir/VelocityRaptor)
+[![Build Status](https://travis-ci.org/Mithreindeir/nom.svg?branch=master)](https://travis-ci.org/Mithreindeir/Nom)
 
 
 Nom lang is a dynamically typed lightweight functional language focusing on simplicity and embeddability.
