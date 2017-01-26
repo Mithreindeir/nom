@@ -25,6 +25,29 @@ rb_node * rb_node_init()
 
 void rb_insert(rb_node * root, char * string)
 {
+	int v = lex_less(root->string, string);
+	if (v >= 0) {
+		if (root->right)
+			rb_insert(root->right, string);
+		else
+			root->right = rb_new(string);
+	}
+	else {
+		if (root->left)
+			rb_insert(root->left, string);
+		else
+			root->left = rb_new(string);
+	}
+}
+
+rb_node * rb_new(char * string)
+{
+	rb_node * rb = malloc(sizeof(rb_node));
+	rb->left = NULL;
+	rb->right = NULL;
+	rb->string = string;
+	rb->rb = 1;
+	return rb;
 }
 
 void rb_delete(rb_node * root, char * string)

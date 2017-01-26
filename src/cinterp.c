@@ -35,7 +35,6 @@ nom_interp * nom_interp_init()
 void nom_interp_destroy(nom_interp * nom)
 {
 	exit_frame(nom->global_frame);
-	free(nom->global_frame);
 	free(nom);
 }
 
@@ -65,14 +64,16 @@ frame * frame_cpy(frame * original)
 
 void exit_frame(frame * frame)
 {
-	free(frame->data_stack->buff);
-	free(frame->data_stack->elements);
-	free(frame->data_stack);
+	stack_destroy(frame->data_stack);
 
 	for (int i = 0; i < frame->num_variables; i++)
 	{
-		//free(frame->variables[i].value);
-		//free(frame->variables[i].name);
+		//if (frame->variables[i].type == FUNC)
+		//	exit_frame(((nom_func*)frame->variables[i].value)->frame);
+		//if (frame->variables[i].type == STR)
+		//	free(((nom_string*)frame->variables[i].value)->str);
+		free(frame->variables[i].value);
+		free(frame->variables[i].name);
 	}
 	if (frame->variables) free(frame->variables);
 	for (int i = 0; i < frame->num_constants; i++)
@@ -81,7 +82,7 @@ void exit_frame(frame * frame)
 	}
 	if (frame->constants) free(frame->constants);
 	if (frame->instructions) free(frame->instructions);
-
+	free(frame);
 }
 
 void destroy_frame(frame * frame)
@@ -407,7 +408,7 @@ void execute(frame * currentframe)
 				newf->num_constants = 0;
 				newf->num_instructions = 0;
 				newf->instructions = NULL;
-				destroy_frame(newf);
+				exit_frame(newf);
 				f.frame = oldf;
 				//push_func(currentframe->data_stack, *((nom_func*)var->value));
 			}
@@ -452,7 +453,15 @@ stack * stack_init()
 		stk->buff[i] = 0;
 	}
 	stk->num_elements = 0;
+	stk->elements = NULL;
 	return stk;
+}
+
+void stack_destroy(stack * stack)
+{
+	if (stack->elements) free(stack->elements);
+	free(stack->buff);
+	free(stack);
 }
 
 void push_element(stack * stk, char * data, int size, int type)

@@ -34,6 +34,7 @@ struct rb_node
 
 rb_node * rb_node_init();
 void rb_insert(rb_node * root, char * string);
+rb_node * rb_new(char * string);
 void rb_delete(rb_node * root, char * string);
 
 int lex_less(char * str1, char * str2);

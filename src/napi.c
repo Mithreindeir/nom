@@ -74,13 +74,21 @@ void nom_repl()
 	// Don't use this 
 	nom_interp * nom;
 	nom = nom_interp_init();
+	nom_register_func(nom, "print", &nom_print, 1);
+	nom_register_func(nom, "input", &nom_input, 0);
+	nom_register_func(nom, "time", &nom_time, 0);
+	nom_register_func(nom, "clock", &nom_clock, 0);
+	nom_register_func(nom, "seed", &nom_seed, 1);
+	nom_register_func(nom, "random", &nom_random, 2);
 
 	printf(">");
 	char buff[256];
 	memset(buff, 0, 255);
 	fgets(buff, 255, stdin);
 	int scompile = 1;
-	while (strncmp(buff, "exit", 4))
+	stack_init(&nom->global_frame->data_stack);
+
+	while (strncmp(buff, "exit()", 4))
 	{
 		int blocks = 0;
 		int num_tokens = 0;
@@ -116,7 +124,6 @@ void nom_repl()
 			}
 			free(tokens);
 			//return;
-			stack_init(&nom->global_frame->data_stack);
 			execute(nom->global_frame);
 		}
 

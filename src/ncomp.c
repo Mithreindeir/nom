@@ -80,7 +80,7 @@ void tree_traverse(node * node)
 float solve_traverse(node * node)
 {
 	if (node->val.type == INT)
-		return (float)atoi(node->val.tok);
+		return atoi(node->val.tok);
 	float a, b, ans;
 	if (node->left)
 		a = solve_traverse(node->left);
@@ -191,7 +191,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	else if (node->val.type == INT)
 	{
 		nom_number * val = malloc(sizeof(nom_number));
-		*val = (float)atoi(node->val.tok);
+		*val = atoi(node->val.tok);
 		push_instr(instrl, PUSH, add_const(currentframe, val));
 		return;
 	}
@@ -338,7 +338,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		if (node->right)
 			val_traverse(node->right, instrl, currentframe);
 		push_instr(instrl, JUMP, start_cond);
-		instrl->instructions[idx].idx = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = instrl->num_instructions;
 
 		return;
 	}
@@ -351,7 +351,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
 			val_traverse(node->right, instrl, currentframe);
-		instrl->instructions[idx].idx = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = instrl->num_instructions;
 
 		return;
 	}
@@ -364,7 +364,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
 			val_traverse(node->right, instrl, currentframe);
-		instrl->instructions[idx].idx = (float)instrl->num_instructions+1;
+		instrl->instructions[idx].idx = instrl->num_instructions+1;
 
 		return;
 	}
@@ -379,8 +379,8 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
 			val_traverse(node->right, instrl, currentframe);
-		instrl->instructions[idx].idx = (float)instrl->num_instructions;
-		instrl->instructions[idx2].idx = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = instrl->num_instructions;
+		instrl->instructions[idx2].idx = instrl->num_instructions;
 
 		return;
 	}
@@ -395,8 +395,8 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, IFEQ, start_cond);
 		if (node->right)
 			val_traverse(node->right, instrl, currentframe);
-		instrl->instructions[idx].idx = (float)instrl->num_instructions + 1;
-		instrl->instructions[idx2].idx = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = instrl->num_instructions + 1;
+		instrl->instructions[idx2].idx = instrl->num_instructions;
 		return;
 	}
 	else if (node->val.type == ELSE)
@@ -406,7 +406,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, JUMP, start_cond);
 		if (node->next)
 			val_traverse(node->next, instrl, currentframe);
-		instrl->instructions[idx].idx = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = instrl->num_instructions;
 
 		return;
 	}
@@ -424,7 +424,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		if (node->branches[2])
 			val_traverse(node->branches[2], instrl, currentframe);
 		push_instr(instrl, JUMP, start_cond);
-		instrl->instructions[idx].idx = (float)instrl->num_instructions;
+		instrl->instructions[idx].idx = instrl->num_instructions;
 
 		return;
 	}

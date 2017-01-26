@@ -128,6 +128,7 @@ void create_var(frame * currentframe, char * name, int type);
 
 void execute(frame * currentframe);
 stack * stack_init();
+void stack_destroy(stack * stack);
 
 //Elements
 void push_element(stack * stk, char * data, int size, int type);
