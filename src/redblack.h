@@ -20,6 +20,8 @@
 #define REDBLACK_H
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef struct rb_node rb_node;
 
