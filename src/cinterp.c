@@ -348,7 +348,7 @@ void execute(frame * currentframe)
 				f.frame = newf;
 
 				//Set top of stack to function args
-				int args = f.arg_count;
+				int args = pop_number(currentframe->data_stack);
 				for (int i = 0; i < args; i++)
 				{
 					nom_variable * v = &f.frame->variables[(args - 1) - i];

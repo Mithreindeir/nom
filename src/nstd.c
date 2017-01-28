@@ -24,20 +24,19 @@
 
 void nom_print(frame * currentframe)
 {
-	if (currentframe->data_stack->stack_ptr > 0)
+	int args = pop_number(currentframe->data_stack);
+	for (int i = 0; i < args; i++)
 	{
 		element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
 		if (e.type == NUM) {
-			nom_number n;
-			store(currentframe->data_stack, &n, sizeof(nom_number), 0);
+			nom_number n = pop_number(currentframe->data_stack);
 			if (floorf(n) == n)
 				printf("%d", (int)n);
 			else
 				printf("%f", n);
 		}
 		else if (e.type == BOOL) {
-			nom_boolean n;
-			store(currentframe->data_stack, &n, sizeof(nom_boolean), 0);
+			nom_boolean n = pop_bool(currentframe->data_stack);
 			if (n)
 				printf("True");
 			else
@@ -45,8 +44,7 @@ void nom_print(frame * currentframe)
 		}
 		else if (e.type == STR)
 		{
-			nom_string str;
-			store(currentframe->data_stack, &str, sizeof(nom_string), 0);
+			nom_string str = pop_string(currentframe->data_stack);
 			printf("%s", str.str);
 		}
 	}
@@ -54,6 +52,8 @@ void nom_print(frame * currentframe)
 
 void nom_input(frame * currentframe)
 {	
+	int args = pop_number(currentframe->data_stack);
+
 	char str[256];
 	memset(str, 0, 255);
 	fgets(str, 255, stdin);
@@ -78,6 +78,8 @@ void nom_input(frame * currentframe)
 
 void nom_seed(frame * currentframe)
 {
+	int args = pop_number(currentframe->data_stack);
+
 	if (currentframe->data_stack->num_elements < 1)
 		return;
 	element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
@@ -90,6 +92,7 @@ void nom_seed(frame * currentframe)
 
 void nom_random(frame * currentframe)
 {
+	int args = pop_number(currentframe->data_stack);
 	int min = (int)(pop_number(currentframe->data_stack));
 	int max = (int)(pop_number(currentframe->data_stack));
 	push_number(currentframe->data_stack, (rand() % (max - min)) + min);

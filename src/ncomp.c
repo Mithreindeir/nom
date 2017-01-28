@@ -101,11 +101,16 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	}
 	else if (node->val.type == FUNC_CALL)
 	{
+		int args = 0;
 		for (int i = 1; i < node->num_branches; i++)
 		{
 			if (node->branches[i])
 				val_traverse(node->branches[i], instrl, currentframe);
+			args++;
 		}
+		nom_number * val = malloc(sizeof(nom_number));
+		*val = args;
+		push_instr(instrl, PUSH, add_const(currentframe, val));
 		int idx = get_var_index(currentframe, node->branches[0]->val.tok);
 		if (idx == -1)
 		{
