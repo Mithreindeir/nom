@@ -18,11 +18,6 @@
 
 #include "redblack.h"
 
-rb_node * rb_node_init()
-{
-	return NULL;
-}
-
 void rb_insert(rb_node * root, char * string)
 {
 	int v = lex_less(root->string, string);
@@ -55,12 +50,10 @@ void rb_insert(rb_node * root, char * string)
 	{
 		if (right && (!root->left || (root->left && !root->left->rb)))
 		{
-			//rotate left
 			rb_rotate_left(child);
 		}
 		else if (!right && (!root->right || (root->right && !root->right->rb)))
 		{
-			//rotate right
 			rb_rotate_right(child);
 		}
 		else if (right && (!root->left || (root->left && root->left->rb)))
@@ -86,14 +79,20 @@ void rb_rotate_right(rb_node * node)
 {
 	rb_node * p = node->parent;
 	p->left = node->right;
-	node->rb = p;
+	node->right->parent = p;
+	int r = p->rb;
+	p->rb = node->rb;
+	node->rb = r;
 }
 
 void rb_rotate_left(rb_node * node)
 {
 	rb_node * p = node->parent;
 	p->right = node->left;
-	node->rb = p;
+	node->left->parent = p;
+	int r = p->rb;
+	p->rb = node->rb;
+	node->rb = r;
 }
 
 rb_node * rb_new(char * string)
@@ -109,6 +108,47 @@ rb_node * rb_new(char * string)
 
 void rb_delete(rb_node * root, char * string)
 {
+	int right = 1;
+	if (root->parent->left == root)
+		right = 0;
+	if (right) {
+		root->parent->right = root->right;
+		if (root->left)
+			root->right->left;
+	}
+}
+
+rb_node * rb_search(rb_node * root, char * string)
+{
+	int v = lex_less(root->string, string);
+	rb_node * child = NULL;
+	rb_node * found = NULL;
+	int right = 1;
+	if (v > 0) {
+		if (root->right) {
+			return rb_search(root->right, string);
+		}
+	}
+	else if (v < 0)  {
+		if (root->left) {
+			return rb_search(root->left, string);
+		}
+	}
+	else if (v == 0) {
+		return root;
+	}
+	return NULL;
+}
+
+void rb_destroy_tree(rb_node * root)
+{
+	if (root->left)
+		rb_destroy_tree(root->left);
+	if (root->right)
+		rb_destroy_tree(root->right);
+	
+	free(root);
+	root = NULL;
 }
 
 int lex_less(char * str1, char * str2)

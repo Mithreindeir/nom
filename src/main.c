@@ -27,6 +27,6 @@ int main(int argc, char ** argv)
 		nom_repl();
 		return 0;
 	}
-	nom_run_file(argv[1]);
+	nom_run_file("tests/test.nom");
 	return 0;
 }

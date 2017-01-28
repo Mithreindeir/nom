@@ -35,12 +35,14 @@ struct rb_node
 	int rb;
 };
 
-rb_node * rb_node_init();
 void rb_insert(rb_node * root, char * string);
+void rb_delete(rb_node * root, char * string);
+rb_node * rb_search(rb_node * root, char * string);
+void rb_destroy_tree(rb_node * root);
+
 void rb_rotate_right(rb_node * node);
 void rb_rotate_left(rb_node * node);
 rb_node * rb_new(char * string);
-void rb_delete(rb_node * root, char * string);
 
 int lex_less(char * str1, char * str2);
 

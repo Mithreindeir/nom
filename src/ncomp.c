@@ -59,78 +59,6 @@ void traverse(node * node)
 
 	printf("%s ", node->val.tok);
 }
-void tree_traverse(node * node)
-{
-	printf(" %s ", node->val.tok);
-	//if (node->left || node->right)
-	//	printf("\n");
-
-	if (node->left) {
-		printf("L(");
-		tree_traverse(node->left);
-		printf(") ");
-	}
-	if (node->right) {
-		printf("R(");
-		tree_traverse(node->right);
-		printf(") ");
-	}
-}
-
-float solve_traverse(node * node)
-{
-	if (node->val.type == INT)
-		return atoi(node->val.tok);
-	float a, b, ans;
-	if (node->left)
-		a = solve_traverse(node->left);
-	//printf("%s", node->val);
-	if (node->right)
-		b = solve_traverse(node->right);
-
-	if (node->val.type == PLUS)
-	{
-		return a + b;
-	}
-	else if (node->val.type == MINUS)
-	{
-		return a - b;
-	}
-	else if (node->val.type == MULT)
-	{
-		return a * b;
-	}
-	else if (node->val.type == DIVIDE)
-	{
-		return a / b;
-	}
-	else if (node->val.type == GREATER)
-	{
-		return a > b;
-	}
-	else if (node->val.type == GREATER_OR_EQ)
-	{
-		return a >= b;
-	}
-	else if (node->val.type == LESS)
-	{
-		return a < b;
-	}
-	else if (node->val.type == LESS_OR_EQ)
-	{
-		return a <= b;
-	}
-	else if (node->val.type == IS_EQUAL)
-	{
-		return a == b;
-	}
-	else if (node->val.type == NOT_EQUAL)
-	{
-		return a != b;
-	}
-
-}
-
 void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 {
 	if (!node)
@@ -472,7 +400,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	}
 	else if (node->val.type == GREATER)
 	{
-		push_instr(instrl, GTE, 0);
+		push_instr(instrl, GT, 0);
 		return;
 	}
 	else if (node->val.type == GREATER_OR_EQ)
