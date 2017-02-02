@@ -220,7 +220,6 @@ void execute(frame * currentframe)
 		else if (c.action == PUSH_STR)
 		{
 			char * str = currentframe->constants[c.idx];
-
 			push_raw_string(currentframe->data_stack, str);
 		}
 		else if (c.action == POP_STR)

@@ -483,10 +483,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		{
 			node * etop = op_stack_pop(expressionstack);
 			node * netop = op_stack_pop(expressionstack);
-			if (top->val.type == UNARY_NEG) {
-				printf("%s and %s\n", etop->val.tok, netop->val.tok);
-				getch();
-			}
 			op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
 
 		}

@@ -25,9 +25,11 @@
 void nom_print(frame * currentframe)
 {
 	int args = pop_number(currentframe->data_stack);
+	//printf("args: %d\n", args);
 	for (int i = 0; i < args; i++)
 	{
 		element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
+		//printf("\t type: %d \n", e.type);
 		if (e.type == NUM) {
 			nom_number n = pop_number(currentframe->data_stack);
 			if (floorf(n) == n)
@@ -100,12 +102,14 @@ void nom_random(frame * currentframe)
 
 void nom_time(frame * currentframe)
 {
+	pop_number(currentframe->data_stack);
 	float t = difftime(time(NULL), 0);
 	push_number(currentframe->data_stack, t);
 }
 
 void nom_clock(frame * currentframe)
 {
+	pop_number(currentframe->data_stack);
 	int c = clock();
 	float sec = (float)(c) / CLOCKS_PER_SEC;
 	push_number(currentframe->data_stack, sec);
