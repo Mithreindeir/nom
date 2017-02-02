@@ -29,7 +29,7 @@ typedef struct instr_list
 	int num_instructions;
 } instr_list;
 
-void push_instr(instr_list * instrl, int instr, float op);
+void push_instr(instr_list * instrl, int instr, int op);
 
 void compile(node * bop, frame * currentframe);
 void traverse(node * node);

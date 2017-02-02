@@ -18,7 +18,7 @@
 
 #include "ncomp.h"
 
-void push_instr(instr_list * instrl, int instr, float op)
+void push_instr(instr_list * instrl, int instr,  int op)
 {
 	instrl->num_instructions++;
 	if (instrl->num_instructions == 1)
@@ -210,6 +210,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	{
 		//STORE_NAME
 		//push_instr(instrl, );
+
 		if (node->next->val.type != IDENTIFIER)
 		{
 			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->next->val.tok);

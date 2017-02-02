@@ -2,8 +2,13 @@ fibonacci = function(n):
   if n < 2:
     return n
   end
-  return fibonacci(n - 2) + fibonacci(n - 1)
+  return fibonacci(n-1) + fibonacci(n-2)
 end
 
-print(fibonacci(35))
-print("\n")
+for i=2,i<=35,i++:
+  t = clock()
+  x = fibonacci(i)
+  t2 = clock() - t
+  print("The fibonacci of ", i, " is ", x, " in ", t2, " seconds\n")
+end
+input()

@@ -372,7 +372,7 @@ int token_type(char * tok, int * len)
 	}
 	else if (!strncmp(tok, "-", 1))
 	{
-		if (last_tok_type == INT || last_tok_type == FLOAT || last_tok_type == IDENTIFIER)
+		if (last_tok_type == INT || last_tok_type == FLOAT || last_tok_type == IDENTIFIER || RPAREN)
 		{
 			*len = 1;
 			return MINUS;
