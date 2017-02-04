@@ -376,6 +376,22 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		}
 		else if (tok.type == RPAREN)
 		{
+			int nest = 1;
+			for (int j = i; j >= start; j--)
+			{
+				token t = tokens[j];
+				if (t.type == FUNC_CALL || t.type == LPAREN) {
+					nest--;
+					if (nest <= 0) {
+						if (t.type == FUNC_CALL)
+							func = 1;
+						else func = 0;
+						break;
+					}
+				}
+				if (t.type == RPAREN)
+					nest++;
+			}
 
 			if (func)
 			{
@@ -412,7 +428,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 						nested++;
 					if (nested <= 0)
 						break;
-					if (t.type == COMMA)
+					if (t.type == COMMA && nested < 2)
 						num_args++;
 					total_toks++;
 				}
