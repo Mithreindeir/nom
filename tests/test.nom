@@ -1,14 +1,16 @@
-fibonacci = function(n):
-  if n < 2:
-    return n
+num = 10
+str = "Yea"
+
+func = function():
+  num--
+  if num == 30:
+      str = "Ya"
   end
-  return fibonacci(n-1) + fibonacci(n-2)
+  else:
+    str = "na"
+  end
+  return num
 end
 
-for i=2,i<=35,i++:
-  t = clock()
-  x = fibonacci(i)
-  t2 = clock() - t
-  print("The fibonacci of ", i, " is ", x, " in ", t2, " seconds\n")
-end
+print(func(), " ", str, "\t", func(), " ", str, "\n")
 input()

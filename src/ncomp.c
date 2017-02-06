@@ -294,6 +294,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	}
 	else if (node->val.type == IFELSE)
 	{
+
 		start_cond = instrl->num_instructions;
 		if (node->left)
 			val_traverse(node->left, instrl, currentframe);

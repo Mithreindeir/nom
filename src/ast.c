@@ -146,7 +146,7 @@ node * block_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 	int nested = 1;
 	for (; end_tok < num_tokens; end_tok++)
 	{
-		if (tokens[end_tok].type == END || tokens[end_tok].type == ELSE)
+		if (tokens[end_tok].type == END)
 			nested--;
 		if (tokens[end_tok].type == COLON)
 			nested++;

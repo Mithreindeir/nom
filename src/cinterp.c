@@ -72,8 +72,11 @@ void exit_frame(frame * frame)
 		//	exit_frame(((nom_func*)frame->variables[i].value)->frame);
 		//if (frame->variables[i].type == STR)
 		//	free(((nom_string*)frame->variables[i].value)->str);
-		free(frame->variables[i].value);
-		free(frame->variables[i].name);
+		frame->variables[i].num_references--;
+		if (frame->variables[i].num_references <= 0) {
+			free(frame->variables[i].value);
+			free(frame->variables[i].name);
+		}
 	}
 	if (frame->variables) free(frame->variables);
 	for (int i = 0; i < frame->num_constants; i++)
@@ -167,6 +170,7 @@ void create_var(frame * currentframe, char * name, int type)
 	nom_variable var;
 	var.name = STRDUP(name);
 	var.type = NONE;
+	var.num_references = 1;
 
 	currentframe->num_variables++;
 	if (currentframe->num_variables == 1)
@@ -385,21 +389,8 @@ void execute(frame * currentframe)
 					if (rv)
 					{
 						change_type(v, rv->type);
-
-						if (v->type == NUM) {
-							*((nom_number*)v->value) = *((nom_number*)rv->value);
-						}
-						else if (v->type == BOOL) {
-							*((nom_boolean*)v->value) = *((nom_boolean*)rv->value);
-						}
-						else if (v->type == STR)
-						{
-							*((nom_string*)v->value) = *((nom_string*)rv->value);
-						}
-						else if (v->type == FUNC)
-						{
-							*((nom_func*)v->value) = *((nom_func*)rv->value);
-						}
+						v->num_references++;
+						v->value = rv->value;
 					}
 				}
 				execute(f.frame);
