@@ -24,6 +24,9 @@
 #include "ast.h"
 #include "ncomp.h"
 
+//Functions in the nom standard library
+
+
 void nom_print(frame * currentframe);
 void nom_input(frame * currentframe);
 void nom_seed(frame * currentframe);

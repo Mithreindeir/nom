@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include "nerr.h"
 
+//Types of recognizable tokens
 enum TOKEN_TYPES
 {
 	IF,

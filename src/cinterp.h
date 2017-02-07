@@ -37,6 +37,7 @@ typedef enum nom_type
 	NONE
 } nom_type;
 
+//Variable in nom
 typedef struct nom_variable
 {
 	char * name;
@@ -46,7 +47,7 @@ typedef struct nom_variable
 } nom_variable;
 
 typedef struct element element;
-
+//Element in the data stack. 
 struct element
 {
 	element * next;
@@ -55,6 +56,7 @@ struct element
 	int size;
 };
 
+//Data stack used in stack machine as intermediary between values, variables, and operations
 typedef struct stack
 {
 	char * buff;
@@ -64,7 +66,7 @@ typedef struct stack
 } stack;
 
 typedef struct frame frame;
-
+//Program frame. This holds all information about a program in a certain scope
 struct frame
 {
 	frame * parent;
@@ -81,7 +83,7 @@ struct frame
 typedef float nom_number;
 typedef int nom_boolean;
 typedef void(*nom_external_func)(frame * cf);
-
+//Callable function in nom
 typedef struct nom_func
 {
 	frame * frame;
@@ -90,7 +92,7 @@ typedef struct nom_func
 	int external;
 	nom_external_func func;
 } nom_func;
-
+//String data type 
 typedef struct nom_string
 {
 	int num_characters;

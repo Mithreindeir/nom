@@ -23,10 +23,12 @@
 
 int main(int argc, char ** argv)
 {
+	//Launch the interpreter if no arguments
 	if (argc < 2) {
 		nom_repl();
 		return 0;
 	}
+	//Run a file if specified
 	nom_run_file(argv[1]);
 	return 0;
 }

@@ -19,6 +19,8 @@
 #ifndef CINSTR_H
 #define CINSTR_H
 
+
+//All possible opcodes for the nom vm
 enum OPCODES
 {
 	//Operations
@@ -61,7 +63,7 @@ enum OPCODES
 	RET	//Returns from a function, and pushes return value (if there is one) to parent stack
 };
 
-//CrapLang Instruction 1 per line
+//Nom Instruction. Has an index to a variable or constant array and an action
 typedef struct cinstr
 {
 	int action;

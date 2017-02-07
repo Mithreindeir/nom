@@ -600,8 +600,8 @@ void push_raw_string(stack * stack, char * string)
 {
 	nom_string str;
 	str.num_characters = 0;
-	str.str = NULL;
-	resize_string(&str, string, strlen(string));
+	str.str = string;
+	//resize_string(&str, string, strlen(string));
 	push(stack, &str, sizeof(nom_string));
 	push_element(stack, &stack->buff[stack->stack_ptr - sizeof(nom_string)], sizeof(nom_string), STR);
 }

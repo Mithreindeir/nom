@@ -27,8 +27,11 @@
 #include "ncomp.h"
 #include "nstd.h"
 
+//Opens and parses a file then runes
 void nom_run_file(char * file);
+//Launches a nom interpreter / REPL
 void nom_repl();
+//Registers a C function to the interpreter
 void nom_register_func(nom_interp * nom, char * name, nom_external_func func, int args);
 
 

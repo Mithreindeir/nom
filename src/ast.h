@@ -6,6 +6,7 @@
 #include "clexer.h"
 #include "nerr.h"
 
+//Type of nodes based off how many children
 enum NODE_TYPE
 {
 	UNARY,
@@ -17,6 +18,7 @@ enum NODE_TYPE
 
 typedef struct node node;
 
+//AST node to hold tokens and put them in a compilable form
 struct node
 {
 	int type;
@@ -36,6 +38,7 @@ struct node
 	token val;
 };
 
+//Stack for shunting yard algorithm
 typedef struct op_stack
 {
 	node ** stack;

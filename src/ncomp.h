@@ -23,17 +23,22 @@
 #include "cinstr.h"
 #include "cinterp.h"
 
+//List of instructions to be added to interpreter
 typedef struct instr_list
 {
 	cinstr * instructions;
 	int num_instructions;
 } instr_list;
 
+
+//Creates and adds an instruction to the list
 void push_instr(instr_list * instrl, int instr, int op);
 
+//Compiles an AST and creates a frame around it 
 void compile(node * bop, frame * currentframe);
+//Traverses an AST, and prints values
 void traverse(node * node);
-
+//Traverses an AST and compiles recursively
 void val_traverse(node * node, instr_list * instrl, frame * currentframe);
 
 #endif
