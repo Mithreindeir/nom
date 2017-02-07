@@ -29,30 +29,37 @@ Nom runs on a stack based virual machine, and nom code is compiled to nom byteco
 ## Basic usage
 A codeblock starts with a colon and ends with an end statement. This is used for everything that would require a codeblock, eg: conditionals, loops, functions.
 
+One line comments can be used with "#"
+
 If, else if and else statements
 
     if condition:
-        -- Do something
+        #Do something
     end
     elseif condition:
-        -- Do something else
+        #Do something else
     end
     else:
-        -- DO something else
+        #DO something else
     end
 Loops
   
     while condition:
-        -- do this
+        #do this
     end
     for i=start, i<end, i++:
-        -- Do something
+        #Do something
     end
 
 Functions
 
     foo = function(arg):
-        --Do things
+        #Do things
     end
     
     foo(5)
+
+
+
+## Todo
+String operations, user data types, arrays.
