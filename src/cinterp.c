@@ -73,9 +73,10 @@ void exit_frame(frame * frame)
 		//if (frame->variables[i].type == STR)
 		//	free(((nom_string*)frame->variables[i].value)->str);
 		frame->variables[i].num_references--;
+		free(frame->variables[i].name);
+
 		if (frame->variables[i].num_references <= 0) {
-			free(frame->variables[i].value);
-			free(frame->variables[i].name);
+			if (frame->variables[i].value) free(frame->variables[i].value);
 		}
 	}
 	if (frame->variables) free(frame->variables);
@@ -170,6 +171,7 @@ void create_var(frame * currentframe, char * name, int type)
 	nom_variable var;
 	var.name = STRDUP(name);
 	var.type = NONE;
+	var.value = NULL;
 	var.num_references = 1;
 
 	currentframe->num_variables++;
@@ -388,7 +390,7 @@ void execute(frame * currentframe)
 					}
 					if (rv)
 					{
-						change_type(v, rv->type);
+						//change_type(v, rv->type);
 						v->num_references++;
 						v->value = rv->value;
 					}

@@ -1,16 +1,9 @@
-num = 10
-str = "Yea"
-
-func = function():
-  num--
-  if num == 30:
-      str = "Ya"
+fib = function(n):
+  if n < 2:
+    return n
   end
-  else:
-    str = "na"
-  end
-  return num
+  return fib(n-1) + fib(n-2)
 end
 
-print(func(), " ", str, "\t", func(), " ", str, "\n")
+print(fib(35))
 input()
