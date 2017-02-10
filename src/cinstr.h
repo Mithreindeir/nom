@@ -30,6 +30,7 @@ enum OPCODES
 	DIV,	//Divides topmost 2 elements and pushes result to stack
 	NEG,	//Negates the top of the stack and pushes it back
 	AND,	//Ands topmost elements and pushes result to stack
+	NOT,	//Nots topmost element and pushes result to stack
 	OR,		//Ors topmost elements and pushes result to stack
 	NOR,	//Norss topmost elements and pushes result to stack
 	NAND,	//Nands topmost elements and pushes result to stack

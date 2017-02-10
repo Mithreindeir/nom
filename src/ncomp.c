@@ -443,6 +443,11 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, NEG, 0);
 		return;
 	}
+	else if (node->val.type == LNOT)
+	{
+		push_instr(instrl, NOT, 0);
+		return;
+	}
 	else if (node->val.type == LAND)
 	{
 		push_instr(instrl, AND, 0);

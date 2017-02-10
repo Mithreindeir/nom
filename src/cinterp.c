@@ -193,12 +193,13 @@ void execute(frame * currentframe)
 	{
 		cinstr c = currentframe->instructions[currentframe->instr_ptr];
 		currentframe->instr_ptr++;
-		if (c.action < 9)
+		if (c.action < 10) {
 			operation[c.action](currentframe->data_stack);
-		else if (c.action < 15) {
-			condition[c.action-9](currentframe->data_stack);
 		}
-		else if (c.action < 17)
+		else if (c.action < 16) {
+			condition[c.action-10](currentframe->data_stack);
+		}
+		else if (c.action < 18)
 		{
 			if (c.action == IFEQ)
 			{
@@ -701,6 +702,12 @@ void and(stack * stk)
 {
 	nom_number a = pop_number(stk), b = pop_number(stk);
 	push_number(stk, b && a);
+}
+
+void not(stack * stk)
+{
+	nom_number a = pop_number(stk);
+	push_number(stk, !a);
 }
 
 void nand(stack * stk)

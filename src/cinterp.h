@@ -169,10 +169,11 @@ void eq(stack * stk);
 void ne(stack * stk);
 //Logical operations
 void and(stack * stk);
+void not(stack * stk);
 void nand(stack * stk);
 void or(stack * stk);
 void nor(stack * stk);
 
-static void(*operation[9])(stack * stk) = {&add, &subtract, &multiply, &divide, &negate, &and, &or, &nor, &nand};
+static void(*operation[10])(stack * stk) = {&add, &subtract, &multiply, &divide, &negate, &and, &not, &or, &nor, &nand};
 static void(*condition[6])(stack*stk) = {&gt, &gte, &lt, &lte, &eq, &ne};
 #endif

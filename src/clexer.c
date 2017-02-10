@@ -233,14 +233,21 @@ int token_type(char * tok, int * len)
 	}
 	else if (!strncmp(tok, "and", max(3, tlen)))
 	{
+		
 		*len = 3;
 		return LAND;
+	}
+	else if (!strncmp(tok, "not", max(3, tlen)))
+	{
+		*len = 3;
+		return LNOT;
 	}
 	else if (!strncmp(tok, "nand", max(4, tlen)))
 	{
 		*len = 4;
 		return LNAND;
 	}
+
 	else if (!strncmp(tok, "==", 2))
 	{
 		*len = 2;
@@ -437,7 +444,7 @@ int is_operator(token tok)
 		return 1;
 	if (tok.type == EQUAL)
 		return 1;
-	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC)
+	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC || tok.type == LNOT)
 		return 1;
 	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
 		return 1;
@@ -467,15 +474,15 @@ int token_precedence(token tok)
 		return 1;
 	if (tok.type == MULT || tok.type == DIVIDE)
 		return 2;
-	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC)
+	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC || tok.type == LNOT)
 		return 3;
 
-	return 0;
+	return -3;
 }
 
 int token_associative(token tok)
 {
-	if (tok.type == UNARY_NEG)
+	if (tok.type == UNARY_NEG || tok.type == LNOT)
 		return 0;
 	if (tok.type == RETURN)
 		return 0;
@@ -494,7 +501,7 @@ int token_idxs(token tok)
 		return 1;
 	if (tok.type == LESS || tok.type == GREATER || tok.type == LESS_OR_EQ || tok.type == GREATER_OR_EQ || tok.type == IS_EQUAL || tok.type == NOT_EQUAL)
 		return 2;
-	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC)
+	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC || tok.type == LNOT)
 		return 1;
 	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
 		return 2;

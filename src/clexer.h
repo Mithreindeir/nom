@@ -67,6 +67,7 @@ enum TOKEN_TYPES
 	BOR,
 	BXOR,
 	LAND,
+	LNOT,
 	LNAND,
 	LOR,
 	LNOR,
