@@ -604,6 +604,7 @@ void push_raw_string(stack * stack, char * string)
 	nom_string str;
 	str.num_characters = 0;
 	str.str = string;
+	str.num_characters = strlen(str.str);
 	//resize_string(&str, string, strlen(string));
 	push(stack, &str, sizeof(nom_string));
 	push_element(stack, &stack->buff[stack->stack_ptr - sizeof(nom_string)], sizeof(nom_string), STR);
@@ -631,8 +632,34 @@ nom_func pop_func(stack * stk)
 
 void add(stack * stk)
 {
-	nom_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, b + a);
+	//Adding numbers or apphending strings
+	if (stk->num_elements < 2)
+		return;
+	int t1, t2;
+	t1 = stk->elements[stk->num_elements - 1].type;
+	t2 = stk->elements[stk->num_elements - 2].type;
+	if (t1 == NUM && t2 == NUM) {
+		nom_number a = pop_number(stk), b = pop_number(stk);
+		push_number(stk, b + a);
+	}
+	else if (t1 == STR && t2 == STR) {
+		nom_string b = pop_string(stk);
+		nom_string a = pop_string(stk);
+		int size = a.num_characters + b.num_characters;
+
+		char * str = malloc(size);
+		memset(str, 0, size);
+		for (int i = 0; i < size; i++) {
+			if (i < a.num_characters) {
+				str[i] = a.str[i];
+			}
+			else {
+				str[i] = b.str[i - a.num_characters];
+			}
+		}
+		str[size] = '\0';
+		push_raw_string(stk, str);
+	}
 }
 
 void subtract(stack * stk)
@@ -687,15 +714,40 @@ void lte(stack * stk)
 
 void eq(stack * stk)
 {
-
-	nom_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, b == a);
+	//Adding numbers or apphending strings
+	if (stk->num_elements < 2)
+		return;
+	int t1, t2;
+	t1 = stk->elements[stk->num_elements - 1].type;
+	t2 = stk->elements[stk->num_elements - 2].type;
+	if (t1 == NUM && t2 == NUM) {
+		nom_number a = pop_number(stk), b = pop_number(stk);
+		push_number(stk, b == a);
+	}
+	else if (t1 == STR && t2 == STR) {
+		nom_string b = pop_string(stk);
+		nom_string a = pop_string(stk);
+		push_number(stk, !strcmp(a.str, b.str));
+	}
 }
 
 void ne(stack * stk)
 {
-	nom_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, b != a);
+	//Adding numbers or apphending strings
+	if (stk->num_elements < 2)
+		return;
+	int t1, t2;
+	t1 = stk->elements[stk->num_elements - 1].type;
+	t2 = stk->elements[stk->num_elements - 2].type;
+	if (t1 == NUM && t2 == NUM) {
+		nom_number a = pop_number(stk), b = pop_number(stk);
+		push_number(stk, b != a);
+	}
+	else if (t1 == STR && t2 == STR) {
+		nom_string b = pop_string(stk);
+		nom_string a = pop_string(stk);
+		push_number(stk, strcmp(a.str, b.str));
+	}
 }
 
 void and(stack * stk)
