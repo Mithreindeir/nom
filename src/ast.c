@@ -204,7 +204,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 			if (i > start)
 			{
 				token t2 = tokens[i - 1];
-				if (t2.type == IDENTIFIER) {
+				if (t2.type == IDENTIFIER && !func) {
 					func = 1;
 					tok.type = FUNC_CALL;
 					tokens[i].type = FUNC_CALL;
@@ -376,7 +376,8 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		}
 		else if (tok.type == RPAREN)
 		{
-			int nest = 1;
+			int nest = 0;
+			func = 0;
 			for (int j = i; j >= start; j--)
 			{
 				token t = tokens[j];
@@ -407,7 +408,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 					}
 					else if (num_idxs == 1)
 					{
-
 						node * etop = op_stack_pop(expressionstack);
 						op_stack_push(expressionstack, node_init_unary(top->val, etop));
 					}
@@ -444,6 +444,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				}
 				func_call->branches[0] = op_stack_pop(expressionstack);
 				op_stack_push(expressionstack, func_call);
+				func = 0;
 			}
 			else {
 				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != LPAREN)
