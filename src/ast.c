@@ -204,7 +204,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 			if (i > start)
 			{
 				token t2 = tokens[i - 1];
-				if (t2.type == IDENTIFIER && !func) {
+				if (t2.type == IDENTIFIER) {
 					func = 1;
 					tok.type = FUNC_CALL;
 					tokens[i].type = FUNC_CALL;

@@ -25,6 +25,7 @@
 void nom_print(frame * currentframe)
 {
 	int args = pop_number(currentframe->data_stack);
+
 	//printf("args: %d\n", args);
 	for (int i = 0; i < args; i++)
 	{

@@ -328,6 +328,7 @@ void execute(frame * currentframe)
 		{
 			nom_variable * var = &currentframe->variables[(int)c.idx];
 			nom_func f = *((nom_func*)var->value);
+
 			if (f.external)
 			{
 				f.func(currentframe);
@@ -407,13 +408,14 @@ void execute(frame * currentframe)
 			}
 		}
 		else if (c.action == RET)
-		{
+		{			
 			if (currentframe->data_stack->stack_ptr > 0 && currentframe->parent)
 			{
 				element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
 				if (e.type == NUM) {
 					nom_number n;
 					store(currentframe->data_stack, &n, sizeof(nom_number), 0);
+
 					push_number(currentframe->parent->data_stack, n);
 				}
 				else if (e.type == BOOL) {
