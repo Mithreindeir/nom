@@ -49,6 +49,79 @@ void  compile(node * bop, frame * currentframe)
 	free(instrl);
 }
 
+int push_member_idx(node * node, instr_list * instrl, frame * currentframe)
+{
+	int args = 0;
+	if (node->val.type == IDENTIFIER) {
+		int idx = get_var_index(currentframe, node->val.tok);
+		if (idx == -1)
+		{
+			create_var(currentframe, node->val.tok, NONE);
+			idx = currentframe->num_variables - 1;
+		}
+		args++;
+
+		push_instr(instrl, PUSH_IDX, idx);
+	}
+	else {
+		struct node * cnode = node;
+		int idx = get_var_index(currentframe, cnode->left->val.tok);
+		if (idx == -1)
+		{
+			create_var(currentframe, cnode->left->val.tok, NUM);
+			idx = currentframe->num_variables - 1;
+		}
+		args++;
+		push_instr(instrl, PUSH_IDX, idx);
+		nom_variable * lvar = &currentframe->variables[idx];
+
+		if (cnode->right->val.type == IDENTIFIER) {
+
+			idx = get_var_index_local(lvar, cnode->right->val.tok);
+			if (idx == -1)
+			{
+				create_var_local(lvar, cnode->right->val.tok, NUM);
+				idx = lvar->num_members - 1;
+			}
+			args++;
+
+			push_instr(instrl, PUSH_IDX, idx);
+		}
+		else {
+			cnode = cnode->right;
+			lvar = &currentframe->variables[idx];
+			while (1) {
+				idx = get_var_index_local(lvar, cnode->left->val.tok);
+				if (idx == -1)
+				{
+					create_var_local(lvar, cnode->left->val.tok, NUM);
+					idx = lvar->num_members - 1;
+				}
+				args++;
+
+				push_instr(instrl, PUSH_IDX, idx);
+				lvar = &lvar->members[idx];
+				if (cnode->right->val.type == IDENTIFIER) {
+					idx = get_var_index_local(lvar, cnode->right->val.tok);
+					if (idx == -1)
+					{
+						create_var_local(lvar, cnode->right->val.tok, NUM);
+						idx = lvar->num_members - 1;
+					}
+					args++;
+
+					push_instr(instrl, PUSH_IDX, idx);
+					break;
+				}
+				else {
+					cnode = cnode->right;
+				}
+			}
+		}
+	}
+	return args;
+}
+
 
 void traverse(node * node)
 {
@@ -113,15 +186,8 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		nom_number * val = malloc(sizeof(nom_number));
 		*val = args;
 		push_instr(instrl, PUSH, add_const(currentframe, val));
-
-		int idx = get_var_index(currentframe, node->branches[0]->val.tok);
-		if (idx == -1)
-		{
-			//syntax_error(node->branches[0]->val.tok, node->branches[0]->val.col, node->branches[0]->val.row, "Undefined function");
-			create_var(currentframe, node->branches[0]->val.tok, NUM);
-			idx = currentframe->num_variables - 1;
-		}
-		push_instr(instrl, CALL, idx);
+		int nargs = push_member_idx(node->branches[0], instrl, currentframe);
+		push_instr(instrl, CALL, nargs);
 		return;
 	}
 	else if (node->val.type == INT)
@@ -146,7 +212,6 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		int j = 0;
 		for (int i = 0; i < size; i++)
 		{
-
 			char c = node->val.tok[j];
 			if (c == '\\')
 			{
@@ -174,6 +239,12 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		str[size] = '\0';
 		push_instr(instrl, PUSH_STR, add_const(currentframe, str));
 	}
+	else if (node->val.type == DOT)
+	{
+		int args = push_member_idx(node, instrl, currentframe);
+		push_instr(instrl, LOAD_NAME, args);
+		return;
+	}
 	else if (node->val.type == IDENTIFIER)
 	{
 		int idx = get_var_index(currentframe, node->val.tok);
@@ -182,30 +253,25 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 			create_var(currentframe, node->val.tok, NUM);
 			idx = currentframe->num_variables - 1;
 		}
-		push_instr(instrl, LOAD_NAME, idx);
+		push_instr(instrl, PUSH_IDX, idx);
+		push_instr(instrl, LOAD_NAME, 1);
 		return;
 	}
 	else if (node->val.type == EQUAL)
 	{
 		//STORE_NAME
 		//push_instr(instrl, );
-		if (node->left->val.type != IDENTIFIER)
+		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT)
 		{
 			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->left->val.tok);
 			abort();
 		}
 		else
 		{
-			int idx = get_var_index(currentframe, node->left->val.tok);
-			if (idx == -1)
-			{
-				create_var(currentframe, node->left->val.tok, NONE);
-				idx = currentframe->num_variables - 1;
-			}
 			if (node->right)
 				val_traverse(node->right, instrl, currentframe);
-
-			push_instr(instrl, STORE_NAME, idx);
+			int args = push_member_idx(node->left, instrl, currentframe);
+			push_instr(instrl, STORE_NAME, args);
 		}
 		return;
 	}
@@ -214,26 +280,21 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		//STORE_NAME
 		//push_instr(instrl, );
 
-		if (node->next->val.type != IDENTIFIER)
+		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT)
 		{
 			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->next->val.tok);
 			abort();
 		}
 		else
 		{
-
-			int idx = get_var_index(currentframe, node->next->val.tok);
-			if (idx == -1)
-			{
-				create_var(currentframe, node->next->val.tok, NONE);
-				idx = currentframe->num_variables - 1;
-			}
-			push_instr(instrl, LOAD_NAME, idx);
+			int args = push_member_idx(node->next, instrl, currentframe);
+			push_instr(instrl, LOAD_NAME, args);
 			nom_number * val = malloc(sizeof(nom_number));
 			*val = 1;
 			push_instr(instrl, PUSH, add_const(currentframe, val));
 			push_instr(instrl, ADD, 0);
-			push_instr(instrl, STORE_NAME, idx);
+			args = push_member_idx(node->next, instrl, currentframe);
+			push_instr(instrl, STORE_NAME, args);		
 		}
 		return;
 	}
@@ -242,26 +303,21 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 
 		//STORE_NAME
 		//push_instr(instrl, );
-		if (node->next->val.type != IDENTIFIER)
+		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT)
 		{
 			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->next->val.tok);
 			abort();
 		}
 		else
 		{
-
-			int idx = get_var_index(currentframe, node->next->val.tok);
-			if (idx == -1)
-			{
-				create_var(currentframe, node->next->val.tok, NONE);
-				idx = currentframe->num_variables - 1;
-			}
-			push_instr(instrl, LOAD_NAME, idx);
+			int args = push_member_idx(node->next, instrl, currentframe);
+			push_instr(instrl, LOAD_NAME, args);
 			nom_number * val = malloc(sizeof(nom_number));
 			*val = -1;
 			push_instr(instrl, PUSH, add_const(currentframe, val));
 			push_instr(instrl, ADD, 0);
-			push_instr(instrl, STORE_NAME, idx);
+			args = push_member_idx(node->next, instrl, currentframe);
+			push_instr(instrl, STORE_NAME, args);
 		}
 		return;
 	}

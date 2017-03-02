@@ -45,6 +45,7 @@ enum OPCODES
 	IFEQ,	//Jumps to x if top of stack is 0
 	JUMP,	//Jumps to x
 	//Memory
+	PUSH_IDX,	//Pushes the idx to stack
 	PUSH,	//Pushes number to stack
 	POP,	//Pops top of stack
 	PUSH_STR,	//Pushes string to stack

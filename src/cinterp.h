@@ -34,17 +34,23 @@ typedef enum nom_type
 	NUM,
 	BOOL,
 	FUNC,
+	STRUCT,
 	NONE
 } nom_type;
 
+typedef struct nom_variable nom_variable;
+
 //Variable in nom
-typedef struct nom_variable
+struct nom_variable
 {
 	char * name;
 	void * value;
 	nom_type type;
 	int num_references;
-} nom_variable;
+	int num_members;
+	int member_ref;
+	nom_variable * members;
+};
 
 typedef struct element element;
 //Element in the data stack. 
@@ -99,6 +105,14 @@ typedef struct nom_string
 	char  * str;
 } nom_string;
 
+//User struct type (temporary for passing)
+typedef struct nom_struct
+{
+	int mem_ref;
+	int num_members;
+	nom_variable * members;
+} nom_struct;
+
 const static int nom_type_size[] = { sizeof(nom_string), sizeof(nom_number), sizeof(nom_boolean), sizeof(nom_func), 0 };
 
 //NomLang interpreter
@@ -127,6 +141,12 @@ void resize_string(nom_string * str, char * nstr, int size);
 void change_type(nom_variable * old, int ntype);
 int get_var_index(frame * currentframe, char * name);
 void create_var(frame * currentframe, char * name, int type);
+//Add or get from a variables member list
+int get_var_index_local(nom_variable * lvar, char * name);
+void create_var_local(nom_variable * lvar,  char * name, int type);
+void nom_var_free_members(nom_variable * var);
+void nom_var_add_ref(nom_variable * var);
+
 
 void execute(frame * currentframe);
 stack * stack_init();
@@ -154,6 +174,8 @@ void push_raw_string(stack * stack, char * str);
 nom_string pop_string(stack * stk);
 void push_func(stack * stack, nom_func func);
 nom_func pop_func(stack * stk);
+void push_struct(stack * stack, nom_struct nstruct);
+nom_struct pop_struct(stack * stk);
 //operations
 void add(stack * stk);
 void subtract(stack * stk);

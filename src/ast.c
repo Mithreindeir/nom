@@ -208,6 +208,18 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 					func = 1;
 					tok.type = FUNC_CALL;
 					tokens[i].type = FUNC_CALL;
+					while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type == DOT) {
+						node * top = op_stack_pop(operatorstack);
+
+						int num_idxs = token_idxs(top->val);
+						if (num_idxs == 2)
+						{
+							node * etop = op_stack_pop(expressionstack);
+							node * netop = op_stack_pop(expressionstack);
+							op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+						}
+						free(top);
+					}
 				}
 			}
 			op_stack_push(operatorstack, node_init_op(tok));

@@ -395,6 +395,11 @@ int token_type(char * tok, int * len)
 		*len = 1;
 		return MULT;
 	}
+	else if (!strncmp(tok, ".", 1))
+	{
+		*len = 1;
+		return DOT;
+	}
 	else if (!strncmp(tok, "/", 1))
 	{
 		*len = 1;
@@ -440,6 +445,8 @@ int is_operator(token tok)
 {
 	if (tok.type == PLUS || tok.type == MINUS || tok.type == DIVIDE || tok.type == MULT)
 		return 1;
+	if (tok.type == DOT)
+		return 1;
 	if (tok.type == LESS || tok.type == GREATER || tok.type == LESS_OR_EQ || tok.type == GREATER_OR_EQ || tok.type == IS_EQUAL || tok.type == NOT_EQUAL)
 		return 1;
 	if (tok.type == EQUAL)
@@ -476,7 +483,8 @@ int token_precedence(token tok)
 		return 2;
 	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC || tok.type == LNOT)
 		return 3;
-
+	if (tok.type == DOT)
+		return 4;
 	return -3;
 }
 
@@ -492,6 +500,8 @@ int token_associative(token tok)
 int token_idxs(token tok)
 {
 	if (tok.type == PLUS || tok.type == MINUS)
+		return 2;
+	if (tok.type == DOT)
 		return 2;
 	if (tok.type == MULT || tok.type == DIVIDE)
 		return 2;

@@ -60,6 +60,7 @@ enum TOKEN_TYPES
 	MINUS,
 	DIVIDE,
 	MULT,
+	DOT,
 	INC,
 	DEC,
 	UNARY_NEG,
