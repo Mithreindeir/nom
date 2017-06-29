@@ -31,7 +31,7 @@ int max(int a, int b)
 }
 int tcidx = 0;
 int col = 0, row = 0;
-
+//Separates into tokens
 char * strtokm(char * s)
 {
 	if (!s || s[tcidx] == '\0')
@@ -79,6 +79,7 @@ char * strtokm(char * s)
 }
 //The type of the last token for context related idxs (eg: unary_neg vs binary_sub)
 int last_tok_type = -1;
+//Tokenizes the string and sets the type of token
 token * tokenize(char * file, int * num_tok)
 {
 	tcidx = 0;
@@ -169,7 +170,7 @@ token * tokenize(char * file, int * num_tok)
 	return tokens;
 }
 
-
+//Returns token type given token and sets length
 int token_type(char * tok, int * len)
 {
 	int tlen = strlen(tok);
@@ -441,6 +442,7 @@ int token_type(char * tok, int * len)
 	return -1;
 }
 
+//Returns if the token is an operator
 int is_operator(token tok)
 {
 	if (tok.type == PLUS || tok.type == MINUS || tok.type == DIVIDE || tok.type == MULT)
@@ -460,6 +462,7 @@ int is_operator(token tok)
 	return 0;
 }
 
+//Returns if the token is a conditional/branch
 int is_conditional(token tok)
 {
 	if (tok.type == WHILE || tok.type == FOR || tok.type == IF || tok.type == ELSE || tok.type == ELSEIF)
@@ -467,6 +470,7 @@ int is_conditional(token tok)
 	return 0;
 }
 
+//Returns the a number corresponding to the priority/precedence of the token
 int token_precedence(token tok)
 {
 	if (tok.type == EQUAL)
@@ -488,6 +492,7 @@ int token_precedence(token tok)
 	return -3;
 }
 
+//Is the token right or left associative
 int token_associative(token tok)
 {
 	if (tok.type == UNARY_NEG || tok.type == LNOT)
@@ -497,6 +502,7 @@ int token_associative(token tok)
 	return 1;
 }
 
+//Returns the index of the token
 int token_idxs(token tok)
 {
 	if (tok.type == PLUS || tok.type == MINUS)

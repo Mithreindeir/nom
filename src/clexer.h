@@ -75,7 +75,8 @@ enum TOKEN_TYPES
 	IDENTIFIER,
 	NEWLINE,
 	COMMENT,
-	FUNC_CALL
+	FUNC_CALL,
+	MEM_IDX
 };
 
 typedef struct token

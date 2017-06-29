@@ -18,6 +18,7 @@
 
 #include "ncomp.h"
 
+//Pushes an instruction into the list given instruction and operator
 void push_instr(instr_list * instrl, int instr,  int op)
 {
 	instrl->num_instructions++;
@@ -35,6 +36,7 @@ void push_instr(instr_list * instrl, int instr,  int op)
 	instrl->instructions[instrl->num_instructions - 1] = c;
 }
 
+//Compiles AST into instructions
 void  compile(node * bop, frame * currentframe)
 {
 	instr_list * instrl = malloc(sizeof(instr_list));
@@ -49,6 +51,7 @@ void  compile(node * bop, frame * currentframe)
 	free(instrl);
 }
 
+//Gets index of variable by searching through the data structure (The eg x.y.z index)
 int push_member_idx(node * node, instr_list * instrl, frame * currentframe)
 {
 	int args = 0;
@@ -113,7 +116,7 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe)
 					push_instr(instrl, PUSH_IDX, idx);
 					break;
 				}
-				else {
+				else if (cnode->right->val.type == DOT) {
 					cnode = cnode->right;
 				}
 			}
@@ -132,6 +135,8 @@ void traverse(node * node)
 
 	printf("%s ", node->val.tok);
 }
+
+//Traverses the tree and creates instructions from each node
 void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 {
 	if (!node)
@@ -190,6 +195,17 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, CALL, nargs);
 		return;
 	}
+	else if (node->val.type == MEM_IDX)
+	{
+		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT && node->left->val.type == MEM_IDX)
+		{
+			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->left->val.tok);
+			abort();
+		}
+		int args = push_member_idx(node, instrl, currentframe);
+		push_instr(instrl, LOAD_NAME, args);
+		return;
+	}
 	else if (node->val.type == INT)
 	{
 		nom_number * val = malloc(sizeof(nom_number));
@@ -241,6 +257,11 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	}
 	else if (node->val.type == DOT)
 	{
+		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT && node->left->val.type == MEM_IDX)
+		{
+			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->left->val.tok);
+			abort();
+		}
 		int args = push_member_idx(node, instrl, currentframe);
 		push_instr(instrl, LOAD_NAME, args);
 		return;

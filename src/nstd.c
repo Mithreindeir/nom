@@ -19,11 +19,15 @@
 #include "nstd.h"
 #include <math.h>
 #include <time.h>
+#include "napi.h"
 
 #pragma warning(disable:4996)
 
+//Standart Print Function
+//Takes an arbitrary amount of arguments of any data type and prints it
 void nom_print(frame * currentframe)
 {
+	
 	int args = pop_number(currentframe->data_stack);
 
 	//printf("args: %d\n", args);
@@ -53,6 +57,7 @@ void nom_print(frame * currentframe)
 	}
 }
 
+//Returns input from stdin. Default as string unless number then return float or int
 void nom_input(frame * currentframe)
 {	
 	int args = pop_number(currentframe->data_stack);
@@ -79,9 +84,10 @@ void nom_input(frame * currentframe)
 	}
 }
 
+//Seeds random function.
 void nom_seed(frame * currentframe)
 {
-	int args = pop_number(currentframe->data_stack);
+	int args = pop_number(currentframe->data_stack); 
 
 	if (currentframe->data_stack->num_elements < 1)
 		return;
@@ -92,7 +98,7 @@ void nom_seed(frame * currentframe)
 		srand((int)n);
 	}
 }
-
+//Returns a random number taking a min and a max
 void nom_random(frame * currentframe)
 {
 	int args = pop_number(currentframe->data_stack);
@@ -100,7 +106,7 @@ void nom_random(frame * currentframe)
 	int max = (int)(pop_number(currentframe->data_stack));
 	push_number(currentframe->data_stack, (rand() % (max - min)) + min);
 }
-
+//Time since epoch
 void nom_time(frame * currentframe)
 {
 	pop_number(currentframe->data_stack);
@@ -108,6 +114,7 @@ void nom_time(frame * currentframe)
 	push_number(currentframe->data_stack, t);
 }
 
+//CPU clock
 void nom_clock(frame * currentframe)
 {
 	pop_number(currentframe->data_stack);
@@ -126,4 +133,17 @@ void nom_floor(frame * currentframe)
 
 void nom_ceil(frame * currentframe)
 {
+}
+//Runs a nom program taking PATH as input
+void nom_run(frame * currentframe)
+{
+
+	int args = pop_number(currentframe->data_stack);
+
+	element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
+	if (e.type == STR)
+	{
+		nom_string str = pop_string(currentframe->data_stack);
+		nom_run_file(str.str);
+	}
 }

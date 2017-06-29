@@ -18,7 +18,7 @@
 
 #include "ast.h"
 
-
+//Initialize a stack structure
 op_stack * op_stack_init()
 {
 	op_stack * nstack = malloc(sizeof(op_stack));
@@ -26,7 +26,7 @@ op_stack * op_stack_init()
 	nstack->stack = NULL;
 	return nstack;
 }
-
+//Returns top node in stack
 node * op_stack_gettop(op_stack * stack)
 {
 	if (stack->size <= 0)
@@ -35,6 +35,7 @@ node * op_stack_gettop(op_stack * stack)
 	return top;
 }
 
+//Pushes a node to top of the stack
 void op_stack_push(op_stack * stack, node * nnode)
 {
 	stack->size++;
@@ -49,6 +50,7 @@ void op_stack_push(op_stack * stack, node * nnode)
 	stack->stack[stack->size - 1] = nnode;
 }
 
+//Pops top node from stack
 node * op_stack_pop(op_stack * stack)
 {
 	if (stack->size <= 0)
@@ -67,6 +69,7 @@ node * op_stack_pop(op_stack * stack)
 	return top;
 }
 
+//Initializes a node as empty
 node * node_init()
 {
 	node * bo = malloc(sizeof(node));
@@ -74,6 +77,7 @@ node * node_init()
 	return bo;
 }
 
+//Initialize a node as an operation
 node * node_init_op(token tok)
 {
 	node * bo = malloc(sizeof(node));
@@ -83,7 +87,7 @@ node * node_init_op(token tok)
 	bo->type = LEAF;
 	return bo;
 }
-
+//Initialize a node as a binary operator
 node * node_init_binary(token  op, node * l, node * r)
 {
 	node * bo = malloc(sizeof(node));
@@ -94,6 +98,7 @@ node * node_init_binary(token  op, node * l, node * r)
 	return bo;
 }
 
+//initialize a node as unary operator
 node * node_init_unary(token op, node * n)
 {
 	node * bo = malloc(sizeof(node));
@@ -102,7 +107,7 @@ node * node_init_unary(token op, node * n)
 	bo->type = UNARY;
 	return bo;
 }
-
+//Create an AST from a token list, returning a root node
 node * parse_string(token * tokens, int num_tokens)
 {
 	int current_used = 0;
@@ -132,6 +137,7 @@ node * parse_string(token * tokens, int num_tokens)
 	return base;
 }
 
+//Converts a code block into an AST taking line number and token list and returning root node as well as setting the end token
 node * block_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 {
 	int current_used = start;
@@ -179,6 +185,7 @@ node * block_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 	return base;
 }
 
+//Converts single line into part of the AST 
 node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 {
 	op_stack * operatorstack = op_stack_init();
@@ -208,6 +215,31 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 					func = 1;
 					tok.type = FUNC_CALL;
 					tokens[i].type = FUNC_CALL;
+					while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type == DOT) {
+						node * top = op_stack_pop(operatorstack);
+
+						int num_idxs = token_idxs(top->val);
+						if (num_idxs == 2)
+						{
+							node * etop = op_stack_pop(expressionstack);
+							node * netop = op_stack_pop(expressionstack);
+							op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+						}
+						free(top);
+					}
+				}
+			}
+			op_stack_push(operatorstack, node_init_op(tok));
+		}
+		else if (tok.type == LBRACK)
+		{
+			if (i > start)
+			{
+				token t2 = tokens[i - 1];
+				if (t2.type == IDENTIFIER) {
+					func = 1;
+					tok.type = MEM_IDX;
+					tokens[i].type = MEM_IDX;
 					while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type == DOT) {
 						node * top = op_stack_pop(operatorstack);
 
@@ -386,6 +418,102 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				op_stack_push(expressionstack, op_stack_pop(operatorstack));
 			}
 		}
+		else if (tok.type == RBRACK)
+		{
+			int nest = 0;
+			func = 0;
+			for (int j = i; j >= start; j--)
+			{
+				token t = tokens[j];
+				if (t.type == MEM_IDX || t.type == LBRACK) {
+					nest--;
+					if (nest <= 0) {
+						if (t.type == MEM_IDX)
+							func = 1;
+						else func = 0;
+						break;
+					}
+				}
+				if (t.type == RBRACK)
+					nest++;
+			}
+
+			if (func)
+			{
+				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != MEM_IDX)
+				{
+					node * top = op_stack_pop(operatorstack);
+					int num_idxs = token_idxs(top->val);
+					if (num_idxs == 2)
+					{
+						node * etop = op_stack_pop(expressionstack);
+						node * netop = op_stack_pop(expressionstack);
+						op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+					}
+					else if (num_idxs == 1)
+					{
+						node * etop = op_stack_pop(expressionstack);
+						op_stack_push(expressionstack, node_init_unary(top->val, etop));
+					}
+					free(top);
+				}
+
+				node * func_call = op_stack_pop(operatorstack);
+
+				int num_args = 0;
+				int total_toks = 0;
+				int nested = 0;
+				for (int j = i; j >= start; j--)
+				{
+					token t = tokens[j];
+					if (t.type == MEM_IDX || t.type == LBRACK)
+						nested--;
+					if (t.type == RBRACK)
+						nested++;
+					if (nested <= 0)
+						break;
+					if (t.type == COMMA && nested < 2)
+						num_args++;
+					total_toks++;
+				}
+				if (total_toks > 1)
+					num_args++;
+				func_call->type = BINARY;
+
+				func_call->right = op_stack_pop(expressionstack);
+
+				func_call->left = op_stack_pop(expressionstack);
+				op_stack_push(expressionstack, func_call);
+				func = 0;
+			}
+			else {
+				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != LBRACK)
+				{
+					node * top = op_stack_pop(operatorstack);
+					int num_idxs = token_idxs(top->val);
+					if (num_idxs == 2)
+					{
+						node * etop = op_stack_pop(expressionstack);
+						node * netop = op_stack_pop(expressionstack);
+
+						op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
+					}
+					else if (num_idxs == 1)
+					{
+
+						node * etop = op_stack_pop(expressionstack);
+						op_stack_push(expressionstack, node_init_unary(top->val, etop));
+					}
+
+					free(top);
+				}
+				if (operatorstack->size == 0)
+				{
+					syntax_error(tokens[i].tok, tokens[i].col, tokens[i].row, "NO MATCHING PARENTHESES BLOCK");
+				}
+				op_stack_pop(operatorstack);
+			}
+		}
 		else if (tok.type == RPAREN)
 		{
 			int nest = 0;
@@ -531,12 +659,14 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 	return root;
 }
 
+//Operator precedence. returns bool of which token precedes
 int precedes(token tok1, token tok2)
 {
 	int lass = token_associative(tok1);
 	return ((lass && token_precedence(tok1) <= token_precedence(tok2)) || (!lass && token_precedence(tok1) < token_precedence(tok2)));
 }
 
+//Frees memory in the tree given root node
 void free_nodes(node * root)
 {
 	if (!root)

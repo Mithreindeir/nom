@@ -63,6 +63,7 @@ enum OPCODES
 	//Functions
 	CALL,	//Enters a new frame. Top of stack is num_args, and args are below it
 	RET	//Returns from a function, and pushes return value (if there is one) to parent stack
+
 };
 
 //Nom Instruction. Has an index to a variable or constant array and an action

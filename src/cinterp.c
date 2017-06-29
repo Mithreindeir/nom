@@ -438,6 +438,7 @@ void execute(frame * currentframe)
 				*((nom_boolean*)var->value) = pop_bool(currentframe->data_stack);
 			}
 			else if (var->type == STR)
+
 			{
 				*((nom_string*)var->value) = pop_string(currentframe->data_stack);
 			}

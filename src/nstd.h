@@ -34,5 +34,6 @@ void nom_clock(frame * currentframe);
 void nom_abs(frame * currentframe);
 void nom_floor(frame * currentframe);
 void nom_ceil(frame * currentframe);
+void nom_run(frame * currentframe);
 
 #endif

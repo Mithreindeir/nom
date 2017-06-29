@@ -49,6 +49,8 @@ void nom_run_file(char * file)
 		nom_register_func(nom, "clock", &nom_clock, 0);
 		nom_register_func(nom, "seed", &nom_seed, 1);
 		nom_register_func(nom, "random", &nom_random, 2);
+		nom_register_func(nom, "run", &nom_run, 1);
+
 
 		int num_tokens = 0;
 		token * tokens = tokenize(buffer, &num_tokens);
@@ -80,6 +82,7 @@ void nom_repl()
 	nom_register_func(nom, "clock", &nom_clock, 0);
 	nom_register_func(nom, "seed", &nom_seed, 1);
 	nom_register_func(nom, "random", &nom_random, 2);
+	nom_register_func(nom, "run", &nom_run, 1);
 
 	printf(">");
 	char buff[256];
