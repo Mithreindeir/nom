@@ -77,15 +77,16 @@ void exit_frame(frame * frame)
 		frame->variables[i].num_references--;
 		frame->variables[i].member_ref--;
 		free(frame->variables[i].name);
-
 		if (frame->variables[i].num_references <= 0) {
 			if (frame->variables[i].value) free(frame->variables[i].value);
-			if (frame->variables[i].num_members > 0)
+			if (frame->variables[i].num_members > 0) {
 				nom_var_free_members(&frame->variables[i]);
+			}
 		}
 		if (frame->variables[i].member_ref <= 0) {
-			if (frame->variables[i].num_members > 0)
+			if (frame->variables[i].num_members > 0) {
 				nom_var_free_members(&frame->variables[i]);
+			}
 		}
 	}
 	if (frame->variables) free(frame->variables);
@@ -480,6 +481,8 @@ void execute(frame * currentframe)
 				newf->num_instructions = oldf->num_instructions;
 				newf->instructions = oldf->instructions;
 				int args = pop_number(currentframe->data_stack);
+				
+
 
 				for (int i = 0; i < oldf->num_variables; i++)
 				{
@@ -496,6 +499,7 @@ void execute(frame * currentframe)
 					}
 					
 				}
+
 				f.frame = newf;
 
 				//Set top of stack to function args
@@ -532,6 +536,7 @@ void execute(frame * currentframe)
 					nom_variable * v = &f.frame->variables[i];
 					nom_variable * rv = NULL;
 					frame * fp = currentframe;
+
 					while (fp)
 					{
 						int idx = get_var_index(fp, v->name);
@@ -541,12 +546,13 @@ void execute(frame * currentframe)
 					}
 					if (rv)
 					{
-						//change_type(v, rv->type);
+						change_type(v, rv->type);
 						v->num_references++;
 						v->value = rv->value;
 						v->members = rv->members;
 						v->num_members = rv->num_members;
 						v->member_ref = rv->member_ref;
+
 					}
 				}
 				execute(f.frame);
