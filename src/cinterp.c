@@ -555,10 +555,10 @@ void execute(frame * currentframe)
 
 					}
 				}
-				execute(f.frame);
-				newf->constants = NULL;
+				execute(f.frame); 
 				newf->num_constants = 0;
 				newf->num_instructions = 0;
+				newf->constants = NULL;
 				newf->instructions = NULL;
 				exit_frame(newf);
 				f.frame = oldf;
