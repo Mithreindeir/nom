@@ -582,6 +582,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				{
 					func_call->branches[i + 1] = op_stack_pop(expressionstack);
 				}
+
 				func_call->branches[0] = op_stack_pop(expressionstack);
 				op_stack_push(expressionstack, func_call);
 				func = 0;

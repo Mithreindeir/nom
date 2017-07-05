@@ -81,6 +81,7 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe)
 		if (cnode->right->val.type == IDENTIFIER) {
 
 			idx = get_var_index_local(lvar, cnode->right->val.tok);
+
 			if (idx == -1)
 			{
 				create_var_local(lvar, cnode->right->val.tok, NUM);
@@ -95,6 +96,7 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe)
 			lvar = &currentframe->variables[idx];
 			while (1) {
 				idx = get_var_index_local(lvar, cnode->left->val.tok);
+
 				if (idx == -1)
 				{
 					create_var_local(lvar, cnode->left->val.tok, NUM);
@@ -183,8 +185,9 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		int args = 0;
 		for (int i = 1; i < node->num_branches; i++)
 		{
-			if (node->branches[i])
-				val_traverse(node->branches[i], instrl, currentframe);
+			if (node->branches[i]) {
+				val_traverse(node->branches[i], instrl, currentframe);				
+			}
 
 			args++;
 		}

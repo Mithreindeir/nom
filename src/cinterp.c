@@ -237,17 +237,20 @@ void create_var_local(nom_variable * lvar, char * name, int type)
 
 void nom_var_free_members(nom_variable * var)
 {
-	if (!var->members || var->members <= 0)
+	//Todo fix this. Currently causes crashes and doesnt free everything
+	return;
+	if (!var->members || var->members <= 0 || !var || var->type != STRUCT)
 		return;
+	
 	for (int j = 0; j < var->num_members; j++) {
 		nom_variable * nvar = &var->members[j];
 		nvar->num_references--;
 		nvar->member_ref--;
 		if (nvar->num_references <= 0) {
-			if (nvar->value) free(nvar->value);
+			if (nvar->value && var->type != STRUCT) free(nvar->value);
 
 		}
-		if (nvar->member_ref <= 0) {
+		if (nvar->member_ref <= 0 && var->type == STRUCT) {
 			if (nvar->num_members > 0)
 				nom_var_free_members(nvar);
 		}
@@ -255,6 +258,7 @@ void nom_var_free_members(nom_variable * var)
 	if (var->member_ref <= 0) {
 		free(var->members);
 	}
+	var->type = NONE;
 	var->members = NULL;
 	var->num_members = 0;
 }
@@ -482,14 +486,12 @@ void execute(frame * currentframe)
 				newf->instructions = oldf->instructions;
 				int args = pop_number(currentframe->data_stack);
 				
-
-
 				for (int i = 0; i < oldf->num_variables; i++)
 				{
 					nom_variable v = oldf->variables[i];
-					create_var(newf, v.name, NONE);
-					if (i < args)
-						continue;
+					create_var(newf, v.name, v.type);
+					//if (i < args)
+					//	continue;
 					newf->variables[newf->num_variables - 1].num_members = v.num_members;
 					newf->variables[newf->num_variables - 1].member_ref = 1;
 					newf->variables[newf->num_variables - 1].members = malloc(sizeof(nom_variable) * v.num_members);
@@ -497,7 +499,7 @@ void execute(frame * currentframe)
 					for (int j = 0; j < v.num_members; j++) {
 						newf->variables[newf->num_variables-1].members[j] = v.members[j];
 					}
-					
+				
 				}
 
 				f.frame = newf;
@@ -524,10 +526,18 @@ void execute(frame * currentframe)
 						*((nom_func*)v->value) = pop_func(currentframe->data_stack);
 					}
 					else if (v->type == STRUCT) {
+
 						nom_struct ns = pop_struct(currentframe->data_stack);
-						v->members = ns.members;
-						v->member_ref = ns.mem_ref;
+						//Variabled are indexed different on copies, so set them based on name
+						for (int i = 0; i < ns.num_members; i++) {
+							for (int j = 0; j < v->num_members; j++) {
+								if (strcmp(v->members[j].name, ns.members[i].name) == 0)
+									v->members[j] = ns.members[i];
+							}
+						}
+						v->member_ref = ns.mem_ref + 1;
 						v->num_members = ns.num_members;
+						
 					}
 				}
 				//Set variables in function to ones out of its scope
@@ -769,8 +779,12 @@ void push_raw_string(stack * stack, char * string)
 {
 	nom_string str;
 	str.num_characters = 0;
-	str.str = string;
-	str.num_characters = strlen(str.str);
+	if (string) {
+		str.str = string;
+		str.num_characters = strlen(str.str);
+	}
+	else str.str = NULL;
+	
 	//resize_string(&str, string, strlen(string));
 	push(stack, &str, sizeof(nom_string));
 	push_element(stack, &stack->buff[stack->stack_ptr - sizeof(nom_string)], sizeof(nom_string), STR);
