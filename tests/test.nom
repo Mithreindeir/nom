@@ -5,5 +5,5 @@ fib = function(n):
   return fib(n-1) + fib(n-2)
 end
 
-print(fib(30))
+print(fib(20))
 input()

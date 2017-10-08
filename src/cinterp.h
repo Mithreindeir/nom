@@ -75,6 +75,7 @@ typedef struct frame frame;
 //Program frame. This holds all information about a program in a certain scope
 struct frame
 {
+	frame ** children;
 	frame * parent;
 	stack * data_stack;
 	cinstr * instructions;
@@ -84,6 +85,7 @@ struct frame
 	int num_variables;
 	void ** constants;
 	int num_constants;
+	int num_children;
 };
 
 typedef float nom_number;
@@ -130,6 +132,7 @@ void nom_interp_destroy(nom_interp * nom);
 //Frame functions
 frame * frame_init();
 frame * frame_cpy(frame * original);
+void frame_add_child(frame * parent, frame * child);
 void exit_frame(frame * frame);
 void destroy_frame(frame * frame);
 

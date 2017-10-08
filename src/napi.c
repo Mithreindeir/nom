@@ -64,7 +64,7 @@ void nom_run_file(char * file)
 		}
 		free(tokens);
 		//return;
-		stack_init(&nom->global_frame->data_stack);
+		//stack_init(&nom->global_frame->data_stack);
 		execute(nom->global_frame);
 		free(buffer);
 		nom_interp_destroy(nom);

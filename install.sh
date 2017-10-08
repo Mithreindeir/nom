@@ -5,6 +5,6 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-gcc -o nom src/*.c -lm
+gcc -o nom src/*.c -lm -ggdb3
 cp nom /usr/bin/nom
 rm nom

@@ -52,6 +52,8 @@ frame *  frame_init()
 	cframe->num_variables = 0;
 	cframe->constants = NULL;
 	cframe->num_constants = 0;
+	cframe->children = NULL;
+	cframe->num_children = 0;
 
 	return cframe;
 }
@@ -64,8 +66,33 @@ frame * frame_cpy(frame * original)
 	return cframe;
 }
 
+void frame_add_child(frame * parent, frame * child)
+{
+	if (parent->num_children == 0) {
+		parent->num_children++;
+		parent->children = malloc(sizeof(frame*));
+	} else {
+		parent->num_children++;
+		parent->children = realloc(parent->children, sizeof(frame*) * parent->num_children);
+	}
+	parent->children[parent->num_children-1] = child;
+}
+
 void exit_frame(frame * frame)
 {
+	while (frame->data_stack->num_elements > 0)
+	{
+		element e = frame->data_stack->elements[frame->data_stack->num_elements - 1];
+		if (e.type == STR)
+		{
+			nom_string s = pop_string(frame->data_stack);
+			printf("STR %s\n", s.str);
+
+			//if (s.str) free(s.str);
+		}
+		else pop_element(frame->data_stack);
+	}
+
 	stack_destroy(frame->data_stack);
 
 	for (int i = 0; i < frame->num_variables; i++)
@@ -78,6 +105,12 @@ void exit_frame(frame * frame)
 		frame->variables[i].member_ref--;
 		free(frame->variables[i].name);
 		if (frame->variables[i].num_references <= 0) {
+			if (frame->variables[i].type == STR) {
+				nom_string s = *(nom_string*)frame->variables[i].value;
+				printf("STR2 %s\n", s.str);
+				//if (s.str)free(s.str);
+				s.str = NULL;
+			}
 			if (frame->variables[i].value) free(frame->variables[i].value);
 			if (frame->variables[i].num_members > 0) {
 				nom_var_free_members(&frame->variables[i]);
@@ -96,7 +129,15 @@ void exit_frame(frame * frame)
 	}
 	if (frame->constants) free(frame->constants);
 	if (frame->instructions) free(frame->instructions);
+	for (int i = 0; i < frame->num_children; i++) 
+	{
+		if (frame->children[i]) {
+			exit_frame(frame->children[i]);
+		}
+	}
+	if (frame->num_children > 0) free(frame->children);
 	free(frame);
+	frame = NULL;
 }
 
 void destroy_frame(frame * frame)
@@ -150,14 +191,13 @@ void change_type(nom_variable * old, int ntype)
 		if (old->type == NONE)
 		{
 			old->type = NUM;
-			old->value = malloc(nom_type_size[ntype]);
 		}
 		else if (old->type != ntype)
 		{
 			old->type = NUM;
-			free(old->value);
-			old->value = malloc(nom_type_size[ntype]);
 		}
+		free(old->value);
+		old->value = malloc(nom_type_size[ntype]);
 	}
 	old->type = ntype;
 }
@@ -424,7 +464,6 @@ void execute(frame * currentframe)
 				int vidx = idxs[i];
 				var = &var->members[vidx];
 			}
-
 			free(idxs);
 			element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
 			if (e.type != STRUCT) change_type(var, e.type);
@@ -479,6 +518,7 @@ void execute(frame * currentframe)
 				frame * newf = frame_init();
 				//For recursive functions, this just alters the caller of the first times stack, not any of the other
 				/* TODO */
+				//frame_add_child(currentframe, newf); Dont add as child in temp recursive copy
 				newf->parent = currentframe;
 				newf->constants = oldf->constants;
 				newf->num_constants = oldf->num_constants;
@@ -494,7 +534,7 @@ void execute(frame * currentframe)
 					//	continue;
 					newf->variables[newf->num_variables - 1].num_members = v.num_members;
 					newf->variables[newf->num_variables - 1].member_ref = 1;
-					newf->variables[newf->num_variables - 1].members = malloc(sizeof(nom_variable) * v.num_members);
+					if (v.num_members > 0) newf->variables[newf->num_variables - 1].members = malloc(sizeof(nom_variable) * v.num_members);
 
 					for (int j = 0; j < v.num_members; j++) {
 						newf->variables[newf->num_variables-1].members[j] = v.members[j];
@@ -558,6 +598,7 @@ void execute(frame * currentframe)
 					{
 						change_type(v, rv->type);
 						v->num_references++;
+						free(v->value);
 						v->value = rv->value;
 						v->members = rv->members;
 						v->num_members = rv->num_members;
@@ -566,11 +607,11 @@ void execute(frame * currentframe)
 					}
 				}
 				execute(f.frame); 
-				newf->num_constants = 0;
-				newf->num_instructions = 0;
-				newf->constants = NULL;
-				newf->instructions = NULL;
-				exit_frame(newf);
+				f.frame->num_constants = 0;
+				f.frame->num_instructions = 0;
+				f.frame->constants = NULL;
+				f.frame->instructions = NULL;
+				exit_frame(f.frame);
 				f.frame = oldf;
 				//push_func(currentframe->data_stack, *((nom_func*)var->value));
 			}
@@ -628,6 +669,7 @@ stack * stack_init()
 
 void stack_destroy(stack * stack)
 {
+
 	if (stack->elements) free(stack->elements);
 	free(stack->buff);
 	free(stack);

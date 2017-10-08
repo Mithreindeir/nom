@@ -80,7 +80,7 @@ node * node_init()
 //Initialize a node as an operation
 node * node_init_op(token tok)
 {
-	node * bo = malloc(sizeof(node));
+	node * bo = malloc(sizeof(node)); // LEAK
 	bo->val = tok;
 	bo->right = NULL;
 	bo->left = NULL;
@@ -119,7 +119,7 @@ node * parse_string(token * tokens, int num_tokens)
 
 	while (current_used < num_tokens)
 	{
-		node* branch = single_ast(tokens, current_used, num_tokens, &current_used);
+		node* branch = single_ast(tokens, current_used, num_tokens, &current_used); // LEAK
 
 		base->num_branches++;
 		if (base->num_branches == 1)
@@ -229,7 +229,8 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 					}
 				}
 			}
-			op_stack_push(operatorstack, node_init_op(tok));
+			node * n = node_init_op(tok);
+			op_stack_push(operatorstack, n); // LEAK
 		}
 		else if (tok.type == LBRACK)
 		{
@@ -307,7 +308,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 					node * etop = op_stack_pop(expressionstack);
 					op_stack_push(expressionstack, node_init_unary(top->val, etop));
 				}
-
 				free(top);
 			}
 
@@ -437,7 +437,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				if (t.type == RBRACK)
 					nest++;
 			}
-
 			if (func)
 			{
 				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != MEM_IDX)
@@ -459,7 +458,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				}
 
 				node * func_call = op_stack_pop(operatorstack);
-
 				int num_args = 0;
 				int total_toks = 0;
 				int nested = 0;
@@ -504,14 +502,13 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 						node * etop = op_stack_pop(expressionstack);
 						op_stack_push(expressionstack, node_init_unary(top->val, etop));
 					}
-
 					free(top);
 				}
 				if (operatorstack->size == 0)
 				{
 					syntax_error(tokens[i].tok, tokens[i].col, tokens[i].row, "NO MATCHING PARENTHESES BLOCK");
 				}
-				op_stack_pop(operatorstack);
+				free(op_stack_pop(operatorstack));
 			}
 		}
 		else if (tok.type == RPAREN)
@@ -533,7 +530,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				if (t.type == RPAREN)
 					nest++;
 			}
-
 			if (func)
 			{
 				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != FUNC_CALL)
@@ -555,7 +551,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				}
 
 				node * func_call = op_stack_pop(operatorstack);
-			
+
 				int num_args = 0;
 				int total_toks = 0;
 				int nested = 0;
@@ -588,6 +584,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				func = 0;
 			}
 			else {
+
 				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != LPAREN)
 				{
 					node * top = op_stack_pop(operatorstack);
@@ -605,14 +602,13 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 						node * etop = op_stack_pop(expressionstack);
 						op_stack_push(expressionstack, node_init_unary(top->val, etop));
 					}
-
 					free(top);
 				}
 				if (operatorstack->size == 0)
 				{
 					syntax_error(tokens[i].tok, tokens[i].col, tokens[i].row, "NO MATCHING PARENTHESES BLOCK");
 				}
-				op_stack_pop(operatorstack);
+				free(op_stack_pop(operatorstack));
 			}
 		}
 		else if (tok.type == NEWLINE && i != start)
@@ -650,8 +646,10 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 
 			op_stack_push(expressionstack, node_init_unary(top->val, etop));
 		}
+		
 		free(top);
 	}
+
 	node * root = op_stack_pop(expressionstack);
 	if (operatorstack->stack) free(operatorstack->stack);
 	free(operatorstack);
@@ -696,6 +694,10 @@ void free_nodes(node * root)
 	else if (root->type == LEAF)
 	{
 		free_nodes(root->next);
+		root->type = EMPTY;
+	}
+	else
+	{
 		root->type = EMPTY;
 	}
 

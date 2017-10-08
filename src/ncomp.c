@@ -154,6 +154,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		func->arg_count = node->num_branches - 1;
 		func->frame = nf;
 		nf->parent = currentframe;
+		frame_add_child(currentframe, nf);
 		for (int i = 1; i < node->num_branches; i++)
 		{
 			if (node->branches[i])
