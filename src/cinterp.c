@@ -85,10 +85,7 @@ void exit_frame(frame * frame)
 		element e = frame->data_stack->elements[frame->data_stack->num_elements - 1];
 		if (e.type == STR)
 		{
-			nom_string s = pop_string(frame->data_stack);
-			printf("STR %s\n", s.str);
-
-			//if (s.str) free(s.str);
+			nom_string s = pop_string(frame->data_stack);  //TODO SAFELY FREE HERE
 		}
 		else pop_element(frame->data_stack);
 	}
@@ -107,9 +104,7 @@ void exit_frame(frame * frame)
 		if (frame->variables[i].num_references <= 0) {
 			if (frame->variables[i].type == STR) {
 				nom_string s = *(nom_string*)frame->variables[i].value;
-				printf("STR2 %s\n", s.str);
-				//if (s.str)free(s.str);
-				s.str = NULL;
+				s.str = NULL; //TODO SAFELY FREE HERE
 			}
 			if (frame->variables[i].value) free(frame->variables[i].value);
 			if (frame->variables[i].num_members > 0) {
