@@ -85,7 +85,16 @@ void exit_frame(frame * frame)
 		element e = frame->data_stack->elements[frame->data_stack->num_elements - 1];
 		if (e.type == STR)
 		{
-			nom_string s = pop_string(frame->data_stack);  //TODO SAFELY FREE HERE
+			nom_string s = pop_string(frame->data_stack);  //TODO SAFELY FREE HERE (Possible fix)
+			int tf = 1;
+			for (int i = 0; i < frame->num_constants; i++)
+			{
+				if (frame->constants[i] == s.str) tf = 0;
+			}
+			if (tf) {
+				free(s.str);
+				s.str = NULL;
+			}
 		}
 		else pop_element(frame->data_stack);
 	}
@@ -104,12 +113,25 @@ void exit_frame(frame * frame)
 		if (frame->variables[i].num_references <= 0) {
 			if (frame->variables[i].type == STR) {
 				nom_string s = *(nom_string*)frame->variables[i].value;
-				s.str = NULL; //TODO SAFELY FREE HERE
+				int tf = 1;
+				//If string is one of the frames constants than do not free
+				for (int i = 0; i < frame->num_constants; i++)
+				{
+					if (frame->constants[i] == s.str) tf = 0;
+				}
+				if (tf) {
+					free(s.str);
+					s.str = NULL;
+				}
+
+				//s.str = NULL; //TODO SAFELY FREE HERE (Possible fix)
+			}
+			if (frame->variables[i].num_members > 0) {
+				//printf("boi\n");
+				//nom_var_free_members(&frame->variables[i]);
 			}
 			if (frame->variables[i].value) free(frame->variables[i].value);
-			if (frame->variables[i].num_members > 0) {
-				nom_var_free_members(&frame->variables[i]);
-			}
+
 		}
 		if (frame->variables[i].member_ref <= 0) {
 			if (frame->variables[i].num_members > 0) {
@@ -120,7 +142,7 @@ void exit_frame(frame * frame)
 	if (frame->variables) free(frame->variables);
 	for (int i = 0; i < frame->num_constants; i++)
 	{
-		free(frame->constants[i]);
+		if (frame->constants[i]) free(frame->constants[i]);
 	}
 	if (frame->constants) free(frame->constants);
 	if (frame->instructions) free(frame->instructions);
@@ -179,10 +201,6 @@ void change_type(nom_variable * old, int ntype)
 {
 	if (old->type != ntype)
 	{
-		if (old->type == STR)
-		{
-			free(((nom_string*)old->value)->str);
-		}
 		if (old->type == NONE)
 		{
 			old->type = NUM;
@@ -272,15 +290,17 @@ void create_var_local(nom_variable * lvar, char * name, int type)
 
 void nom_var_free_members(nom_variable * var)
 {
+	//TODO make this work
 	//Todo fix this. Currently causes crashes and doesnt free everything
-	return;
-	if (!var->members || var->members <= 0 || !var || var->type != STRUCT)
+	//return;
+	if (!var->members || var->members <= 0 || !var)
 		return;
-	
+
 	for (int j = 0; j < var->num_members; j++) {
 		nom_variable * nvar = &var->members[j];
 		nvar->num_references--;
 		nvar->member_ref--;
+
 		if (nvar->num_references <= 0) {
 			if (nvar->value && var->type != STRUCT) free(nvar->value);
 
@@ -289,6 +309,7 @@ void nom_var_free_members(nom_variable * var)
 			if (nvar->num_members > 0)
 				nom_var_free_members(nvar);
 		}
+		if (nvar->name) free(nvar->name);
 	}
 	if (var->member_ref <= 0) {
 		free(var->members);
@@ -296,6 +317,7 @@ void nom_var_free_members(nom_variable * var)
 	var->type = NONE;
 	var->members = NULL;
 	var->num_members = 0;
+	free(var->value);
 }
 
 void nom_var_add_ref(nom_variable * var)
@@ -444,6 +466,7 @@ void execute(frame * currentframe)
 				ns.num_members = var->num_members;
 				ns.members = var->members;
 				ns.mem_ref = var->member_ref + 1;
+				var->member_ref++;
 				push_struct(currentframe->data_stack, ns);
 				nom_var_add_ref(var);
 			}
@@ -529,6 +552,7 @@ void execute(frame * currentframe)
 					//	continue;
 					newf->variables[newf->num_variables - 1].num_members = v.num_members;
 					newf->variables[newf->num_variables - 1].member_ref = 1;
+					//LEAK
 					if (v.num_members > 0) newf->variables[newf->num_variables - 1].members = malloc(sizeof(nom_variable) * v.num_members);
 
 					for (int j = 0; j < v.num_members; j++) {
@@ -1010,6 +1034,16 @@ void eq(stack * stk)
 		nom_string b = pop_string(stk);
 		nom_string a = pop_string(stk);
 		push_number(stk, !strcmp(a.str, b.str));
+	}
+	else if (t1 == NUM && t2 == STR) {
+		nom_number b = pop_number(stk);
+		nom_string a = pop_string(stk);
+		push_number(stk, 0);
+	}
+	else if (t1 == STR && t2 == NUM) {
+		nom_string b = pop_string(stk);
+		nom_number a = pop_number(stk);
+		push_number(stk, 0);
 	}
 }
 

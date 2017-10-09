@@ -150,7 +150,7 @@ node * block_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 
 	int end_tok = start;
 	int nested = 1;
-	for (; end_tok < num_tokens; end_tok++)
+	for (; end_tok < num_tokens-1; end_tok++)
 	{
 		if (tokens[end_tok].type == END)
 			nested--;

@@ -75,9 +75,11 @@ void nom_input(frame * currentframe)
 
 	if (type == INT) {
 		push_number(currentframe->data_stack, atoi(mstr));
+		free(mstr);
 	}
 	else if (type == FLOAT) {
 		push_number(currentframe->data_stack, atof(mstr));
+		free(mstr);
 	}
 	else {
 		push_raw_string(currentframe->data_stack, mstr);
