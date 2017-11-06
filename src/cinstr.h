@@ -19,7 +19,6 @@
 #ifndef CINSTR_H
 #define CINSTR_H
 
-
 //All possible opcodes for the nom vm
 enum OPCODES
 {

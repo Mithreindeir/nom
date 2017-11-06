@@ -22,6 +22,7 @@
 
 void nom_run_file(char * file)
 {
+	
 	nom_interp * nom;
 	char * buffer = 0;
 	long length;
@@ -155,6 +156,7 @@ void nom_register_func(nom_interp * nom, char * name, nom_external_func func, in
 		idx = nom->global_frame->num_variables - 1;
 	}
 	nom_func * nfunc = malloc(sizeof(nom_func));
+	gc_add(nom->global_frame->gcol, nfunc);
 	nfunc->external = 1;
 	nfunc->func = func;
 	nfunc->arg_count = args;

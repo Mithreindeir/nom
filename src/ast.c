@@ -223,6 +223,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 						{
 							node * etop = op_stack_pop(expressionstack);
 							node * netop = op_stack_pop(expressionstack);
+
 							op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
 						}
 						free(top);
@@ -230,7 +231,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				}
 			}
 			node * n = node_init_op(tok);
-			op_stack_push(operatorstack, n); // LEAK
+			op_stack_push(operatorstack, n);
 		}
 		else if (tok.type == LBRACK)
 		{
@@ -249,6 +250,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 						{
 							node * etop = op_stack_pop(expressionstack);
 							node * netop = op_stack_pop(expressionstack);
+
 							op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
 						}
 						free(top);
@@ -299,13 +301,15 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				{
 					node * etop = op_stack_pop(expressionstack);
 					node * netop = op_stack_pop(expressionstack);
-
+					//if (top->val.type == DOT)
+					//	printf("dot:%s left: %s right: %s\n", top->val.tok, netop->val.tok, etop->val.tok);
 					op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
 
 				}
 				else if (num_idxs == 1)
 				{
 					node * etop = op_stack_pop(expressionstack);
+
 					op_stack_push(expressionstack, node_init_unary(top->val, etop));
 				}
 				free(top);

@@ -29,6 +29,9 @@ void push_instr(instr_list * instrl, int instr,  int op)
 	else
 	{
 		instrl->instructions = realloc(instrl->instructions, instrl->num_instructions * sizeof(cinstr));
+		if (instrl->instructions == NULL) {
+			printf("Realloc Failed\n");
+		}
 	}
 	cinstr c;
 	c.action = instr;
@@ -51,9 +54,56 @@ void  compile(node * bop, frame * currentframe)
 	free(instrl);
 }
 
-//Gets index of variable by searching through the data structure (The eg x.y.z index)
-int push_member_idx(node * node, instr_list * instrl, frame * currentframe)
+
+int push_member_idx(node * node, instr_list * instrl, frame * currentframe, nom_variable ** parent)
 {
+	int args = 0;
+	nom_variable * np = NULL;
+	if (node->val.type == IDENTIFIER) {
+		if (*parent == NULL) {
+			int idx = get_var_index(currentframe, node->val.tok);
+			if (idx == -1)
+			{
+				create_var(currentframe, node->val.tok, NONE);
+				idx = currentframe->num_variables - 1;
+			}
+			args++;
+			push_instr(instrl, PUSH_IDX, idx);
+			*parent = &currentframe->variables[idx];
+		} else {
+			nom_variable * p = *parent;
+			p->type = STRUCT;
+			int idx = get_var_index_local(p, node->val.tok);
+			if (idx == -1)
+			{
+				nom_variable * mems = p->members;
+				create_var_local(p, node->val.tok, NUM);	//MEMORY LEAKK
+				gc_add(currentframe->gcol, p->members[p->num_members-1].name);
+				//printf("sad %s.%s\n", lvar->name, cnode->left->right->val.tok);
+				if (mems == NULL) {
+					gc_add(currentframe->gcol, p->members);
+				} else if (mems != p->members) {
+					gc_replace(currentframe->gcol, p->members, mems);
+				}
+				idx = p->num_members - 1;
+			}
+			args++;
+			push_instr(instrl, PUSH_IDX, idx);
+			np = &p->members[idx];
+		}
+	} else {
+		args += push_member_idx(node->left, instrl, currentframe, parent);
+		args += push_member_idx(node->right, instrl, currentframe, parent);
+	}
+	//a.(b.e)
+	if (np != NULL) *parent = np;
+	return args;
+}
+
+//Gets index of variable by searching through the data structure (The eg x.y.z index)
+int push_member_idx2(node * node, instr_list * instrl, frame * currentframe)
+{
+	printf("START\n");
 	int args = 0;
 	if (node->val.type == IDENTIFIER) {
 		int idx = get_var_index(currentframe, node->val.tok);
@@ -63,18 +113,44 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe)
 			idx = currentframe->num_variables - 1;
 		}
 		args++;
-
 		push_instr(instrl, PUSH_IDX, idx);
 	}
 	else {
 		struct node * cnode = node;
-		int idx = get_var_index(currentframe, cnode->left->val.tok);
-		if (idx == -1)
-		{
-			create_var(currentframe, cnode->left->val.tok, NUM);
-			idx = currentframe->num_variables - 1;
+		int idx = -1;
+
+		if (cnode->left->val.type == DOT) {
+			args += push_member_idx2(cnode->left, instrl, currentframe);
+			//printf("DSASDA %s\n",  cnode->left->right->val.tok);
+			idx = get_var_index(currentframe, cnode->left->right->val.tok);
+			printf("FINAL %s\n", cnode->left->right->val.tok);
+			if (idx == -1)
+			{
+				//nom_variable * mems = lvar->members;
+				//create_var_local(lvar, cnode->left->right->val.tok, NUM);
+				//printf("sad %s.%s\n", lvar->name, cnode->left->right->val.tok);
+				//if (mems == NULL) {
+				//	gc_add(currentframe->gcol, lvar->members);
+				//} else if (mems != lvar->members) {
+				//	gc_replace(currentframe->gcol, lvar->members, mems);
+				//}
+				//idx = lvar->num_members - 1;
+			}
+		} else {
+			idx = get_var_index(currentframe, cnode->left->val.tok);printf("FINAL %s\n", cnode->left->val.tok);
+			if (idx == -1)
+			{
+				if (cnode->left->val.type == DOT) {
+					create_var(currentframe, cnode->left->right->val.tok, NUM);
+				}
+				else create_var(currentframe, cnode->left->val.tok, NUM);
+				idx = currentframe->num_variables - 1;
+			}
 		}
+
 		args++;
+
+		printf("idx %d\n", idx);
 		push_instr(instrl, PUSH_IDX, idx);
 		nom_variable * lvar = &currentframe->variables[idx];
 
@@ -84,14 +160,26 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe)
 
 			if (idx == -1)
 			{
+				nom_variable * mems = lvar->members;
 				create_var_local(lvar, cnode->right->val.tok, NUM);
+				printf("sad %s.%s\n", lvar->name, cnode->right->val.tok);
+				if (mems == NULL) {
+					gc_add(currentframe->gcol, lvar->members);
+				} else if (mems != lvar->members) {
+					gc_replace(currentframe->gcol, lvar->members, mems);
+				}
 				idx = lvar->num_members - 1;
+
 			}
 			args++;
+
+			printf("idx2 %d\n", idx);
 
 			push_instr(instrl, PUSH_IDX, idx);
 		}
 		else {
+
+			/*
 			cnode = cnode->right;
 			lvar = &currentframe->variables[idx];
 			while (1) {
@@ -99,10 +187,17 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe)
 
 				if (idx == -1)
 				{
+					nom_variable * mems = lvar->members;
 					create_var_local(lvar, cnode->left->val.tok, NUM);
+					if (mems == NULL) {
+						gc_add(currentframe->gcol, lvar->members);
+					} else if (mems != lvar->members) {
+						gc_replace(currentframe->gcol, lvar->members, mems);
+					}
 					idx = lvar->num_members - 1;
 				}
 				args++;
+				printf("idx3 %d\n", idx);
 
 				push_instr(instrl, PUSH_IDX, idx);
 				lvar = &lvar->members[idx];
@@ -110,10 +205,17 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe)
 					idx = get_var_index_local(lvar, cnode->right->val.tok);
 					if (idx == -1)
 					{
+						nom_variable * mems = lvar->members;
 						create_var_local(lvar, cnode->right->val.tok, NUM);
+						if (mems == NULL) {
+							gc_add(currentframe->gcol, lvar->members);
+						} else if (mems != lvar->members) {
+							gc_replace(currentframe->gcol, lvar->members, mems);
+						}
 						idx = lvar->num_members - 1;
 					}
 					args++;
+					printf("idx4 %d\n", idx);
 
 					push_instr(instrl, PUSH_IDX, idx);
 					break;
@@ -122,8 +224,11 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe)
 					cnode = cnode->right;
 				}
 			}
+			*/
 		}
 	}
+	printf("END\n");
+
 	return args;
 }
 
@@ -154,6 +259,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		func->arg_count = node->num_branches - 1;
 		func->frame = nf;
 		nf->parent = currentframe;
+		nf->gcol = currentframe->gcol;
 		frame_add_child(currentframe, nf);
 		for (int i = 1; i < node->num_branches; i++)
 		{
@@ -195,7 +301,8 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		nom_number * val = malloc(sizeof(nom_number));
 		*val = args;
 		push_instr(instrl, PUSH, add_const(currentframe, val));
-		int nargs = push_member_idx(node->branches[0], instrl, currentframe);
+		nom_variable * p = NULL;
+		int nargs = push_member_idx(node->branches[0], instrl, currentframe, &p);
 		push_instr(instrl, CALL, nargs);
 		return;
 	}
@@ -206,7 +313,8 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->left->val.tok);
 			abort();
 		}
-		int args = push_member_idx(node, instrl, currentframe);
+		nom_variable * p = NULL;
+		int args = push_member_idx(node, instrl, currentframe, &p);
 		push_instr(instrl, LOAD_NAME, args);
 		return;
 	}
@@ -266,7 +374,8 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->left->val.tok);
 			abort();
 		}
-		int args = push_member_idx(node, instrl, currentframe);
+		nom_variable * p = NULL;
+		int args = push_member_idx(node, instrl, currentframe, &p);
 		push_instr(instrl, LOAD_NAME, args);
 		return;
 	}
@@ -295,7 +404,8 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		{
 			if (node->right)
 				val_traverse(node->right, instrl, currentframe);
-			int args = push_member_idx(node->left, instrl, currentframe);
+			nom_variable * p = NULL;
+			int args = push_member_idx(node->left, instrl, currentframe, &p);
 			push_instr(instrl, STORE_NAME, args);
 		}
 		return;
@@ -312,13 +422,15 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		}
 		else
 		{
-			int args = push_member_idx(node->next, instrl, currentframe);
+			nom_variable * p = NULL;
+			int args = push_member_idx(node->next, instrl, currentframe, &p);
 			push_instr(instrl, LOAD_NAME, args);
 			nom_number * val = malloc(sizeof(nom_number));
 			*val = 1;
 			push_instr(instrl, PUSH, add_const(currentframe, val));
 			push_instr(instrl, ADD, 0);
-			args = push_member_idx(node->next, instrl, currentframe);
+			p = NULL;
+			args = push_member_idx(node->next, instrl, currentframe, &p);
 			push_instr(instrl, STORE_NAME, args);		
 		}
 		return;
@@ -335,13 +447,15 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		}
 		else
 		{
-			int args = push_member_idx(node->next, instrl, currentframe);
+			nom_variable * p = NULL;
+			int args = push_member_idx(node->next, instrl, currentframe, &p);
 			push_instr(instrl, LOAD_NAME, args);
 			nom_number * val = malloc(sizeof(nom_number));
 			*val = -1;
 			push_instr(instrl, PUSH, add_const(currentframe, val));
 			push_instr(instrl, ADD, 0);
-			args = push_member_idx(node->next, instrl, currentframe);
+			p = NULL;
+			args = push_member_idx(node->next, instrl, currentframe, &p);
 			push_instr(instrl, STORE_NAME, args);
 		}
 		return;

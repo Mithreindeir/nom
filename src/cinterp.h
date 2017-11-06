@@ -24,9 +24,13 @@
 #include <string.h>
 #include "cinstr.h"
 #include "nerr.h"
+#include "gc.h"
 
 //Stack size is 4kb
 #define STACK_SIZE 4*1024
+//Epsilon for floating point comparing
+#define EPSILON 0.000001
+
 
 typedef enum nom_type
 {
@@ -86,6 +90,7 @@ struct frame
 	void ** constants;
 	int num_constants;
 	int num_children;
+	gc * gcol;
 };
 
 typedef float nom_number;
@@ -141,14 +146,14 @@ int add_const(frame * frame, void * val);
 
 //Variable functions
 void resize_string(nom_string * str, char * nstr, int size);
-void change_type(nom_variable * old, int ntype);
+void change_type(frame * frame, nom_variable * old, int ntype);
 int get_var_index(frame * currentframe, char * name);
 void create_var(frame * currentframe, char * name, int type);
 //Add or get from a variables member list
 int get_var_index_local(nom_variable * lvar, char * name);
 void create_var_local(nom_variable * lvar,  char * name, int type);
-void nom_var_free_members(nom_variable * var);
-void nom_var_add_ref(nom_variable * var);
+void nom_var_free_members(frame * frame, nom_variable * var);
+void nom_var_add_ref(frame * frame, nom_variable * var);
 
 
 void execute(frame * currentframe);
@@ -180,11 +185,11 @@ nom_func pop_func(stack * stk);
 void push_struct(stack * stack, nom_struct nstruct);
 nom_struct pop_struct(stack * stk);
 //operations
-void add(stack * stk);
-void subtract(stack * stk);
-void multiply(stack * stk);
-void divide(stack * stk);
-void negate(stack * stk);
+void add(frame * currentframe);
+void subtract(frame * currentframe);
+void multiply(frame * currentframe);
+void divide(frame * currentframe);
+void negate(frame * currentframe);
 //Conditions
 void gt(stack * stk);
 void gte(stack * stk);
@@ -193,12 +198,16 @@ void lte(stack * stk);
 void eq(stack * stk);
 void ne(stack * stk);
 //Logical operations
-void and(stack * stk);
-void not(stack * stk);
-void nand(stack * stk);
-void or(stack * stk);
-void nor(stack * stk);
+void and(frame * currentframe);
+void not(frame * currentframe);
+void nand(frame * currentframe);
+void or(frame * currentframe);
+void nor(frame * currentframe);
 
-static void(*operation[10])(stack * stk) = {&add, &subtract, &multiply, &divide, &negate, &and, &not, &or, &nor, &nand};
+//Helper functions
+int alphabetical(char * a, char * b);
+void copy_struct(frame * currentframeframe, nom_variable * var, nom_struct ns);
+
+static void(*operation[10])(frame * currentframe) = {&add, &subtract, &multiply, &divide, &negate, &and, &not, &or, &nor, &nand};
 static void(*condition[6])(stack*stk) = {&gt, &gte, &lt, &lte, &eq, &ne};
 #endif

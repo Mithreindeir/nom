@@ -27,7 +27,6 @@
 //Takes an arbitrary amount of arguments of any data type and prints it
 void nom_print(frame * currentframe)
 {
-	
 	int args = pop_number(currentframe->data_stack);
 
 	//printf("args: %d\n", args);
@@ -82,6 +81,7 @@ void nom_input(frame * currentframe)
 		free(mstr);
 	}
 	else {
+		gc_add(currentframe->gcol, mstr);
 		push_raw_string(currentframe->data_stack, mstr);
 	}
 }
