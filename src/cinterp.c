@@ -719,20 +719,23 @@ void execute(frame * currentframe)
 					else if (v->type == FUNC)
 					{
 						*((nom_func*)v->value) = pop_func(currentframe->data_stack);
+						gc_add(currentframe->gcol, v->value);
 					}
 					else if (v->type == STRUCT) {
 						nom_struct ns = pop_struct(currentframe->data_stack);
 						//Variabled are indexed different on copies, so set them based on name
-						for (int i = 0; i < ns.num_members; i++) {
-							for (int j = 0; j < v->num_members; j++) {
-								if (strcmp(v->members[j].name, ns.members[i].name) == 0)
-									v->members[j] = ns.members[i];
-							}
-						}
-						v->member_ref = ns.mem_ref + 1;
-						v->num_members = ns.num_members;
+						//for (int i = 0; i < ns.num_members; i++) {
+						//	for (int j = 0; j < v->num_members; j++) {
+						//		if (strcmp(v->members[j].name, ns.members[i].name) == 0)
+						//			v->members[j] = ns.members[i];
+						//	}
+						//}
+						copy_struct(currentframe, v, ns);
+						nom_var_add_ref(currentframe, v);
+						//v->member_ref = ns.mem_ref + 1;
+						//v->num_members = ns.num_members;
 
-						gc_add(currentframe->gcol, ns.members);
+						//gc_add(currentframe->gcol, ns.members);
 					}
 				}
 				//Set variables in function to ones out of its scope
@@ -756,6 +759,7 @@ void execute(frame * currentframe)
 						//free(v->value);
 						//gc_free(currentframe, v->value);
 						v->value = rv->value;
+						gc_add(currentframe->gcol, v->value);
 						v->members = rv->members;
 						//gc_add(currentframe->gcol, v->members);
 						v->num_members = rv->num_members;
