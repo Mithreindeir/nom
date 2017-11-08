@@ -71,16 +71,16 @@ Objects
     end
 
     withdraw = function(o, v):
-    	if o.balance < v:
-    		print(o.name, " has insufficient funds\n")
-    	end
-	    else:
-    		o.balance = o.balance - v
-    	end
+        if o.balance < v:
+            print(o.name, " has insufficient funds\n")
+        end
+        else:
+            o.balance = o.balance - v
+        end
     end
 
     show = function(o):
-    	print("Name: ", o.name, " Balance: ", o.balance, "\n")
+        print("Name: ", o.name, " Balance: ", o.balance, "\n")
     end
 
     b = new_acc("John")
