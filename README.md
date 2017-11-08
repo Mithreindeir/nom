@@ -61,9 +61,9 @@ Functions
 Objects
 
     new_acc = function(name):
-    	acc.name = name
-	    acc.balance = 0
-	    return acc
+        acc.name = name
+	acc.balance = 0
+	return acc
     end
 
     deposit = function(o, v):
