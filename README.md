@@ -58,7 +58,35 @@ Functions
     end
     
     foo(5)
+Objects
 
+    new_acc = function(name):
+    	acc.name = name
+	    acc.balance = 0
+	    return acc
+    end
+
+    deposit = function(o, v):
+	    o.balance = o.balance + v
+    end
+
+    withdraw = function(o, v):
+    	if o.balance < v:
+    		print(o.name, " has insufficient funds\n")
+    	end
+	    else:
+    		o.balance = o.balance - v
+    	end
+    end
+
+    show = function(o):
+    	print("Name: ", o.name, " Balance: ", o.balance, "\n")
+    end
+
+    b = new_acc("John")
+    deposit(b, 100)
+    withdraw(b, 120)
+    show(b)
 
 
 ## Todo
