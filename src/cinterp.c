@@ -343,6 +343,7 @@ void nom_var_add_ref(frame * frame, nom_variable * var)
 
 void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 {
+
 	//Copys a struct into a variable. Accounts for different idxs and recursively copies for members that are structs
 	int * vi = malloc(sizeof(int) * var->num_members);
 	int * ni = malloc(sizeof(int) * ns.num_members);
@@ -357,7 +358,9 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 		int idx = get_var_index_local(var, ns.members[i].name);
 		if (idx != -1) {
 			vi[idx] = i;
-		} else ni[i] = 1;
+		} else{
+			ni[i] = 1;
+		}
 	}
 	//if (var->num_members > 0) nom_var_free_members(currentframe, var);
 
@@ -365,20 +368,7 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 
 	var->num_members = 0;
 	for (int i = 0; i < (ns.num_members > oldlen ? ns.num_members : oldlen); i++) {
-		if (i < ns.num_members && ni[i]) {
-				create_var_local(var, ns.members[i].name, ns.members[i].type);
-				free(var->members[var->num_members-1].name);
-				var->members[var->num_members-1].name = ns.members[i].name;
-				var->members[var->num_members-1].type = ns.members[i].type;
-				var->members[var->num_members-1].value = ns.members[i].value;
-				if (ns.members[i].num_members > 0) {
-					nom_struct mns;
-					mns.members = ns.members[i].members;
-					mns.num_members = ns.members[i].num_members;
-					copy_struct(currentframe, &var->members[var->num_members-1], mns);
-				}
-				gc_add(currentframe->gcol, var->members[var->num_members-1].value);
-		} else if (i < oldlen) {
+		if (i < oldlen) {
 			if (vi[i] != -1) {
 				create_var_local(var, ns.members[vi[i]].name, ns.members[vi[i]].type);
 				free(var->members[var->num_members-1].name);
@@ -421,8 +411,26 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 			gc_add(currentframe->gcol, var->members[var->num_members-1].value);
 		}
 	}
+	//The newly added vars go on the end
+	for (int i = 0; i < (ns.num_members > oldlen ? ns.num_members : oldlen); i++) {
+		if (i < ns.num_members && ni[i]) {
+			create_var_local(var, ns.members[i].name, ns.members[i].type);
+			free(var->members[var->num_members-1].name);
+			var->members[var->num_members-1].name = ns.members[i].name;
+			var->members[var->num_members-1].type = ns.members[i].type;
+			var->members[var->num_members-1].value = ns.members[i].value;
+			if (ns.members[i].num_members > 0) {
+				nom_struct mns;
+				mns.members = ns.members[i].members;
+				mns.num_members = ns.members[i].num_members;
+				copy_struct(currentframe, &var->members[var->num_members-1], mns);
+			}
+			gc_add(currentframe->gcol, var->members[var->num_members-1].value);
+		}
+	}
+
 	//gc_remove(currentframe->gcol, oldmembers);
-	//gc_free(oldmembers);
+	//gc_free(currentframe->gcol, oldmembers);
 	//var->members = ns.members;
 	gc_add(currentframe->gcol, var->members);
 	nom_var_add_ref(currentframe, var); 
@@ -1072,7 +1080,7 @@ void add(frame * currentframe)
 		int bf = strlen(buf);
 		int size = a.num_characters + bf;
 
-		char * str = malloc(size);
+		char * str = malloc(size+1);
 		memset(str, 0, size);
 		for (int i = 0; i < size; i++) {
 			if (i >= bf) {
@@ -1084,6 +1092,7 @@ void add(frame * currentframe)
 			}
 		}
 		str[size] = '\0';
+		gc_add(currentframe->gcol, str);
 		push_raw_string(stk, str);
 	}
 	else if (t1 == NUM && t2 == STR) {
@@ -1098,8 +1107,7 @@ void add(frame * currentframe)
 			sprintf(buf, "%f", b);
 		int bf = strlen(buf);
 		int size = a.num_characters + bf;
-
-		char * str = malloc(size);
+		char * str = malloc(size+1);
 		memset(str, 0, size);
 		for (int i = 0; i < size; i++) {
 			if (i < a.num_characters) {
@@ -1110,6 +1118,7 @@ void add(frame * currentframe)
 			}
 		}
 		str[size] = '\0';
+		gc_add(currentframe->gcol, str);
 		push_raw_string(stk, str);
 	}
 }

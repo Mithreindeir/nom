@@ -77,7 +77,7 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe, nom_
 			if (idx == -1)
 			{
 				nom_variable * mems = p->members;
-				create_var_local(p, node->val.tok, NUM);	//MEMORY LEAKK
+				create_var_local(p, node->val.tok, NUM);
 				gc_add(currentframe->gcol, p->members[p->num_members-1].name);
 				//printf("sad %s.%s\n", lvar->name, cnode->left->right->val.tok);
 				if (mems == NULL) {
