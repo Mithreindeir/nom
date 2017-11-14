@@ -633,18 +633,24 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		node * top = op_stack_pop(operatorstack);
 		int num_idxs = token_idxs(top->val);
 
-		if (expressionstack->size < num_idxs)
+		if (expressionstack->size < num_idxs && (top->val.type != RETURN))
 		{
 			syntax_error(top->val.tok, top->val.col, top->val.row, "INCORRECT OPERATOR OPERANDS");
-		}
-		if (num_idxs == 2)
+		} else if (top->val.type == RETURN && expressionstack->size == 0) {
+			//Implicit return 0
+			token t;
+			t.tok = 0;
+			t.type = INT;
+			t.len = 1;
+			node * etop = node_init_op(t);
+			op_stack_push(expressionstack, node_init_unary(top->val, etop));
+		} else if (num_idxs == 2)
 		{
 			node * etop = op_stack_pop(expressionstack);
 			node * netop = op_stack_pop(expressionstack);
 			op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
 
-		}
-		else if (num_idxs == 1)
+		} else if (num_idxs == 1)
 		{
 			node * etop = op_stack_pop(expressionstack);
 

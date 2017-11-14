@@ -119,9 +119,9 @@ void nom_time(frame * currentframe)
 //CPU clock
 void nom_clock(frame * currentframe)
 {
-	pop_number(currentframe->data_stack);
-	int c = clock();
-	float sec = (float)(c) / CLOCKS_PER_SEC;
+	//pop_number(currentframe->data_stack);
+	clock_t c = clock();
+	float sec = ((float)c) / CLOCKS_PER_SEC;
 	push_number(currentframe->data_stack, sec);
 }
 
@@ -135,6 +135,31 @@ void nom_floor(frame * currentframe)
 
 void nom_ceil(frame * currentframe)
 {
+}
+void nom_size(frame * currentframe)
+{
+	int args = pop_number(currentframe->data_stack);
+
+	element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
+	//printf("\t type: %d \n", e.type);
+	if (e.type == NUM) {
+		nom_number n = pop_number(currentframe->data_stack);
+		push_number(currentframe->data_stack, 1);
+	}
+	else if (e.type == BOOL) {
+		nom_boolean n = pop_bool(currentframe->data_stack);
+		push_number(currentframe->data_stack, 1);
+	}
+	else if (e.type == STR)
+	{
+		nom_string tstr = pop_string(currentframe->data_stack);
+		push_number(currentframe->data_stack, tstr.num_characters);
+	}
+	else if (e.type == STRUCT)
+	{
+		nom_struct ns = pop_struct(currentframe->data_stack);
+		push_number(currentframe->data_stack, ns.num_members);
+	}
 }
 //Runs a nom program taking PATH as input
 void nom_run(frame * currentframe)

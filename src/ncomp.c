@@ -99,6 +99,20 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe, nom_
 	if (np != NULL) *parent = np;
 	return args;
 }
+int push_member_str(node * node, instr_list * instrl, frame * currentframe, nom_variable ** parent)
+{
+	int args = 0;
+	if (node->val.type == IDENTIFIER) {
+		printf("%s\n", node->val.tok);
+		//push_instr(instrl, PUSH_STR, add_const(currentframe, strdup(node->val.tok)));
+		args++;
+	} else {
+		args += push_member_str(node->left, instrl, currentframe, parent);
+		args += push_member_str(node->right, instrl, currentframe, parent);
+	}
+	//a.(b.e)
+	return args;
+}
 
 //Gets index of variable by searching through the data structure (The eg x.y.z index)
 int push_member_idx2(node * node, instr_list * instrl, frame * currentframe)
@@ -306,21 +320,14 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, CALL, nargs);
 		return;
 	}
-	else if (node->val.type == MEM_IDX)
-	{
-		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT && node->left->val.type == MEM_IDX)
-		{
-			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->left->val.tok);
-			abort();
-		}
-		nom_variable * p = NULL;
-		int args = push_member_idx(node, instrl, currentframe, &p);
-		push_instr(instrl, LOAD_NAME, args);
-		return;
-	}
 	else if (node->val.type == INT)
 	{
+		if (node->val.tok == 0) {
+			push_instr(instrl, PUSH, add_const(currentframe, 0));
+			return;
+		}
 		nom_number * val = malloc(sizeof(nom_number));
+
 		*val = atoi(node->val.tok);
 		push_instr(instrl, PUSH, add_const(currentframe, val));
 		return;
@@ -375,6 +382,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 			abort();
 		}
 		nom_variable * p = NULL;
+		//push_member_str(node, instrl, currentframe, &p);
 		int args = push_member_idx(node, instrl, currentframe, &p);
 		push_instr(instrl, LOAD_NAME, args);
 		return;
@@ -395,6 +403,32 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	{
 		//STORE_NAME
 		//push_instr(instrl, );
+		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT && node->left->val.type != MEM_IDX)
+		{
+			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->left->val.tok);
+			abort();
+		}
+		else
+		{
+			if (node->right)
+				val_traverse(node->right, instrl, currentframe);
+			nom_variable * p = NULL;
+			int args = 0;
+			if (node->left->val.type == MEM_IDX) {
+				if (node->left->right)
+					val_traverse(node->left->right, instrl, currentframe);
+				args = push_member_idx(node->left->left, instrl, currentframe, &p);
+				push_instr(instrl, ARR_STORE, args);
+			} else {
+				args = push_member_idx(node->left, instrl, currentframe, &p);
+				push_instr(instrl, STORE_NAME, args);
+			}
+			
+		}
+		return;
+	}
+	else if (node->val.type == MEM_IDX)
+	{
 		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT)
 		{
 			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->left->val.tok);
@@ -406,8 +440,8 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 				val_traverse(node->right, instrl, currentframe);
 			nom_variable * p = NULL;
 			int args = push_member_idx(node->left, instrl, currentframe, &p);
-			push_instr(instrl, STORE_NAME, args);
-		}
+			push_instr(instrl, ARR_LOAD, args);
+		}	
 		return;
 	}
 	else if (node->val.type == INC)
@@ -601,6 +635,11 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	else if (node->val.type == DIVIDE)
 	{
 		push_instr(instrl, DIV, 0);
+		return;
+	}
+	else if (node->val.type == MODULUS)
+	{
+		push_instr(instrl, MOD, 0);
 		return;
 	}
 	else if (node->val.type == GREATER)

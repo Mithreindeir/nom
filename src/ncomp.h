@@ -39,6 +39,7 @@ void compile(node * bop, frame * currentframe);
 //Pushes indexes of members for correct reference
 //int push_member_idx(node * node, instr_list * instrl, frame * currentframe);
 int push_member_idx(node * node, instr_list * instrl, frame * currentframe, nom_variable ** parent);
+int push_member_str(node * node, instr_list * instrl, frame * currentframe, nom_variable ** parent);
 //Traverses an AST, and prints values
 void traverse(node * node);
 //Traverses an AST and compiles recursively

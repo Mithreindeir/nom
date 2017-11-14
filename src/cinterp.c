@@ -150,9 +150,12 @@ void exit_frame(frame * frame)
 void destroy_frame(frame * frame)
 {
 }
-
 int add_const(frame * frame, void * val)
 {
+	for (int i = 0; i < frame->num_constants; i++) {
+		if (frame->constants[i] == val)
+			return i;
+	}
 	frame->num_constants++;
 	if (frame->num_constants == 1)
 	{
@@ -238,6 +241,7 @@ void create_var(frame * currentframe, char * name, int type)
 	var.num_members = 0;
 	var.members = NULL;
 	var.member_ref = 1;
+	var.parent = NULL;
 
 
 	currentframe->num_variables++;
@@ -283,6 +287,7 @@ void create_var_local(nom_variable * lvar, char * name, int type)
 	var.num_members = 0;
 	var.members = NULL;
 	var.member_ref = 1;
+	var.parent = lvar;
 
 	lvar->num_members++;
 
@@ -434,7 +439,6 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 	//var->members = ns.members;
 	gc_add(currentframe->gcol, var->members);
 	nom_var_add_ref(currentframe, var); 
-	var->num_members = ns.num_members;
 	var->member_ref = ns.mem_ref;
 	//gc_free(currentframe->gcol, ns.members);
 	free(vi);
@@ -451,13 +455,13 @@ void execute(frame * currentframe)
 
 		cinstr c = currentframe->instructions[currentframe->instr_ptr];
 		currentframe->instr_ptr++;
-		if (c.action < 10) {
+		if (c.action < 11) {
 			operation[c.action](currentframe);
 		}
-		else if (c.action < 16) {
-			condition[c.action-10](currentframe->data_stack);
+		else if (c.action < 17) {
+			condition[c.action-11](currentframe->data_stack);
 		}
-		else if (c.action < 18)
+		else if (c.action < 19)
 		{
 			if (c.action == IFEQ)
 			{
@@ -636,6 +640,114 @@ void execute(frame * currentframe)
 				*((nom_func*)var->value) = pop_func(currentframe->data_stack);
 			}
 		}
+		else if (c.action == ARR_LOAD)
+		{
+			int * idxs = malloc(sizeof(int) * c.idx);
+			for (int i = 0; i < c.idx; i++) {
+				idxs[i] = (int)pop_number(currentframe->data_stack);
+			}
+			nom_variable * var = &currentframe->variables[idxs[c.idx - 1]];
+			for (int i = c.idx - 2; i >= 0; i--) {
+				int vidx = idxs[i];
+				var = &var->members[vidx];
+			}
+
+			free(idxs);
+			int idx = (int)pop_number(currentframe->data_stack);
+			var = &var->members[idx];
+			if (var->type == NUM) {
+				push_number(currentframe->data_stack, *((nom_number*)var->value));
+			}
+			else if (var->type == BOOL) {
+				push_bool(currentframe->data_stack, *((nom_boolean*)var->value));
+			}
+			else if (var->type == STR)
+			{
+				push_string(currentframe->data_stack, *((nom_string*)var->value));
+				gc_add(currentframe->gcol, ((nom_string*)var->value)->str);
+			}
+			else if (var->type == FUNC)
+			{
+				push_func(currentframe->data_stack, *((nom_func*)var->value));
+				//push_number(currentframe->data_stack, 0);
+			}
+			if (var->num_members > 0) {
+				nom_struct ns;
+				ns.num_members = var->num_members;
+				ns.members = var->members;
+				//gc_add(currentframe->gcol, var->members);
+				ns.mem_ref = var->member_ref + 1;
+				var->member_ref++;
+				push_struct(currentframe->data_stack, ns);
+				gc_add(currentframe->gcol, var->members);
+				nom_var_add_ref(currentframe, var);
+			}
+		}
+		else if (c.action == ARR_STORE)
+		{
+			int * idxs = malloc(sizeof(int) * c.idx);
+			for (int i = 0; i < c.idx; i++) {
+				idxs[i] = (int)pop_number(currentframe->data_stack);
+			}
+			nom_variable * var = &currentframe->variables[idxs[c.idx-1]];
+			for (int i = c.idx-2; i >= 0; i--) {
+				int vidx = idxs[i];
+				var = &var->members[vidx];
+			}
+			free(idxs);
+			int idx = (int)pop_number(currentframe->data_stack);
+			if (var->num_members <= idx) {
+				char buf[16];
+				if (var->num_members == idx) {
+					snprintf(buf, 16, "%d", idx);
+					nom_variable * mems = var->members;
+					create_var_local(var, buf, NONE);
+					gc_add(currentframe->gcol, var->members[var->num_members-1].name);
+					if (mems == NULL) {
+						gc_add(currentframe->gcol, var->members);
+					} else if (mems != var->members) {
+						gc_replace(currentframe->gcol, var->members, mems);
+					}
+				} else {
+					printf("FATAL ERROR: IDX OUT OF BOUNDS IN ARR %s\n", var->name);
+					abort();
+				}
+			}
+			var = &var->members[idx];
+
+			element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
+			if (e.type != STRUCT) {
+				change_type(currentframe, var, e.type);
+			}
+
+			if (e.type == STRUCT) {
+				/*
+				nom_struct ns = pop_struct(currentframe->data_stack);
+				if (var->num_members > 0) nom_var_free_members(currentframe, var);
+				var->members = ns.members;
+				gc_add(currentframe->gcol, var->members);
+				var->num_members = ns.num_members;
+				var->member_ref = ns.mem_ref;
+				*/
+				nom_struct ns = pop_struct(currentframe->data_stack);
+				copy_struct(currentframe, var, ns);
+			}
+			else if (var->type == NUM) {
+				*((nom_number*)var->value) = pop_number(currentframe->data_stack);
+			}
+			else if (var->type == BOOL) {
+				*((nom_boolean*)var->value) = pop_bool(currentframe->data_stack);
+			}
+			else if (var->type == STR)
+			{
+				*((nom_string*)var->value) = pop_string(currentframe->data_stack);
+				gc_add(currentframe->gcol, var->value);
+			}
+			else if (var->type == FUNC)
+			{
+				*((nom_func*)var->value) = pop_func(currentframe->data_stack);
+			}
+		}
 		else if (c.action == CALL)
 		{
 			int * idxs = malloc(sizeof(int) * c.idx);
@@ -767,6 +879,18 @@ void execute(frame * currentframe)
 
 					}
 				}
+				//Set self variable
+				if (var->parent) {
+					int sidx = get_var_index(f.frame, "self");
+					if (sidx != -1) {
+						nom_variable * v = &f.frame->variables[sidx];
+						nom_struct ns;
+						ns.members = var->parent->members;
+						ns.num_members = var->parent->num_members;
+						copy_struct(f.frame, v, ns);
+						nom_var_add_ref(currentframe, v);
+					}
+				}
 				execute(f.frame); 
 				f.frame->num_constants = 0;
 				f.frame->num_instructions = 0;
@@ -822,8 +946,9 @@ stack * stack_init()
 	stack * stk = malloc(sizeof(stack));
 	stk->base_ptr = 0;
 	stk->stack_ptr = 0;
-	stk->buff = malloc(STACK_SIZE);
-	for (int i = 0; i < STACK_SIZE; i++)
+	stk->buff = malloc(STACK_CHUNK);
+	stk->chunks = 1;
+	for (int i = 0; i < STACK_CHUNK; i++)
 	{
 		stk->buff[i] = 0;
 	}
@@ -832,9 +957,25 @@ stack * stack_init()
 	return stk;
 }
 
+void stack_resize(stack * stk, int size_bytes)
+{
+	if ((stk->stack_ptr + size_bytes) > (stk->chunks * STACK_CHUNK)) {
+		int nchunks = 1;
+		if (size_bytes > STACK_CHUNK) {
+			int half = STACK_CHUNK/2;
+			int rounded_size = size_bytes + half - ((size_bytes+half) % STACK_CHUNK);
+			nchunks = (rounded_size/STACK_CHUNK)*2;			
+		}
+		stk->buff = realloc(stk->buff, nchunks*STACK_CHUNK + stk->chunks*STACK_CHUNK);
+		stk->chunks += nchunks;
+		for (int i = stk->stack_ptr; i < (stk->chunks*STACK_CHUNK); i++) {
+			stk->buff[i] = 0;
+		}
+	} 
+}
+
 void stack_destroy(stack * stack)
 {
-
 	if (stack->elements) free(stack->elements);
 	free(stack->buff);
 	free(stack);
@@ -880,14 +1021,15 @@ void pop_element(stack * stk)
 void push(stack * stk, void * val, int size_bytes)
 {
 	char * cval = val;
-	for (int i = 0; i < size_bytes && stk->stack_ptr < STACK_SIZE; i++)
+	stack_resize(stk, size_bytes);
+	for (int i = 0; i < size_bytes; i++)
 	{
 		stk->buff[stk->stack_ptr] = cval[i];
 		stk->stack_ptr++;
 	}
 }
 
-void  pop(stack * stk, int size_bytes)
+void pop(stack * stk, int size_bytes)
 {
 	if (size_bytes > (stk->stack_ptr - stk->base_ptr))
 		return;
@@ -900,7 +1042,8 @@ void pop_store(stack * stk, int size_bytes, void * buf)
 	if (size_bytes > (stk->stack_ptr - stk->base_ptr))
 		return;
 	char * cbuf = buf;
-	for (int i = 0; i < size_bytes && stk->stack_ptr < STACK_SIZE; i++)
+	stack_resize(stk, size_bytes);
+	for (int i = 0; i < size_bytes; i++)
 	{
 		cbuf[i] = stk->buff[stk->stack_ptr-size_bytes + i];
 	}
@@ -913,7 +1056,8 @@ void store(stack * stk, void * buf, int size_bytes, int offset)
 	if (size_bytes > (stk->stack_ptr - stk->base_ptr))
 		return;
 	char * cbuf = buf;
-	for (int i = 0; i < size_bytes && stk->stack_ptr < STACK_SIZE; i++)
+	stack_resize(stk, size_bytes);
+	for (int i = 0; i < size_bytes; i++)
 	{
 		cbuf[i] = stk->buff[(stk->stack_ptr-offset) - size_bytes + i];
 	}
@@ -922,7 +1066,8 @@ void store(stack * stk, void * buf, int size_bytes, int offset)
 void load(stack * stk, void * val, int size_bytes, int offset)
 {
 	char * cval = val;
-	for (int i = 0; i < size_bytes && stk->stack_ptr < STACK_SIZE; i++)
+	stack_resize(stk, size_bytes);
+	for (int i = 0; i < size_bytes; i++)
 	{
 		stk->buff[stk->stack_ptr-offset] = cval[i];
 		stk->stack_ptr++;
@@ -1146,6 +1291,13 @@ void divide(frame * currentframe)
 	stack * stk = currentframe->data_stack;
 	nom_number a = pop_number(stk), b = pop_number(stk);
 	push_number(stk, b / a);
+}
+
+void modulus(frame * currentframe)
+{
+	stack * stk = currentframe->data_stack;
+	nom_number a = pop_number(stk), b = pop_number(stk);
+	push_number(stk, (int)b % (int)a);
 }
 
 void negate(frame * currentframe)

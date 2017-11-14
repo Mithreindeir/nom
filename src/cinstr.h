@@ -27,6 +27,7 @@ enum OPCODES
 	SUB,	//Subtracts topmost 2 elements and pushes result to stack
 	MUL,	//Multiplies topmost 2 elements and pushes result to stack
 	DIV,	//Divides topmost 2 elements and pushes result to stack
+	MOD,	//Modulus operator. Pushes remainder after dividing to stack
 	NEG,	//Negates the top of the stack and pushes it back
 	AND,	//Ands topmost elements and pushes result to stack
 	NOT,	//Nots topmost element and pushes result to stack
@@ -54,6 +55,8 @@ enum OPCODES
 	LOAD,	//Loads top of stack to other element
 	DUP,	//Duplicates top of stack
 	SWAP,	//Swaps topmost 2 elements
+	ARR_STORE,	//Stores into an array
+	ARR_LOAD,	//Loads an array member
 	//IO
 	PRINT,
 	//Variable handling

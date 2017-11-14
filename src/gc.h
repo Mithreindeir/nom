@@ -29,12 +29,17 @@ struct gc_el
 	void * ptr;
 	int ref;
 	gc_el * next;
+	gc_el * last;
 };
 
 //Implements reference counting
 typedef struct gc
 {
 	gc_el * el;
+	//Reuse old nodes
+	gc_el * lfreed;
+	gc_el * ffreed;
+	int cfree;
 	int num_nodes;
 } gc;
 

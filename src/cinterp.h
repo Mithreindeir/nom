@@ -26,8 +26,8 @@
 #include "nerr.h"
 #include "gc.h"
 
-//Stack size is 4kb
-#define STACK_SIZE 4*1024
+//Stack chunk is 512 bytes
+#define STACK_CHUNK 256
 //Epsilon for floating point comparing
 #define EPSILON 0.000001
 
@@ -54,6 +54,7 @@ struct nom_variable
 	int num_members;
 	int member_ref;
 	nom_variable * members;
+	nom_variable * parent;
 };
 
 typedef struct element element;
@@ -72,6 +73,7 @@ typedef struct stack
 	char * buff;
 	element * elements;
 	int num_elements;
+	int chunks;
 	int base_ptr, stack_ptr;
 } stack;
 
@@ -93,7 +95,7 @@ struct frame
 	gc * gcol;
 };
 
-typedef float nom_number;
+typedef double nom_number;
 typedef int nom_boolean;
 typedef void(*nom_external_func)(frame * cf);
 //Callable function in nom
@@ -158,6 +160,7 @@ void nom_var_add_ref(frame * frame, nom_variable * var);
 
 void execute(frame * currentframe);
 stack * stack_init();
+void stack_resize(stack * stack, int size_bytes);
 void stack_destroy(stack * stack);
 
 //Elements
@@ -189,6 +192,7 @@ void add(frame * currentframe);
 void subtract(frame * currentframe);
 void multiply(frame * currentframe);
 void divide(frame * currentframe);
+void modulus(frame * currentframe);
 void negate(frame * currentframe);
 //Conditions
 void gt(stack * stk);
@@ -208,6 +212,6 @@ void nor(frame * currentframe);
 int alphabetical(char * a, char * b);
 void copy_struct(frame * currentframeframe, nom_variable * var, nom_struct ns);
 
-static void(*operation[10])(frame * currentframe) = {&add, &subtract, &multiply, &divide, &negate, &and, &not, &or, &nor, &nand};
+static void(*operation[11])(frame * currentframe) = {&add, &subtract, &multiply, &divide, &modulus, &negate, &and, &not, &or, &nor, &nand};
 static void(*condition[6])(stack*stk) = {&gt, &gte, &lt, &lte, &eq, &ne};
 #endif

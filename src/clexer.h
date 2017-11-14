@@ -60,6 +60,7 @@ enum TOKEN_TYPES
 	MINUS,
 	DIVIDE,
 	MULT,
+	MODULUS,
 	DOT,
 	INC,
 	DEC,
@@ -76,7 +77,8 @@ enum TOKEN_TYPES
 	NEWLINE,
 	COMMENT,
 	FUNC_CALL,
-	MEM_IDX
+	MEM_IDX,
+	ARR_IDX
 };
 
 typedef struct token

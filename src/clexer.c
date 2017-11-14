@@ -396,6 +396,11 @@ int token_type(char * tok, int * len)
 		*len = 1;
 		return MULT;
 	}
+	else if (!strncmp(tok, "%", 1))
+	{
+		*len = 1;
+		return MODULUS;
+	}
 	else if (!strncmp(tok, ".", 1))
 	{
 		*len = 1;
@@ -445,7 +450,7 @@ int token_type(char * tok, int * len)
 //Returns if the token is an operator
 int is_operator(token tok)
 {
-	if (tok.type == PLUS || tok.type == MINUS || tok.type == DIVIDE || tok.type == MULT)
+	if (tok.type == PLUS || tok.type == MINUS || tok.type == DIVIDE || tok.type == MULT || tok.type == MODULUS)
 		return 1;
 	if (tok.type == DOT)
 		return 1;
@@ -483,7 +488,7 @@ int token_precedence(token tok)
 		return 0;
 	if (tok.type == PLUS || tok.type == MINUS)
 		return 1;
-	if (tok.type == MULT || tok.type == DIVIDE)
+	if (tok.type == MULT || tok.type == DIVIDE || tok.type == MODULUS)
 		return 2;
 	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC || tok.type == LNOT)
 		return 3;
@@ -509,7 +514,7 @@ int token_idxs(token tok)
 		return 2;
 	if (tok.type == DOT)
 		return 2;
-	if (tok.type == MULT || tok.type == DIVIDE)
+	if (tok.type == MULT || tok.type == DIVIDE || tok.type == MODULUS)
 		return 2;
 	if (tok.type == EQUAL)
 		return 2;
