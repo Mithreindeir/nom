@@ -37,7 +37,7 @@ char * strtokm(char * s)
 	if (!s || s[tcidx] == '\0')
 		return NULL;
 
-	char * f = malloc(sizeof(char) * 100);
+	char * f = malloc(sizeof(char) * strlen(s));
 	int i = tcidx, k = 0;
 	//Ignore spaces and tabs
 	while (s[i] == ' ' || s[i] == '\t') {
@@ -121,9 +121,12 @@ token * tokenize(char * file, int * num_tok)
 			if (type == STRING)
 			{
 				ctoken.tok = malloc(len - 1);
+				ctoken.len = len-1;
 			}
-			else ctoken.tok = malloc(len + 1);
-			ctoken.len = len;
+			else {
+				ctoken.tok = malloc(len + 1);
+				ctoken.len = len+1;
+			}
 			ctoken.type = type;
 			last_tok_type = type;
 			if (type == STRING)

@@ -3,20 +3,79 @@ deposit = function(v):
 end
 
 withdraw = function(v):
+	if self.balance < v:
+		print("Insufficient funds\n")
+		return 0
+	end
 	self.balance = self.balance - v
 end
 
+show = function():
+	print("Name: ", self.name, " Balance: ", self.balance, " \n")
+end
 
-new_acc = function(name):
+new_acc = function(name, m):
 	acc.name = name
-	acc.balance = 0
-
+	acc.balance = m
+	acc.deposit = deposit
+	acc.withdraw = withdraw
+	acc.show = show
 	return acc
 end
 
-b = new_acc("John")
-b.deposit = deposit
-b.withdraw = withdraw
-b.deposit(500)
-b.withdraw(120)
-print(b.balance, "\n")
+a[0] = new_acc("john", 100)
+a[1] = new_acc("mike", 1000)
+a[2] = new_acc("bill", 10000)
+
+x=a[0]
+y=a[1]
+z=a[2]
+x.withdraw(10)
+x.show()
+y.deposit(15)
+y.show()
+z.deposit(20)
+z.show()
+
+
+loop = 1
+while loop:
+	print("What name is on the account?  ")
+	name = input()
+	num = 0
+	if name == "mike\n":
+		num = 1
+	end
+	elseif name == "bill\n":
+		num = 2
+	end
+	b=a[num]
+	print("TASJD: ", b.name, "\n")
+	print("What a action do you want to do?\n")
+	print("A: Withdraw\nB: Deposit\n")
+	action = input()
+	if action == "a\n" or action == "A\n":
+		print("How much?")
+		amount = input()
+		b.withdraw(amount)
+	end
+	elseif action == "b\n" or action == "B\b":
+		print("How much?")
+		amount = input()
+		b.deposit(amount)
+	end
+	else:
+		loop = 0
+	end
+	print("TASJD2: ", b.name, " ", b.balance, "\n")
+	b.show()
+	print("\n")
+end
+
+x=a[0]
+y=a[1]
+z=a[2]
+
+x.show()
+y.show()
+z.show()

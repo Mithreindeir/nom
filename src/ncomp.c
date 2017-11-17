@@ -345,7 +345,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		char * str = malloc(size+1);
 		memset(str, 0, size + 1);
 		int j = 0;
-		for (int i = 0; i < size; i++)
+		for (int i = 0; i < size && j < size; i++)
 		{
 			char c = node->val.tok[j];
 			if (c == '\\')

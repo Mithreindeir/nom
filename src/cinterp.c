@@ -359,10 +359,12 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 		ni[i] = 0;
 	}
 	int oldlen = var->num_members;
+	int size = oldlen + ns.num_members;
 	for (int i = 0; i < ns.num_members; i++) {
 		int idx = get_var_index_local(var, ns.members[i].name);
 		if (idx != -1) {
 			vi[idx] = i;
+			size--;
 		} else{
 			ni[i] = 1;
 		}
@@ -370,10 +372,13 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 	//if (var->num_members > 0) nom_var_free_members(currentframe, var);
 
 	nom_variable * oldmembers = var->members;
-
+	var->members = NULL;
 	var->num_members = 0;
-	for (int i = 0; i < (ns.num_members > oldlen ? ns.num_members : oldlen); i++) {
+	int offset = 0;
+	for (int i = 0; i < size; i++) {
+
 		if (i < oldlen) {
+			offset++;
 			if (vi[i] != -1) {
 				create_var_local(var, ns.members[vi[i]].name, ns.members[vi[i]].type);
 				free(var->members[var->num_members-1].name);
@@ -387,7 +392,7 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 					copy_struct(currentframe, &var->members[var->num_members-1], mns);
 				}
 				gc_add(currentframe->gcol, var->members[var->num_members-1].value);
-			} else { 
+			} else {
 				create_var_local(var, oldmembers[i].name, oldmembers[i].type);
 				free(var->members[var->num_members-1].name);
 				var->members[var->num_members-1].name = oldmembers[i].name;
@@ -402,38 +407,25 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 				gc_add(currentframe->gcol, var->members[var->num_members-1].value);
 			}
 		} else {
-			create_var_local(var, ns.members[i].name, ns.members[i].type);
+			//Size is equal to the size of both minus shared members
+			//Shared members and old go first
+			//So the new members go last
+			//Subtract already added members
+			int j = i - offset;
+			create_var_local(var, ns.members[j].name, ns.members[j].type);
 			free(var->members[var->num_members-1].name);
-			var->members[var->num_members-1].name = ns.members[i].name;
-			var->members[var->num_members-1].type = ns.members[i].type;
-			var->members[var->num_members-1].value = ns.members[i].value;
-			if (ns.members[i].num_members > 0) {
+			var->members[var->num_members-1].name = ns.members[j].name;
+			var->members[var->num_members-1].type = ns.members[j].type;
+			var->members[var->num_members-1].value = ns.members[j].value;
+			if (ns.members[j].num_members > 0) {
 				nom_struct mns;
-				mns.members = ns.members[i].members;
-				mns.num_members = ns.members[i].num_members;
+				mns.members = ns.members[j].members;
+				mns.num_members = ns.members[j].num_members;
 				copy_struct(currentframe, &var->members[var->num_members-1], mns);
 			}
 			gc_add(currentframe->gcol, var->members[var->num_members-1].value);
 		}
 	}
-	//The newly added vars go on the end
-	for (int i = 0; i < (ns.num_members > oldlen ? ns.num_members : oldlen); i++) {
-		if (i < ns.num_members && ni[i]) {
-			create_var_local(var, ns.members[i].name, ns.members[i].type);
-			free(var->members[var->num_members-1].name);
-			var->members[var->num_members-1].name = ns.members[i].name;
-			var->members[var->num_members-1].type = ns.members[i].type;
-			var->members[var->num_members-1].value = ns.members[i].value;
-			if (ns.members[i].num_members > 0) {
-				nom_struct mns;
-				mns.members = ns.members[i].members;
-				mns.num_members = ns.members[i].num_members;
-				copy_struct(currentframe, &var->members[var->num_members-1], mns);
-			}
-			gc_add(currentframe->gcol, var->members[var->num_members-1].value);
-		}
-	}
-
 	//gc_remove(currentframe->gcol, oldmembers);
 	//gc_free(currentframe->gcol, oldmembers);
 	//var->members = ns.members;
@@ -442,7 +434,7 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 	var->member_ref = ns.mem_ref;
 	//gc_free(currentframe->gcol, ns.members);
 	free(vi);
-	free(ni);	
+	free(ni);
 }
 
 void execute(frame * currentframe)
