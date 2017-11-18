@@ -195,6 +195,7 @@ void resize_string(nom_string * str, char * nstr, int size)
 	{
 		str->str[i] = nstr[i];
 	}
+	str->is_char = 0;
 	str->str[size] = '\0';
 }
 
@@ -427,7 +428,7 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 		}
 	}
 	//gc_remove(currentframe->gcol, oldmembers);
-	//gc_free(currentframe->gcol, oldmembers);
+	gc_free(currentframe->gcol, oldmembers);
 	//var->members = ns.members;
 	gc_add(currentframe->gcol, var->members);
 	nom_var_add_ref(currentframe, var); 
@@ -566,6 +567,7 @@ void execute(frame * currentframe)
 			}
 			else if (var->type == STR)
 			{
+				(*((nom_string*)var->value)).is_char = 0;
 				push_string(currentframe->data_stack, *((nom_string*)var->value));
 				gc_add(currentframe->gcol, ((nom_string*)var->value)->str);
 			}
@@ -625,7 +627,7 @@ void execute(frame * currentframe)
 			else if (var->type == STR)
 			{
 				*((nom_string*)var->value) = pop_string(currentframe->data_stack);
-				gc_add(currentframe->gcol, var->value);
+				//gc_add(currentframe->gcol, ((nom_string*)var->value)->str);
 			}
 			else if (var->type == FUNC)
 			{
@@ -646,7 +648,9 @@ void execute(frame * currentframe)
 
 			free(idxs);
 			int idx = (int)pop_number(currentframe->data_stack);
-			var = &var->members[idx];
+			int stridx = var->type == STR;
+
+			if (!stridx) var = &var->members[idx];
 			if (var->type == NUM) {
 				push_number(currentframe->data_stack, *((nom_number*)var->value));
 			}
@@ -655,8 +659,17 @@ void execute(frame * currentframe)
 			}
 			else if (var->type == STR)
 			{
-				push_string(currentframe->data_stack, *((nom_string*)var->value));
-				gc_add(currentframe->gcol, ((nom_string*)var->value)->str);
+				if (stridx) {
+					nom_string str = *((nom_string*)var->value);
+					str.is_char = 1;
+					str.offset = idx;
+					str.num_characters = 1;
+					push_string(currentframe->data_stack, str);
+					gc_add(currentframe->gcol, ((nom_string*)var->value)->str);
+				} else {
+					push_string(currentframe->data_stack, *((nom_string*)var->value));
+					gc_add(currentframe->gcol, ((nom_string*)var->value)->str);
+				}
 			}
 			else if (var->type == FUNC)
 			{
@@ -688,7 +701,8 @@ void execute(frame * currentframe)
 			}
 			free(idxs);
 			int idx = (int)pop_number(currentframe->data_stack);
-			if (var->num_members <= idx) {
+			int stridx = var->type == STR;
+			if (var->num_members <= idx && !stridx) {
 				char buf[16];
 				if (var->num_members == idx) {
 					snprintf(buf, 16, "%d", idx);
@@ -705,7 +719,10 @@ void execute(frame * currentframe)
 					abort();
 				}
 			}
-			var = &var->members[idx];
+			else if (stridx) {
+
+			}
+			if (!stridx) var = &var->members[idx];
 
 			element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
 			if (e.type != STRUCT) {
@@ -732,8 +749,16 @@ void execute(frame * currentframe)
 			}
 			else if (var->type == STR)
 			{
-				*((nom_string*)var->value) = pop_string(currentframe->data_stack);
-				gc_add(currentframe->gcol, var->value);
+				nom_string str = pop_string(currentframe->data_stack);
+				if (stridx) {
+					if (str.num_characters != 1) {
+						printf("ERROR: %s is not single char\n", str.str);
+					}
+					(*((nom_string*)var->value)).str[idx] = str.str[str.offset];
+				} else {
+					*((nom_string*)var->value) = str;
+					//gc_add(currentframe->gcol, ((nom_string*)var->value)->str);
+				}
 			}
 			else if (var->type == FUNC)
 			{
@@ -818,7 +843,7 @@ void execute(frame * currentframe)
 					else if (v->type == STR)
 					{
 						*((nom_string*)v->value) = pop_string(currentframe->data_stack);
-						gc_add(currentframe->gcol, var->value);
+						//gc_add(currentframe->gcol, var->value);
 					}
 					else if (v->type == FUNC)
 					{
@@ -915,9 +940,10 @@ void execute(frame * currentframe)
 					nom_string str;
 					store(currentframe->data_stack, &str, sizeof(nom_string), 0);
 					char * newstr = STRDUP(str.str);
+					str.str = newstr;
 					gc_add(currentframe->gcol, newstr);
-					push_raw_string(currentframe->parent->data_stack, newstr);
-					//push_string(currentframe->parent->data_stack, str);
+					//push_raw_string(currentframe->parent->data_stack, newstr);
+					push_string(currentframe->parent->data_stack, str);
 				}
 				else if (e.type == STRUCT)
 				{
@@ -1132,7 +1158,9 @@ void push_string(stack * stk, nom_string str)
 void push_raw_string(stack * stack, char * string)
 {
 	nom_string str;
+	str.is_char = 0;
 	str.num_characters = 0;
+	str.offset = 0;
 	if (string) {
 		str.str = string;
 		str.num_characters = strlen(str.str);
@@ -1212,55 +1240,64 @@ void add(frame * currentframe)
 	else if (t1 == STR && t2 == NUM) {
 		nom_string a = pop_string(stk);
 		nom_number b = pop_number(stk);
-		char buf[256];
-		memset(buf, 0, 255);
-		if (floorf(b) == b)
-			sprintf(buf, "%d", (int)b);
-		else
-			sprintf(buf, "%f", b);
-		int bf = strlen(buf);
-		int size = a.num_characters + bf;
+		if (a.is_char) {
+			a.str[a.offset] += (int)b;
+			push_string(stk, a);
+		} else {
+			char buf[256];
+			memset(buf, 0, 255);
+			if (floorf(b) == b)
+				sprintf(buf, "%d", (int)b);
+			else
+				sprintf(buf, "%f", b);
+			int bf = strlen(buf);
+			int size = a.num_characters + bf;
 
-		char * str = malloc(size+1);
-		memset(str, 0, size);
-		for (int i = 0; i < size; i++) {
-			if (i >= bf) {
-				str[i] = a.str[i - bf];
+			char * str = malloc(size+1);
+			memset(str, 0, size);
+			for (int i = 0; i < size; i++) {
+				if (i >= bf) {
+					str[i] = a.str[i - bf];
+				}
+				else {
+					str[i] = buf[i];
+					
+				}
 			}
-			else {
-				str[i] = buf[i];
-				
-			}
+			str[size] = '\0';
+			gc_add(currentframe->gcol, str);
+			push_raw_string(stk, str);
 		}
-		str[size] = '\0';
-		gc_add(currentframe->gcol, str);
-		push_raw_string(stk, str);
 	}
 	else if (t1 == NUM && t2 == STR) {
 		nom_number b = pop_number(stk);
 		nom_string a = pop_string(stk);
-
-		char buf[256];
-		memset(buf, 0, 255);
-		if (floorf(b) == b)
-			sprintf(buf, "%d", (int)b);
-		else
-			sprintf(buf, "%f", b);
-		int bf = strlen(buf);
-		int size = a.num_characters + bf;
-		char * str = malloc(size+1);
-		memset(str, 0, size);
-		for (int i = 0; i < size; i++) {
-			if (i < a.num_characters) {
-				str[i] = a.str[i];
+		if (a.is_char) {
+			a.str[a.offset] += (int)b;
+			push_string(stk, a);
+		} else {
+			char buf[256];
+			memset(buf, 0, 255);
+			if (floorf(b) == b)
+				sprintf(buf, "%d", (int)b);
+			else
+				sprintf(buf, "%f", b);
+			int bf = strlen(buf);
+			int size = a.num_characters + bf;
+			char * str = malloc(size+1);
+			memset(str, 0, size);
+			for (int i = 0; i < size; i++) {
+				if (i < a.num_characters) {
+					str[i] = a.str[i];
+				}
+				else {
+					str[i] = buf[i - a.num_characters];
+				}
 			}
-			else {
-				str[i] = buf[i - a.num_characters];
-			}
+			str[size] = '\0';
+			gc_add(currentframe->gcol, str);
+			push_raw_string(stk, str);
 		}
-		str[size] = '\0';
-		gc_add(currentframe->gcol, str);
-		push_raw_string(stk, str);
 	}
 }
 
@@ -1340,7 +1377,11 @@ void eq(stack * stk)
 	else if (t1 == STR && t2 == STR) {
 		nom_string b = pop_string(stk);
 		nom_string a = pop_string(stk);
-		push_number(stk, !strcmp(a.str, b.str));
+		if (a.is_char && b.is_char) {
+			push_number(stk, b.str[b.offset] == a.str[a.offset]);
+		} else {
+			push_number(stk, !strcmp(a.str, b.str));
+		}
 	}
 	else if (t1 == NUM && t2 == STR) {
 		nom_number b = pop_number(stk);
@@ -1369,7 +1410,11 @@ void ne(stack * stk)
 	else if (t1 == STR && t2 == STR) {
 		nom_string b = pop_string(stk);
 		nom_string a = pop_string(stk);
-		push_number(stk, strcmp(a.str, b.str));
+		if (a.is_char && b.is_char) {
+			push_number(stk, b.str[b.offset] != a.str[a.offset]);
+		} else {
+			push_number(stk, strcmp(a.str, b.str));
+		}
 	}
 }
 

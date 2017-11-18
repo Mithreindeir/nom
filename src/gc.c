@@ -22,6 +22,7 @@ gc * gc_init()
 {
 	gc * gcol = malloc(sizeof(gc));
 	gcol->el = NULL;
+	gcol->last_el = NULL;
 	gcol->lfreed = NULL;
 	gcol->ffreed = NULL;
 	gcol->num_nodes = 0;
@@ -54,15 +55,14 @@ void gc_add(gc * gcol, void * ptr)
 {
 	if (gcol->num_nodes > 0) {
 		gc_el * cur = gcol->el;
-		gc_el * last = NULL;
 		while (cur != NULL) {
 			if (cur->ptr == ptr) {
 				cur->ref++;
 				return;
 			}
-			last = cur;
 			cur = cur->next;
 		}
+		gc_el * last = gcol->last_el;
 		if (last) {
 			gc_el * gcel;
 			if (gcol->ffreed) {
@@ -78,6 +78,7 @@ void gc_add(gc * gcol, void * ptr)
 			gcol->num_nodes++;
 			last->next = gcel;
 			gcel->last = last;
+			gcol->last_el = gcel;
 		}
 	} else {
 		gc_el * gcel;
@@ -94,7 +95,7 @@ void gc_add(gc * gcol, void * ptr)
 		gcol->el = gcel;
 		gcol->num_nodes = 1;
 		gcel->last = NULL;
-
+		gcol->last_el = gcel;
 	}
 }
 
@@ -153,7 +154,9 @@ void gc_free(gc * gc, void * ptr)
 			cur->ref--;
 			if (cur->ref <= 0) {
 				gc->el = cur->next;
-				gc->el->last = NULL;
+				if (gc->el)
+					gc->el->last = NULL;
+				else gc->last_el = NULL;
 				gc->num_nodes--;
 				free(cur->ptr);
 				cur->ptr = NULL;
@@ -175,6 +178,7 @@ void gc_free(gc * gc, void * ptr)
 						cur->next->last = cur->last;
 					} else {
 						cur->last->next = NULL;
+						gc->last_el = cur->last;
 					}
 					gc->num_nodes--;
 					free(cur->ptr);

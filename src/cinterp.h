@@ -71,6 +71,7 @@ struct element
 typedef struct stack
 {
 	char * buff;
+
 	element * elements;
 	int num_elements;
 	int chunks;
@@ -111,6 +112,8 @@ typedef struct nom_func
 typedef struct nom_string
 {
 	int num_characters;
+	int is_char;
+	int offset;
 	char  * str;
 } nom_string;
 

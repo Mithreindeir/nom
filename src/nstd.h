@@ -36,6 +36,7 @@ void nom_floor(frame * currentframe);
 void nom_ceil(frame * currentframe);
 void nom_run(frame * currentframe);
 void nom_size(frame * currentframe);
+void nom_reserve(frame * currentframe);
 
 
 #endif

@@ -53,7 +53,7 @@ void nom_run_file(char * file)
 		nom_register_func(nom, "random", &nom_random, 2);
 		nom_register_func(nom, "run", &nom_run, 1);
 		nom_register_func(nom, "size", &nom_size, 1);
-
+		nom_register_func(nom, "reserve", &nom_reserve, 2);
 
 
 		int num_tokens = 0;
@@ -88,6 +88,8 @@ void nom_repl()
 	nom_register_func(nom, "random", &nom_random, 2);
 	nom_register_func(nom, "run", &nom_run, 1);
 	nom_register_func(nom, "size", &nom_size, 1);
+	nom_register_func(nom, "reserve", &nom_reserve, 2);
+
 
 
 	printf(">");

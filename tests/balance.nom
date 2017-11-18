@@ -2,6 +2,7 @@ deposit = function(v):
 	self.balance = self.balance + v
 end
 
+
 withdraw = function(v):
 	if self.balance < v:
 		print("Insufficient funds\n")
@@ -50,16 +51,15 @@ while loop:
 		num = 2
 	end
 	b=a[num]
-	print("TASJD: ", b.name, "\n")
 	print("What a action do you want to do?\n")
 	print("A: Withdraw\nB: Deposit\n")
 	action = input()
-	if action == "a\n" or action == "A\n":
+	if action == "a" or action == "A":
 		print("How much?")
 		amount = input()
 		b.withdraw(amount)
 	end
-	elseif action == "b\n" or action == "B\b":
+	elseif action == "b" or action == "B":
 		print("How much?")
 		amount = input()
 		b.deposit(amount)
@@ -67,7 +67,6 @@ while loop:
 	else:
 		loop = 0
 	end
-	print("TASJD2: ", b.name, " ", b.balance, "\n")
 	b.show()
 	print("\n")
 end

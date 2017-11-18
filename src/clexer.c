@@ -56,11 +56,15 @@ char * strtokm(char * s)
 		if (s[i] == '"')
 			quotations = !quotations;
 		col++;
+		if (s[i] == ';' && quotations == 0) {
+			s[i] = '\n';
+		}
 		if (s[i] == '\n')
 		{
 			col = 0;
 			row++;
 		}
+
 		if (!quotations && (s[i] == ' ' || s[i] == '\t'))
 		{
 			f[k] = 0;

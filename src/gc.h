@@ -36,6 +36,7 @@ struct gc_el
 typedef struct gc
 {
 	gc_el * el;
+	gc_el * last_el;
 	//Reuse old nodes
 	gc_el * lfreed;
 	gc_el * ffreed;

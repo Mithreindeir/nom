@@ -51,14 +51,15 @@ void nom_print(frame * currentframe)
 		else if (e.type == STR)
 		{
 			nom_string str = pop_string(currentframe->data_stack);
-			printf("%s", str.str);
+			if (str.is_char) putchar(str.str[str.offset]);
+			else printf("%s", str.str);
 		}
 	}
 }
 
 //Returns input from stdin. Default as string unless number then return float or int
 void nom_input(frame * currentframe)
-{	
+{
 	int args = pop_number(currentframe->data_stack);
 
 	char str[256];
@@ -81,6 +82,7 @@ void nom_input(frame * currentframe)
 		free(mstr);
 	}
 	else {
+		mstr[s-1] = '\0';
 		gc_add(currentframe->gcol, mstr);
 		push_raw_string(currentframe->data_stack, mstr);
 	}
@@ -136,6 +138,50 @@ void nom_floor(frame * currentframe)
 void nom_ceil(frame * currentframe)
 {
 }
+
+void nom_reserve(frame * currentframe)
+{
+	int args = pop_number(currentframe->data_stack);
+	element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
+	//printf("\t type: %d \n", e.type);
+	if (e.type == NUM) {
+		//nom_number n = pop_number(currentframe->data_stack);
+		//push_number(currentframe->data_stack, 1);
+	}
+	else if (e.type == BOOL) {
+		//nom_boolean n = pop_bool(currentframe->data_stack);
+		//push_number(currentframe->data_stack, 1);
+	}
+	else if (e.type == STR)
+	{
+		nom_string tstr = pop_string(currentframe->data_stack);
+		int reserve = pop_number(currentframe->data_stack);
+
+		if (tstr.num_characters == 0) {
+			tstr.str = malloc(reserve);
+			gc_add(currentframe->gcol, tstr.str+1);
+			tstr.num_characters = reserve;
+		} else {
+			char * str = tstr.str;
+			int ns = tstr.num_characters + reserve;
+			tstr.str = realloc(tstr.str, ns);
+			for(int i = tstr.num_characters-1; i < ns; i++) {
+				tstr.str[i] = 0;
+			}
+			if (str != tstr.str) {
+				gc_replace(currentframe->gcol, tstr.str, str);
+			}
+			tstr.num_characters += reserve;
+		}
+		push_string(currentframe->data_stack, tstr);
+	}
+	else if (e.type == STRUCT)
+	{
+		//nom_struct ns = pop_struct(currentframe->data_stack);
+		//push_number(currentframe->data_stack, ns.num_members);
+	}
+}
+
 void nom_size(frame * currentframe)
 {
 	int args = pop_number(currentframe->data_stack);
