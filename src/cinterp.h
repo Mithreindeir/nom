@@ -71,9 +71,9 @@ struct element
 typedef struct stack
 {
 	char * buff;
-
 	element * elements;
 	int num_elements;
+	int el_size;
 	int chunks;
 	int base_ptr, stack_ptr;
 } stack;

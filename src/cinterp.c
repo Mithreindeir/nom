@@ -971,7 +971,8 @@ stack * stack_init()
 		stk->buff[i] = 0;
 	}
 	stk->num_elements = 0;
-	stk->elements = NULL;
+	stk->el_size = 20;
+	stk->elements = malloc(sizeof(element)*stk->el_size);
 	return stk;
 }
 
@@ -1002,13 +1003,9 @@ void stack_destroy(stack * stack)
 void push_element(stack * stk, char * data, int size, int type)
 {
 	stk->num_elements++;
-	if (stk->num_elements == 1)
-	{
-		stk->elements = malloc(sizeof(element));
-	}
-	else
-	{
-		stk->elements = realloc(stk->elements, sizeof(element) * stk->num_elements);
+	if (stk->num_elements >= stk->el_size) {
+		stk->el_size += 20;
+		stk->elements = realloc(stk->elements, sizeof(element) * stk->el_size);
 		if (stk->elements == NULL) {
 			printf("Realloc Failed push_ele\n");
 		}
@@ -1022,6 +1019,8 @@ void push_element(stack * stk, char * data, int size, int type)
 
 void pop_element(stack * stk)
 {
+	stk->num_elements--;
+	/*
 	if (stk->num_elements > 1)
 	{
 		stk->num_elements--;
@@ -1034,17 +1033,16 @@ void pop_element(stack * stk)
 		free(stk->elements);
 		stk->elements = NULL;
 	}
+	*/
 }
 
 void push(stack * stk, void * val, int size_bytes)
 {
 	char * cval = val;
 	stack_resize(stk, size_bytes);
-	for (int i = 0; i < size_bytes; i++)
-	{
-		stk->buff[stk->stack_ptr] = cval[i];
-		stk->stack_ptr++;
-	}
+	char * buf = stk->buff + stk->stack_ptr;
+	memmove(buf, val, size_bytes);
+	stk->stack_ptr += size_bytes;
 }
 
 void pop(stack * stk, int size_bytes)
@@ -1059,12 +1057,8 @@ void pop_store(stack * stk, int size_bytes, void * buf)
 {
 	if (size_bytes > (stk->stack_ptr - stk->base_ptr))
 		return;
-	char * cbuf = buf;
 	stack_resize(stk, size_bytes);
-	for (int i = 0; i < size_bytes; i++)
-	{
-		cbuf[i] = stk->buff[stk->stack_ptr-size_bytes + i];
-	}
+	memmove(buf, stk->buff + stk->stack_ptr-size_bytes, size_bytes);
 	stk->stack_ptr -= size_bytes;
 	pop_element(stk);
 }
