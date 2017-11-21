@@ -37,7 +37,7 @@ char * strtokm(char * s)
 	if (!s || s[tcidx] == '\0')
 		return NULL;
 
-	char * f = malloc(sizeof(char) * strlen(s));
+	char * f = malloc(sizeof(char) * strlen(s)+1);
 	int i = tcidx, k = 0;
 	//Ignore spaces and tabs
 	while (s[i] == ' ' || s[i] == '\t') {

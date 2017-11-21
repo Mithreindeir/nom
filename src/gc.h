@@ -21,7 +21,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-
 typedef struct gc_el gc_el;
 
 struct gc_el

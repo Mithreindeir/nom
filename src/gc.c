@@ -39,56 +39,48 @@ void gc_destroy(gc * gcol)
 		free(cur);
 		cur = n;
 	}
+
 	if (gcol->num_nodes > 0) {
-		cur = gcol->el;
+		cur = gcol->last_el;
 		while (cur) {
-			gc_el * n = cur->next;
+			gc_el * n = cur->last;
 			free(cur->ptr);
 			free(cur);
 			cur = n;
 		}
 	}
+	//printf("Average Iter %d\n Average N %d\n", gcol->efficiency/gcol->samples, gcol->av_n/gcol->samples);
 	free(gcol);
 }
 
 void gc_add(gc * gcol, void * ptr)
 {
 	if (gcol->num_nodes > 0) {
-		gc_el * cur = gcol->el;
+		gc_el * cur = gcol->last_el;
+		//int iter = 0;
 		while (cur != NULL) {
+			//iter++;
 			if (cur->ptr == ptr) {
 				cur->ref++;
 				return;
 			}
-			cur = cur->next;
+			cur = cur->last;
 		}
-		gc_el * last = gcol->last_el;
-		if (last) {
-			gc_el * gcel;
-			if (gcol->ffreed) {
-				gcel = gcol->ffreed;
-				gcol->ffreed = gcol->ffreed->next;
-				if (gcol->ffreed) gcol->ffreed->last = NULL;
-				else gcol->lfreed = NULL;
-			}
-			else gcel = malloc(sizeof(gc_el));
-			gcel->ptr = ptr;
-			gcel->ref = 1;
-			gcel->next = NULL;
-			gcol->num_nodes++;
-			last->next = gcel;
-			gcel->last = last;
-			gcol->last_el = gcel;
-		}
+		//gcol->efficiency += iter;
+		//gcol->av_n += gcol->num_nodes;
+		//gcol->samples++;
+		gc_el * gcel;
+		gcel = malloc(sizeof(gc_el));
+		gcel->ptr = ptr;
+		gcel->ref = 1;
+		gcel->next = NULL;
+		gcol->num_nodes++;
+		gcol->last_el->next = gcel;
+		gcel->last = gcol->last_el;
+		gcol->last_el = gcel;
 	} else {
 		gc_el * gcel;
-		if (gcol->ffreed) {
-			gcel = gcol->ffreed;
-			gcol->ffreed = gcol->ffreed->next;
-			if (gcol->ffreed) gcol->ffreed->last = NULL;
-			else gcol->lfreed = NULL;
-		}
-		else gcel = malloc(sizeof(gc_el));
+		gcel = malloc(sizeof(gc_el));
 		gcel->ptr = ptr;
 		gcel->ref = 1;
 		gcel->next = NULL;
@@ -118,7 +110,6 @@ void gc_remove(gc * gc, void * ptr)
 	gc_el * cur = gc->el;
 	gc_el * last = gc->el;
 	gc_el * remove = NULL;
-
 	while (cur) {
 		if (cur->ptr == ptr) {
 			if (cur == gc->el) {
@@ -146,53 +137,63 @@ void gc_remove(gc * gc, void * ptr)
 
 void gc_free(gc * gc, void * ptr)
 {
-	gc_el * cur = gc->el;
+	gc_el * cur = gc->last_el;
 	gc_el * remove = NULL;
 	int f = 0;
 	if (cur) {
 		if (cur->ptr == ptr) {
 			cur->ref--;
 			if (cur->ref <= 0) {
-				gc->el = cur->next;
-				if (gc->el)
-					gc->el->last = NULL;
-				else gc->last_el = NULL;
+				if (cur->last) {
+					gc->last_el = cur->last;
+				} else {
+					gc->el = NULL;
+					gc->last_el = NULL;
+				}
 				gc->num_nodes--;
 				free(cur->ptr);
 				cur->ptr = NULL;
 				remove = cur;
 				gc->cfree++;
 				ptr = NULL;
+				free(cur);
+				return;
 			}
 			f = 1;
 		}
 	}
+	//int iter = 1;
 	if (!f) {
-		cur = cur->next;
+		cur = cur->last;
 		while (cur) {
+			//iter++;	
 			if (cur->ptr == ptr) {
 				cur->ref--;
 				if (cur->ref <= 0) {
-					if (cur->next) {
+					if (cur->last) {
 						cur->last->next = cur->next;
 						cur->next->last = cur->last;
 					} else {
-						cur->last->next = NULL;
-						gc->last_el = cur->last;
+						cur->next->last = NULL;
+						gc->el = cur->next;
 					}
 					gc->num_nodes--;
 					free(cur->ptr);
 					cur->ptr = NULL;
 					remove = cur;
-
+					free(cur);
 					ptr = NULL;
 
 				}
-				break;
+				return;
 			}
-			cur = cur->next;
+			cur = cur->last;
 		}
 	}
+	return;
+	//gc->efficiency += iter;
+	//gc->av_n += gc->num_nodes;
+	//gc->samples++;
 	if (remove) {
 		remove->next = NULL;
 		remove->last = NULL;

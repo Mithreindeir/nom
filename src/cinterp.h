@@ -26,7 +26,7 @@
 #include "nerr.h"
 #include "gc.h"
 
-//Stack chunk is 512 bytes
+//Stack chunk is 256 bytes
 #define STACK_CHUNK 256
 //Epsilon for floating point comparing
 #define EPSILON 0.000001
@@ -158,6 +158,7 @@ void create_var(frame * currentframe, char * name, int type);
 int get_var_index_local(nom_variable * lvar, char * name);
 void create_var_local(nom_variable * lvar,  char * name, int type);
 void nom_var_free_members(frame * frame, nom_variable * var);
+void nom_var_free_struct(frame * frame, nom_struct ns);
 void nom_var_add_ref(frame * frame, nom_variable * var);
 
 

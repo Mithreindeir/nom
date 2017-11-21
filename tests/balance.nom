@@ -44,10 +44,10 @@ while loop:
 	print("What name is on the account?  ")
 	name = input()
 	num = 0
-	if name == "mike\n":
+	if name == "mike":
 		num = 1
 	end
-	elseif name == "bill\n":
+	elseif name == "bill":
 		num = 2
 	end
 	b=a[num]

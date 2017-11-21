@@ -53,6 +53,7 @@ void nom_print(frame * currentframe)
 			nom_string str = pop_string(currentframe->data_stack);
 			if (str.is_char) putchar(str.str[str.offset]);
 			else printf("%s", str.str);
+			gc_free(currentframe->gcol, str.str);
 		}
 	}
 }
