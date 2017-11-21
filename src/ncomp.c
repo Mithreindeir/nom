@@ -92,6 +92,7 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe, nom_
 			np = &p->members[idx];
 		}
 	} else {
+		if (!node->left || !node->right) syntax_error(node->val.tok, node->val.col, node->val.row, "Unable to find index");
 		args += push_member_idx(node->left, instrl, currentframe, parent);
 		args += push_member_idx(node->right, instrl, currentframe, parent);
 	}

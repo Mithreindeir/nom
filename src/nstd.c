@@ -37,7 +37,7 @@ void nom_print(frame * currentframe)
 		if (e.type == NUM) {
 			nom_number n = pop_number(currentframe->data_stack);
 			if (floorf(n) == n)
-				printf("%d", (int)n);
+				printf("%ld", (int)n);
 			else
 				printf("%f", n);
 		}

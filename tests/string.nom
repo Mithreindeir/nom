@@ -1,0 +1,59 @@
+str="sdas;idhadlsadjsadkljsadljsdhlsaudo';/hdsodsad'sahdilsahdsaikhjdsaiohsaoidbingo bongo chongo mongo longo pongo tingo lingo ringo no nasdnapods p;nads ;asdn ;ksand;knas;kd nsa; ndg;dsogbsadfibg asd;iioasdhuosadsao;dhjs;odhsaoisahd"
+
+cmp = function(str1, str2, offset, num):
+	if size(str1) < num or size(str2) < num:
+		return 0
+	end
+	for i=0,i<num,i++:
+		if str1[i+offset] != str2[i]:
+			return 0
+		end
+	end
+	return 1
+end
+
+range = function(str1, low, high):
+	expr = "a"
+	s = high-low
+	expr = reserve(expr, s)
+	for i=low, i<high, i++:
+		expr[i-low] = str1[i]
+	end
+	return expr
+end
+
+
+find = function(str, expr):
+	x.low = -1
+	x.high = -1
+	sa = size(str)
+	sb = size(expr)
+	if sb > sa:
+		return x
+	end
+	elseif sb == sa and str == expr:
+		x.low = 0
+		x.high = sb
+		return x
+	end
+	for j=0, j<sa, j++:
+		if cmp(str, expr, j, sb):
+			x.low = j
+			x.high = j+sb
+			return x
+		end
+	end
+	return x
+end
+bt = clock()
+idx = find(str, "chongo mongo")
+test = range(str, idx.low, idx.high)
+print(test, " is at idx: ", idx.low, "\n")
+idx = find(str, "longo pongo")
+test = range(str, idx.low, idx.high)
+print(test, " is at idx: ", idx.low, "\n")
+idx = find(str, "tingo lingo")
+test = range(str, idx.low, idx.high)
+print(test, " is at idx: ", idx.low, "\n")
+t = clock() - bt
+print("exec in ", t, " seconds\n")
