@@ -52,8 +52,14 @@ void nom_run_file(char * file)
 		nom_register_func(nom, "seed", &nom_seed, 1);
 		nom_register_func(nom, "random", &nom_random, 2);
 		nom_register_func(nom, "run", &nom_run, 1);
+		nom_register_func(nom, "string", &nom_string_init, 0);
 		nom_register_func(nom, "size", &nom_size, 1);
 		nom_register_func(nom, "reserve", &nom_reserve, 2);
+		nom_register_func(nom, "open", &nom_open, 2);
+		nom_register_func(nom, "close", &nom_close, 1);
+		nom_register_func(nom, "write", &nom_write, 1);
+		nom_register_func(nom, "read", &nom_read, 1);
+		nom_register_func(nom, "readline", &nom_readline, 1);
 
 
 		int num_tokens = 0;
@@ -87,9 +93,14 @@ void nom_repl()
 	nom_register_func(nom, "seed", &nom_seed, 1);
 	nom_register_func(nom, "random", &nom_random, 2);
 	nom_register_func(nom, "run", &nom_run, 1);
+	nom_register_func(nom, "string", &nom_string_init, 0);
 	nom_register_func(nom, "size", &nom_size, 1);
 	nom_register_func(nom, "reserve", &nom_reserve, 2);
-
+	nom_register_func(nom, "open", &nom_open, 2);
+	nom_register_func(nom, "close", &nom_close, 1);
+	nom_register_func(nom, "write", &nom_write, 1);
+	nom_register_func(nom, "read", &nom_read, 1);
+	nom_register_func(nom, "readline", &nom_readline, 1);
 
 
 	printf(">");

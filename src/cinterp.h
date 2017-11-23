@@ -31,6 +31,12 @@
 //Epsilon for floating point comparing
 #define EPSILON 0.000001
 
+#ifdef __linux__
+#define STRDUP strdup
+#elif _WIN32
+#define STRDUP _strdup
+#endif
+
 
 typedef enum nom_type
 {
@@ -49,6 +55,8 @@ struct nom_variable
 {
 	char * name;
 	void * value;
+	//Can have external pointer for use with C. Not touched by garbage collection
+	void * external;
 	nom_type type;
 	int num_references;
 	int num_members;

@@ -21,12 +21,6 @@
 #pragma warning(disable:4996)
 
 
-#ifdef __linux__
-#define STRDUP strdup
-#elif _WIN32
-#define STRDUP _strdup
-#endif
-
 nom_interp * nom_interp_init()
 {
 	nom_interp * nom = malloc(sizeof(nom_interp));
@@ -246,6 +240,7 @@ void create_var(frame * currentframe, char * name, int type)
 	var.members = NULL;
 	var.member_ref = 1;
 	var.parent = NULL;
+	var.external = NULL;
 
 
 	currentframe->num_variables++;
@@ -295,6 +290,7 @@ void create_var_local(nom_variable * lvar, char * name, int type)
 	var.num_members = 0;
 	var.members = NULL;
 	var.member_ref = 1;
+	var.external=NULL;
 	var.parent = lvar;
 
 	lvar->num_members++;
@@ -416,6 +412,7 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 				var->members[var->num_members-1].name = ns.members[vi[i]].name;
 				var->members[var->num_members-1].type = ns.members[vi[i]].type;
 				var->members[var->num_members-1].value = ns.members[vi[i]].value;
+				var->members[var->num_members-1].external = ns.members[vi[i]].external;
 				if (ns.members[vi[i]].num_members > 0) {
 					nom_struct mns;
 					mns.members = ns.members[vi[i]].members;
@@ -429,6 +426,7 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 				var->members[var->num_members-1].name = oldmembers[i].name;
 				var->members[var->num_members-1].type = oldmembers[i].type;
 				var->members[var->num_members-1].value = oldmembers[i].value;
+				var->members[var->num_members-1].external = oldmembers[i].external;
 				if (oldmembers[i].num_members > 0) {
 					nom_struct mns;
 					mns.members = oldmembers[i].members;
@@ -448,6 +446,7 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 			var->members[var->num_members-1].name = ns.members[j].name;
 			var->members[var->num_members-1].type = ns.members[j].type;
 			var->members[var->num_members-1].value = ns.members[j].value;
+			var->members[var->num_members-1].external = ns.members[j].external;
 			if (ns.members[j].num_members > 0) {
 				nom_struct mns;
 				mns.members = ns.members[j].members;
@@ -651,6 +650,7 @@ void execute(frame * currentframe)
 			}
 			else if (var->type == NUM) {
 				*((nom_number*)var->value) = pop_number(currentframe->data_stack);
+				//printf("Store %s %f\n", var->name, *((nom_number*)var->value));
 			}
 			else if (var->type == BOOL) {
 				*((nom_boolean*)var->value) = pop_bool(currentframe->data_stack);
@@ -681,7 +681,13 @@ void execute(frame * currentframe)
 			int idx = (int)pop_number(currentframe->data_stack);
 			int stridx = var->type == STR;
 
-			if (!stridx) var = &var->members[idx];
+			if (!stridx) {
+				if (idx > var->num_members) {
+					printf("%s\n", var->name);
+					runtime_error("Member Index Out Of Range",1);
+				}
+				var = &var->members[idx];
+			}
 			if (var->type == NUM) {
 				push_number(currentframe->data_stack, *((nom_number*)var->value));
 			}
@@ -781,6 +787,7 @@ void execute(frame * currentframe)
 			else if (var->type == STR)
 			{
 				nom_string str = pop_string(currentframe->data_stack);
+				//(*((nom_string*)var->value)).is_char = str.is_char;
 				if (stridx) {
 					if (str.num_characters != 1) {
 						printf("ERROR: %s is not single char\n", str.str);
@@ -913,7 +920,7 @@ void execute(frame * currentframe)
 							rv = &fp->variables[idx];
 						fp = fp->parent;
 					}
-					if (rv && rv->type != STRUCT)
+					if (rv && rv->type == FUNC)
 					{
 						//change_type(currentframe, v, rv->type);
 						v->type = rv->type;
@@ -1262,8 +1269,15 @@ void add(frame * currentframe)
 		nom_string a = pop_string(stk);
 		nom_number b = pop_number(stk);
 		if (a.is_char) {
-			a.str[a.offset] += (int)b;
-			push_string(stk, a);
+			char * str = malloc(2);
+			nom_string s;
+			s.str = str;
+			str[0] = a.str[a.offset] + (int)b;
+			str[1] = '\0';
+			s.is_char = 1;
+			s.num_characters = 1;
+			gc_add(currentframe->gcol, str);
+			push_string(stk, s);
 		} else {
 			char buf[256];
 			memset(buf, 0, 255);
@@ -1294,8 +1308,16 @@ void add(frame * currentframe)
 		nom_number b = pop_number(stk);
 		nom_string a = pop_string(stk);
 		if (a.is_char) {
-			a.str[a.offset] += (int)b;
-			push_string(stk, a);
+			char * str = malloc(2);
+			nom_string s;
+			s.str = str;
+			str[0] = a.str[a.offset] + (int)b;
+			str[1] = '\0';
+			s.is_char = 1;
+			s.offset=0;
+			s.num_characters = 1;
+			gc_add(currentframe->gcol, str);
+			push_string(stk, s);
 		} else {
 			char buf[256];
 			memset(buf, 0, 255);
@@ -1359,28 +1381,130 @@ void negate(frame * currentframe)
 
 void gt(stack * stk)
 {
-	nom_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, b > a);
+	if (stk->num_elements < 2)
+		return;
+	int t1, t2;
+	t1 = stk->elements[stk->num_elements - 1].type;
+	t2 = stk->elements[stk->num_elements - 2].type;
+	if (t1 == NUM && t2 == NUM) {
+		nom_number a = pop_number(stk), b = pop_number(stk);
+		push_number(stk, b > a);
+	}
+	else if (t1 == STR && t2 == STR) {
+		nom_string b = pop_string(stk);
+		nom_string a = pop_string(stk);
+		if (a.is_char || b.is_char) {
+			push_number(stk, b.str[b.offset] > a.str[a.offset]);
+		} else {
+			push_number(stk, 0);
+		}
+	}
+	else if (t1 == NUM && t2 == STR) {
+		pop_number(stk);
+		pop_string(stk);
+		push_number(stk, 0);
+	}
+	else if (t1 == STR && t2 == NUM) {
+		pop_string(stk);
+		pop_number(stk);
+		push_number(stk, 0);
+	}
 }
 
 void gte(stack * stk)
 {
-	nom_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, b >= a);
+	if (stk->num_elements < 2)
+		return;
+	int t1, t2;
+	t1 = stk->elements[stk->num_elements - 1].type;
+	t2 = stk->elements[stk->num_elements - 2].type;
+	if (t1 == NUM && t2 == NUM) {
+		nom_number a = pop_number(stk), b = pop_number(stk);
+		push_number(stk, b >= a);
+	}
+	else if (t1 == STR && t2 == STR) {
+		nom_string b = pop_string(stk);
+		nom_string a = pop_string(stk);
+		if (a.is_char || b.is_char) {
+			push_number(stk, b.str[b.offset] >= a.str[a.offset]);
+		} else {
+			push_number(stk, 0);
+		}
+	}
+	else if (t1 == NUM && t2 == STR) {
+		pop_number(stk);
+		pop_string(stk);
+		push_number(stk, 0);
+	}
+	else if (t1 == STR && t2 == NUM) {
+		pop_string(stk);
+		pop_number(stk);
+		push_number(stk, 0);
+	}
 }
 
 void lt(stack * stk)
 {
-	nom_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, b < a);
+	if (stk->num_elements < 2)
+		return;
+	int t1, t2;
+	t1 = stk->elements[stk->num_elements - 1].type;
+	t2 = stk->elements[stk->num_elements - 2].type;
+	if (t1 == NUM && t2 == NUM) {
+		nom_number a = pop_number(stk), b = pop_number(stk);
+		push_number(stk, b < a);
+	}
+	else if (t1 == STR && t2 == STR) {
+		nom_string b = pop_string(stk);
+		nom_string a = pop_string(stk);
+		if (a.is_char || b.is_char) {
+			push_number(stk, b.str[b.offset] < a.str[a.offset]);
+		} else {
+			push_number(stk, 0);
+		}
+	}
+	else if (t1 == NUM && t2 == STR) {
+		pop_number(stk);
+		pop_string(stk);
+		push_number(stk, 0);
+	}
+	else if (t1 == STR && t2 == NUM) {
+		pop_string(stk);
+		pop_number(stk);
+		push_number(stk, 0);
+	}
 }
 
 void lte(stack * stk)
 {
-
-	nom_number a = pop_number(stk), b = pop_number(stk);
-	push_number(stk, b <= a);
-
+	if (stk->num_elements < 2)
+		return;
+	int t1, t2;
+	t1 = stk->elements[stk->num_elements - 1].type;
+	t2 = stk->elements[stk->num_elements - 2].type;
+	if (t1 == NUM && t2 == NUM) {
+		nom_number a = pop_number(stk), b = pop_number(stk);
+		push_number(stk, b <= a);
+	}
+	else if (t1 == STR && t2 == STR) {
+		nom_string b = pop_string(stk);
+		nom_string a = pop_string(stk);
+		if (a.is_char || b.is_char) {
+			push_number(stk, b.str[b.offset] <= a.str[a.offset]);
+		} else {
+			push_number(stk, 0);
+		}
+	}
+	else if (t1 == NUM && t2 == STR) {
+		pop_number(stk);
+		pop_string(stk);
+		push_number(stk, 0);
+	}
+	else if (t1 == STR && t2 == NUM) {
+		pop_string(stk);
+		pop_number(stk);
+		push_number(stk, 0);
+	}
 }
 
 void eq(stack * stk)
@@ -1398,20 +1522,20 @@ void eq(stack * stk)
 	else if (t1 == STR && t2 == STR) {
 		nom_string b = pop_string(stk);
 		nom_string a = pop_string(stk);
-		if (a.is_char && b.is_char) {
+		if (a.is_char || b.is_char) {
 			push_number(stk, b.str[b.offset] == a.str[a.offset]);
 		} else {
 			push_number(stk, !strcmp(a.str, b.str));
 		}
 	}
 	else if (t1 == NUM && t2 == STR) {
-		nom_number b = pop_number(stk);
-		nom_string a = pop_string(stk);
+		pop_number(stk);
+		pop_string(stk);
 		push_number(stk, 0);
 	}
 	else if (t1 == STR && t2 == NUM) {
-		nom_string b = pop_string(stk);
-		nom_number a = pop_number(stk);
+		pop_string(stk);
+		pop_number(stk);
 		push_number(stk, 0);
 	}
 }
@@ -1431,11 +1555,21 @@ void ne(stack * stk)
 	else if (t1 == STR && t2 == STR) {
 		nom_string b = pop_string(stk);
 		nom_string a = pop_string(stk);
-		if (a.is_char && b.is_char) {
+		if (a.is_char || b.is_char) {
 			push_number(stk, b.str[b.offset] != a.str[a.offset]);
 		} else {
 			push_number(stk, strcmp(a.str, b.str));
 		}
+	}
+	else if (t1 == STR && t2 == NUM) {
+		pop_string(stk);
+		pop_number(stk);
+		push_number(stk, 1);
+	}
+	else if (t1 == NUM && t2 == STR) {
+		pop_number(stk);
+		pop_string(stk);
+		push_number(stk, 1);
 	}
 }
 

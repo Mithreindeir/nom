@@ -19,10 +19,12 @@
 #ifndef NSTD_H
 #define NSTD_H
 
+#include <stdio.h>
 #include "cinterp.h"
 #include "clexer.h"
 #include "ast.h"
 #include "ncomp.h"
+
 
 //Functions in the nom standard library
 void nom_print(frame * currentframe);
@@ -35,8 +37,15 @@ void nom_abs(frame * currentframe);
 void nom_floor(frame * currentframe);
 void nom_ceil(frame * currentframe);
 void nom_run(frame * currentframe);
+
+void nom_string_init(frame * currentframe);
 void nom_size(frame * currentframe);
 void nom_reserve(frame * currentframe);
 
+void nom_open(frame * currentframe);
+void nom_close(frame * currentframe);
+void nom_write(frame * currentframe);
+void nom_read(frame * currentframe);
+void nom_readline(frame * currentframe);
 
 #endif

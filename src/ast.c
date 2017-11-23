@@ -261,15 +261,15 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 		}
 		else if (tok.type == COMMA)
 		{
-			if (operatorstack->size > 0 && !is_conditional(op_stack_gettop(operatorstack)->val) && op_stack_gettop(operatorstack)->val.type != LPAREN &&  op_stack_gettop(operatorstack)->val.type != FUNC_CALL)
+			while (operatorstack->size > 0 && !is_conditional(op_stack_gettop(operatorstack)->val) && op_stack_gettop(operatorstack)->val.type != LPAREN &&  op_stack_gettop(operatorstack)->val.type != FUNC_CALL)
 			{
 				node * top = op_stack_pop(operatorstack);
-
 				int num_idxs = token_idxs(top->val);
 				if (num_idxs == 2)
 				{
 					node * etop = op_stack_pop(expressionstack);
 					node * netop = op_stack_pop(expressionstack);
+					//printf("%s %s %s\n", netop->val.tok, top->val.tok, etop->val.tok);
 					op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
 				}
 				else if (num_idxs == 1)
@@ -296,7 +296,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 			{
 				node * top = op_stack_pop(operatorstack);
 				int num_idxs = token_idxs(top->val);
-
 				if (num_idxs == 2)
 				{
 					node * etop = op_stack_pop(expressionstack);

@@ -51,10 +51,14 @@ char * strtokm(char * s)
 	}
 	//If it is in quotations, keep whitespace
 	int quotations = 0;
+	int comment = 0;
 	while (s[i] != '\0')
 	{
 		if (s[i] == '"')
 			quotations = !quotations;
+		if (!quotations && s[i]=='#')
+			comment = 1;
+		if (s[i] == '\n') comment = 0;
 		col++;
 		if (s[i] == ';' && quotations == 0) {
 			s[i] = '\n';
@@ -65,7 +69,7 @@ char * strtokm(char * s)
 			row++;
 		}
 
-		if (!quotations && (s[i] == ' ' || s[i] == '\t'))
+		if (!comment && !quotations && (s[i] == ' ' || s[i] == '\t'))
 		{
 			f[k] = 0;
 			tcidx = i;
@@ -107,17 +111,7 @@ token * tokenize(char * file, int * num_tok)
 			continue;
 		}
 
-		//printf("token: %s\t type: %d\n", str, type);
-		if (type == NEWLINE)
-		{
-			comment = 0;
-		}
-		if (type == COMMENT)
-		{
-			comment = 1;
-		}
-
-		if (!comment)
+		if (type != COMMENT)
 		{
 			token ctoken;
 			ctoken.col = col;
@@ -225,7 +219,14 @@ int token_type(char * tok, int * len)
 	}
 	else if (*tok == '#')
 	{
-		*len = 1;
+		int i = 0;
+		char c = *(tok+1);
+		while (c != '\0' && c != '\n')
+		{
+			i++;
+			c = *(tok + i + 1);
+		}
+		*len = i+2;
 		return COMMENT;
 	}
 	else if (!strncmp(tok, "or", max(2, tlen)))
