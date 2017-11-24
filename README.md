@@ -5,7 +5,7 @@
 
 
 Nom lang is a dynamically typed lightweight functional language focusing on simplicity and embeddability.
-To install on linux, run the install.sh script. Any program you make will require you to type "nom program_name" or just add #!/usr/bin/nom to the beginning of the scripts to specify which interpreter to use. No REPL loop yet available.
+To install on linux, run the install.sh script. Any program you make will require you to type "nom program_name" or just add #!/usr/bin/nom to the beginning of the scripts to specify which interpreter to use. REPL isn't well tested. Examples are in tests folder.
 
 
 Example factorial program written in Nom:
@@ -59,35 +59,16 @@ Functions
     
     foo(5)
 Objects
+    
+    foo.a = 5
+    foo.b = "Dog"
+    b = foo
+    print(b.a, " ", b.b, "\n")
+Arrays
 
-    new_acc = function(name):
-        acc.name = name
-        acc.balance = 0
-        return acc
-    end
-
-    deposit = function(o, v):
-	    o.balance = o.balance + v
-    end
-
-    withdraw = function(o, v):
-        if o.balance < v:
-            print(o.name, " has insufficient funds\n")
-        end
-        else:
-            o.balance = o.balance - v
-        end
-    end
-
-    show = function(o):
-        print("Name: ", o.name, " Balance: ", o.balance, "\n")
-    end
-
-    b = new_acc("John")
-    deposit(b, 100)
-    withdraw(b, 120)
-    show(b)
-
-
-## Todo
-String operations, user data types, arrays.
+    arr[0] = "Dog"
+    arr[1] = 1
+    #Arrays that hold objects cannot directly reference their members (use temp var)
+    obj.a = "abcdef"
+    arr[2] = obj
+    s=size(arr)
