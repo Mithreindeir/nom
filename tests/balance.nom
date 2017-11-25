@@ -1,7 +1,7 @@
+#Structures in nom can have function pointers as members that reference themselves using "self"
 deposit = function(v):
 	self.balance = self.balance + v
 end
-
 
 withdraw = function(v):
 	if self.balance < v:
@@ -24,10 +24,12 @@ new_acc = function(name, m):
 	return acc
 end
 
+#You can arbitrarily create arrays with any data types
 a[0] = new_acc("john", 100)
 a[1] = new_acc("mike", 1000)
 a[2] = new_acc("bill", 10000)
 
+#You cannot directly use arrays as structs eg "a[0].name" you first have to assign it to a variable
 x=a[0]
 y=a[1]
 z=a[2]
@@ -37,7 +39,6 @@ y.deposit(15)
 y.show()
 z.deposit(20)
 z.show()
-
 
 loop = 1
 while loop:

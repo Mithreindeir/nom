@@ -135,14 +135,20 @@ void nom_clock(frame * currentframe)
 
 void nom_abs(frame * currentframe)
 {
+	int args = pop_number(currentframe->data_stack);
+	push_number(currentframe->data_stack, abs(pop_number(currentframe->data_stack)));
 }
 
 void nom_floor(frame * currentframe)
 {
+	int args = pop_number(currentframe->data_stack);
+	push_number(currentframe->data_stack, floor(pop_number(currentframe->data_stack)));
 }
 
 void nom_ceil(frame * currentframe)
 {
+	int args = pop_number(currentframe->data_stack);
+	push_number(currentframe->data_stack, ceil(pop_number(currentframe->data_stack)));
 }
 
 void nom_reserve(frame * currentframe)
@@ -192,6 +198,10 @@ void nom_reserve(frame * currentframe)
 void nom_size(frame * currentframe)
 {
 	int args = pop_number(currentframe->data_stack);
+	if (args==0) {
+		push_number(currentframe->data_stack, 0);
+		return;
+	}
 
 	element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
 	//printf("\t type: %d \n", e.type);
@@ -225,6 +235,15 @@ void nom_string_init(frame * currentframe)
 	tstr.is_char = 0;
 
 	push_string(currentframe->data_stack, tstr);
+}
+
+void nom_array_init(frame * currentframe)
+{
+	pop_number(currentframe->data_stack);
+	nom_struct ns;
+	ns.members=NULL;
+	ns.num_members=0;
+	push_struct(currentframe->data_stack, ns);
 }
 
 //Runs a nom program taking PATH as input

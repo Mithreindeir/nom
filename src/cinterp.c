@@ -135,7 +135,7 @@ void exit_frame(frame * frame)
 			}
 		}
 	}
-	if (frame->parent == NULL) {
+	if (frame->parent == NULL && frame->gcol) {
 		gc_destroy(frame->gcol);
 	}
 	free(frame);
@@ -315,7 +315,7 @@ void nom_var_free_members(frame * frame, nom_variable * var)
 	//TODO make this work
 	//Todo fix this. Currently causes crashes and doesnt free everything
 	//return;
-	if (!var->members || var->num_members <= 0 || !var)
+	if (!var)
 		return;
 
 	for (int j = 0; j < var->num_members; j++) {
@@ -328,7 +328,7 @@ void nom_var_free_members(frame * frame, nom_variable * var)
 			gc_free(frame->gcol, nvar->name);
 		}
 	}
-	if (var->members) gc_free(frame->gcol, var->members);
+	if (var->members &&  var->num_members > 0) gc_free(frame->gcol, var->members);
 	if (var->value) gc_free(frame->gcol, var->value);
 	if (var->name) gc_free(frame->gcol, var->name);
 }
@@ -351,6 +351,27 @@ void nom_var_free_struct(frame * frame, nom_struct ns)
 	}
 	gc_free(frame->gcol, ns.members);
 }
+
+void nom_var_add_struct(frame * frame, nom_struct ns)
+{
+	//TODO make this work
+	//Todo fix this. Currently causes crashes and doesnt free everything
+	//return;
+	if (!ns.members || ns.num_members <= 0)
+		return;
+	for (int j = 0; j < ns.num_members; j++) {
+		nom_variable * nvar = &ns.members[j];
+
+		if (nvar->num_members > 0)
+			nom_var_add_ref(frame, nvar);
+		else {
+			gc_add(frame->gcol, nvar->value);
+			gc_add(frame->gcol, nvar->name);
+		}
+	}
+	gc_add(frame->gcol, ns.members);
+}
+
 
 void nom_var_add_ref(frame * frame, nom_variable * var)
 {
@@ -456,6 +477,12 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 			//gc_add(currentframe->gcol, var->members[var->num_members-1].value);
 		}
 	}
+	printf("start var: %s\n", var->name);
+	for (int i = 0; i < var->num_members; i++) {
+		printf("name: %s index: %d\n", var->members[i].name, i);
+	}
+	printf("end\n");
+	printf("%s %d\n", var->name, var->num_members);
 	//gc_remove(currentframe->gcol, oldmembers);
 	gc_free(currentframe->gcol, oldmembers);
 	//	nom_var_free_struct(currentframe, ns);
@@ -464,6 +491,7 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 	gc_add(currentframe->gcol, var->members);
 	//nom_var_add_ref(currentframe, var); 
 	var->member_ref = ns.mem_ref;
+	var->type = STRUCT;
 	//gc_free(currentframe->gcol, ns.members);
 	free(vi);
 	free(ni);
@@ -583,11 +611,16 @@ void execute(frame * currentframe)
 				idxs[i] = (int)pop_number(currentframe->data_stack);
 			}
 			nom_variable * var = &currentframe->variables[idxs[c.idx - 1]];
+			printf("load: %s.", var->name);
 			for (int i = c.idx - 2; i >= 0; i--) {
 				int vidx = idxs[i];
+				if (vidx >= var->num_members) {
+					runtime_error("Member out of range\n", 1);
+				}
 				var = &var->members[vidx];
+				printf("%s. %d", var->name, vidx);
 			}
-
+			printf("\n");
 			free(idxs);
 			if (var->type == NUM) {
 				push_number(currentframe->data_stack, *((nom_number*)var->value));
@@ -606,7 +639,8 @@ void execute(frame * currentframe)
 				push_func(currentframe->data_stack, *((nom_func*)var->value));
 				//push_number(currentframe->data_stack, 0);
 			}
-			if (var->num_members > 0) {
+			if (var->type == STRUCT || var->num_members > 0) {
+				printf("load: %s %d\n", var->name, var->num_members);
 				nom_struct ns;
 				ns.num_members = var->num_members;
 				ns.members = var->members;
@@ -615,7 +649,7 @@ void execute(frame * currentframe)
 				var->member_ref++;
 				push_struct(currentframe->data_stack, ns);
 				//gc_add(currentframe->gcol, var->members);
-				nom_var_add_ref(currentframe, var);
+				//nom_var_add_ref(currentframe, var);
 			}
 		}
 		else if (c.action == STORE_NAME)
@@ -627,6 +661,9 @@ void execute(frame * currentframe)
 			nom_variable * var = &currentframe->variables[idxs[c.idx-1]];
 			for (int i = c.idx-2; i >= 0; i--) {
 				int vidx = idxs[i];
+				if (vidx >= var->num_members) {
+					runtime_error("Member out of range\n", 1);
+				}
 				var = &var->members[vidx];
 			}
 
@@ -634,6 +671,9 @@ void execute(frame * currentframe)
 			element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
 			if (e.type != STRUCT) {
 				change_type(currentframe, var, e.type);
+			} else {
+				if (e.type != STRUCT) gc_free(currentframe->gcol, var->value);
+				var->type = STRUCT;
 			}
 
 			if (e.type == STRUCT) {
@@ -646,7 +686,9 @@ void execute(frame * currentframe)
 				var->member_ref = ns.mem_ref;
 				*/
 				nom_struct ns = pop_struct(currentframe->data_stack);
+				nom_var_add_struct(currentframe, ns);
 				copy_struct(currentframe, var, ns);
+
 			}
 			else if (var->type == NUM) {
 				*((nom_number*)var->value) = pop_number(currentframe->data_stack);
@@ -674,9 +716,11 @@ void execute(frame * currentframe)
 			nom_variable * var = &currentframe->variables[idxs[c.idx - 1]];
 			for (int i = c.idx - 2; i >= 0; i--) {
 				int vidx = idxs[i];
+				if (vidx >= var->num_members) {
+					runtime_error("Member out of range\n", 1);
+				}
 				var = &var->members[vidx];
 			}
-
 			free(idxs);
 			int idx = (int)pop_number(currentframe->data_stack);
 			int stridx = var->type == STR;
@@ -713,7 +757,7 @@ void execute(frame * currentframe)
 				push_func(currentframe->data_stack, *((nom_func*)var->value));
 				//push_number(currentframe->data_stack, 0);
 			}
-			if (var->num_members > 0) {
+			if (var->type == STRUCT || var->num_members > 0) {
 				nom_struct ns;
 				ns.num_members = var->num_members;
 				ns.members = var->members;
@@ -722,7 +766,7 @@ void execute(frame * currentframe)
 				var->member_ref++;
 				push_struct(currentframe->data_stack, ns);
 				//gc_add(currentframe->gcol, var->members);
-				nom_var_add_ref(currentframe, var);
+				//nom_var_add_ref(currentframe, var);
 			}
 		}
 		else if (c.action == ARR_STORE)
@@ -734,6 +778,9 @@ void execute(frame * currentframe)
 			nom_variable * var = &currentframe->variables[idxs[c.idx-1]];
 			for (int i = c.idx-2; i >= 0; i--) {
 				int vidx = idxs[i];
+				if (vidx >= var->num_members) {
+					runtime_error("Member out of range\n", 1);
+				}
 				var = &var->members[vidx];
 			}
 			free(idxs);
@@ -764,7 +811,7 @@ void execute(frame * currentframe)
 			element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
 			if (e.type != STRUCT) {
 				change_type(currentframe, var, e.type);
-			}
+			} else var->type = STRUCT;
 
 			if (e.type == STRUCT) {
 				/*
@@ -776,6 +823,7 @@ void execute(frame * currentframe)
 				var->member_ref = ns.mem_ref;
 				*/
 				nom_struct ns = pop_struct(currentframe->data_stack);
+				nom_var_add_struct(currentframe, ns);
 				copy_struct(currentframe, var, ns);
 			}
 			else if (var->type == NUM) {
@@ -816,9 +864,13 @@ void execute(frame * currentframe)
 			}
 
 
+			//printf("%s %d\n", var->name, idxs[c.idx - 1]);
 			free(idxs);
+			if (!var->value) {
+				printf("%s ", var->name);
+				runtime_error("Function doesnt exist",1);
+			}
 			nom_func f = *((nom_func*)var->value);
-
 			if (f.external)
 			{
 				f.func(currentframe);
@@ -889,8 +941,9 @@ void execute(frame * currentframe)
 						*((nom_func*)v->value) = pop_func(currentframe->data_stack);
 						gc_add(currentframe->gcol, v->value);
 					}
-					else if (v->type == STRUCT) {
+					else if (v->type == STRUCT || v->num_members > 0) {
 						nom_struct ns = pop_struct(currentframe->data_stack);
+						nom_var_add_struct(currentframe, ns);
 						//Variabled are indexed different on copies, so set them based on name
 						//for (int i = 0; i < ns.num_members; i++) {
 						//	for (int j = 0; j < v->num_members; j++) {
@@ -899,6 +952,7 @@ void execute(frame * currentframe)
 						//	}
 						//}
 						copy_struct(currentframe, v, ns);
+						printf("name: %s\n", v->name);
 						//nom_var_add_ref(currentframe, v);
 						//v->member_ref = ns.mem_ref + 1;
 						//v->num_members = ns.num_members;
@@ -989,7 +1043,8 @@ void execute(frame * currentframe)
 				{
 					nom_struct nstruct;
 					store(currentframe->data_stack, &nstruct, sizeof(nom_struct), 0);
-					gc_add(currentframe->gcol, nstruct.members);
+					//gc_add(currentframe->gcol, nstruct.members);
+					nom_var_add_struct(currentframe, nstruct);
 					push_struct(currentframe->parent->data_stack, nstruct);
 				} 
 			}
@@ -1538,6 +1593,16 @@ void eq(stack * stk)
 		pop_number(stk);
 		push_number(stk, 0);
 	}
+	else if (t1 == NUM && t2 == STRUCT) {
+		pop_number(stk);
+		pop_struct(stk);
+		push_number(stk, 0);
+	}
+	else if (t1 == STRUCT && t2 == NUM) {
+		pop_struct(stk);
+		pop_number(stk);
+		push_number(stk, 0);
+	}
 }
 
 void ne(stack * stk)
@@ -1569,6 +1634,16 @@ void ne(stack * stk)
 	else if (t1 == NUM && t2 == STR) {
 		pop_number(stk);
 		pop_string(stk);
+		push_number(stk, 1);
+	}
+	else if (t1 == NUM && t2 == STRUCT) {
+		pop_number(stk);
+		pop_struct(stk);
+		push_number(stk, 1);
+	}
+	else if (t1 == STRUCT && t2 == NUM) {
+		pop_struct(stk);
+		pop_number(stk);
 		push_number(stk, 1);
 	}
 }

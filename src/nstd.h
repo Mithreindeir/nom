@@ -21,10 +21,6 @@
 
 #include <stdio.h>
 #include "cinterp.h"
-#include "clexer.h"
-#include "ast.h"
-#include "ncomp.h"
-
 
 //Functions in the nom standard library
 void nom_print(frame * currentframe);
@@ -37,8 +33,10 @@ void nom_abs(frame * currentframe);
 void nom_floor(frame * currentframe);
 void nom_ceil(frame * currentframe);
 void nom_run(frame * currentframe);
+void nom_import(frame * currentframe);
 
 void nom_string_init(frame * currentframe);
+void nom_array_init(frame * currentframe);
 void nom_size(frame * currentframe);
 void nom_reserve(frame * currentframe);
 

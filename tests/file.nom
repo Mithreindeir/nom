@@ -1,4 +1,5 @@
 fh=open("test.txt", "r")
+bt=clock()
 str=read(fh)
 
 #Returns a substring given a start and end
@@ -31,6 +32,73 @@ alphabetical = function(str1, str2):
 	return 0
 end
 
+#Bubble Sort
+b_sort = function(arr, comp):
+	arr_size = size(arr)
+	sort = 1
+	while sort:
+		sort = 0
+		for i = 0, i < (arr_size-1), i++:
+			if comp(arr[i], arr[i+1]):
+				tmp = arr[i+1]
+				arr[i+1]=arr[i]
+				arr[i]=tmp
+				sort = 1
+			end
+		end
+	end
+end
+
+#Merge Sort
+merge = function(arr, p, q, r, comp ):
+	c=p
+	a=array()
+	for i=0, c<=q, i++:
+		a[i]=arr[c]
+		c++
+	end
+	b=array()
+	for i=0, c<=r, i++:
+		b[i]=arr[c]
+		c++
+	end
+	c=p
+	d=0
+	e=0
+	for c=p, (d<size(a)) and e < size(b) and (c <= r), c++:
+		if not comp(a[d], b[e]):
+			arr[c]=a[d]
+			d++
+		end
+		else:
+			arr[c]=b[e]
+			e++
+		end
+	end
+	for , d<size(a),d++:
+		arr[c]=a[d]
+		c++
+	end
+
+	for , e<size(b), e++:
+		arr[c]=b[e]
+		c++
+	end
+end
+mergeSort = function(arr, p, r, comp):
+	if p<r:
+		q=floor((p+r)/2)
+		mergeSort(arr, p, q, comp)
+		mergeSort(arr, q+1, r, comp)
+		merge(arr, p, q, r, comp)
+	end
+end
+
+m_sort = function(arr, comp):
+	arr_size = size(arr)
+	mergeSort(arr, 0, arr_size-1, comp)
+end
+
 c=0
 idx=0
 #Separates Words by Spaces
@@ -42,22 +110,12 @@ for i=0, i<size(str), i++:
 	a[c]=range(str, idx, i)
 	c++
 end
-#Bubble Sort
-sort = 1
-while sort:
-	sort = 0
-	for i = 0, i < (size(a)-1), i++:
-		if alphabetical(a[i], a[i+1]):
-			tmp = a[i+1]
-			a[i+1]=a[i]
-			a[i]=tmp
-			sort = 1
-		end
-	end
-end
 
-for i=0, i<size(a), i++:
+sizea = size(a)
+m_sort(a, alphabetical)
+for i=0, i<sizea, i++:
 	print(a[i], "\n")
 end
-
+t=clock()-bt
+print("Finished in ", t, " seconds\n")
 close(fh)

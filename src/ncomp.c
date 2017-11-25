@@ -391,6 +391,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	else if (node->val.type == IDENTIFIER)
 	{
 		int idx = get_var_index(currentframe, node->val.tok);
+
 		if (idx == -1)
 		{
 			create_var(currentframe, node->val.tok, NUM);

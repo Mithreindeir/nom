@@ -29,10 +29,18 @@
 
 //Opens and parses a file then runes
 void nom_run_file(char * file);
+//Function wrapper to be called in nom
+void nom_import_wrapper(frame * cf);
+//Imports a module and merges with current
+void nom_import_file(frame * cf, char * file);
+//Iterates through children to set var
+void nom_set_var(frame * cf, nom_variable n);
 //Launches a nom interpreter / REPL
 void nom_repl();
 //Registers a C function to the interpreter
 void nom_register_func(nom_interp * nom, char * name, nom_external_func func, int args);
+//Registers a C funtion to a frame
+void nom_register_func_frame(frame * f, char * name, nom_external_func func, int args);
 
 
 #endif

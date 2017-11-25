@@ -57,9 +57,9 @@ void gc_add(gc * gcol, void * ptr)
 {
 	if (gcol->num_nodes > 0) {
 		gc_el * cur = gcol->last_el;
-		//int iter = 0;
+		int iter = 0;
 		while (cur != NULL) {
-			//iter++;
+			iter++;
 			if (cur->ptr == ptr) {
 				cur->ref++;
 				return;
@@ -146,6 +146,7 @@ void gc_free(gc * gc, void * ptr)
 			if (cur->ref <= 0) {
 				if (cur->last) {
 					gc->last_el = cur->last;
+					gc->last_el->next = NULL;
 				} else {
 					gc->el = NULL;
 					gc->last_el = NULL;
