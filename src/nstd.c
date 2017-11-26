@@ -55,8 +55,46 @@ void nom_print(frame * currentframe)
 			else printf("%s", str.str);
 			gc_free(currentframe->gcol, str.str);
 		}
+		else if (e.type == STRUCT) {
+			nom_struct ns = pop_struct(currentframe->data_stack);
+			nom_print_struct(&ns);
+			//nom_var_free_struct(currentframe, ns);
+		}
 	}
 }
+void nom_print_struct(nom_struct * ns)
+{
+	printf("[");
+	for (int i=0; i < ns->num_members; i++) {
+		nom_variable * v = ns->members[i];
+		if (v->type == NUM) {
+			nom_number n = *((nom_number*)v->value);
+			if (floorf(n) == n)
+				printf("%d", (int)n);
+			else
+				printf("%f", n);
+		} else if (v->type == BOOL) {
+			nom_boolean *n = v->value;
+			if (*n)
+				printf("True");
+			else
+				printf("False");
+		} else if (v->type == STR) {
+			nom_string * str = v->value;
+			if (str->is_char) putchar(str->str[str->offset]);
+			else printf("%s", str->str);
+			//gc_free(currentframe->gcol, str.str);
+		} else if (v->type == STRUCT || (v->num_members > 0)) {
+			nom_struct mns;
+			mns.members = v->members;
+			mns.num_members = v->num_members;
+			nom_print_struct(&mns);
+		}
+		if ((i+1) < ns->num_members) printf(", ");
+	}
+	printf("]");
+}
+
 
 //Returns input from stdin. Default as string unless number then return float or int
 void nom_input(frame * currentframe)
@@ -172,6 +210,9 @@ void nom_reserve(frame * currentframe)
 		if (tstr.num_characters == 0) {
 			tstr.str = malloc(reserve+1);
 			gc_add(currentframe->gcol, tstr.str);
+			for(int i = 0; i < reserve; i++) {
+				tstr.str[i] = 0;
+			}
 			tstr.str[reserve] = '\0';
 			tstr.num_characters = reserve;
 		} else {
@@ -198,6 +239,7 @@ void nom_reserve(frame * currentframe)
 void nom_size(frame * currentframe)
 {
 	int args = pop_number(currentframe->data_stack);
+	//int args =1;
 	if (args==0) {
 		push_number(currentframe->data_stack, 0);
 		return;
@@ -282,23 +324,25 @@ void nom_open(frame * currentframe)
 			nom_struct ns;
 			ns.num_members = 1;
 			ns.members = malloc(sizeof(nom_variable));
-			nom_variable var;
-			var.name = NULL;
-			var.name = STRDUP("file");
-			var.type = NONE;
-			var.value = NULL;
-			var.num_references = 1;
-			var.num_members = 0;
-			var.members = NULL;
-			var.member_ref = 1;
-			var.parent = NULL;
-			var.external = f;
+			nom_variable * var = malloc(sizeof(nom_variable));
+			var->name = NULL;
+			var->name = STRDUP("file");
+			var->type = NONE;
+			var->value = NULL;
+			var->num_references = 1;
+			var->num_members = 0;
+			var->members = NULL;
+			var->member_ref = 1;
+			var->parent = NULL;
+			var->external = f;
 			ns.members[0] = var;
-			gc_add(currentframe->gcol, var.name);
+			gc_add(currentframe->gcol, var);
+			gc_add(currentframe->gcol, var->name);
 			gc_add(currentframe->gcol, ns.members);
 			push_struct(currentframe->data_stack, ns);
 		} else {
 			printf("Error opening file\n");
+			push_number(currentframe->data_stack, -1);
 		}
 	}
 }
@@ -312,7 +356,7 @@ void nom_write(frame * currentframe)
 		nom_struct ns = pop_struct(currentframe->data_stack);
 		int idx = -1;
 		for (int i = 0; i < ns.num_members; i++) {
-			if (!strcmp(ns.members[i].name, "file")) {
+			if (!strcmp(ns.members[i]->name, "file")) {
 				idx=i;
 				break;
 			}
@@ -321,7 +365,7 @@ void nom_write(frame * currentframe)
 			printf("Argument is not a file handle\n");
 			return;
 		}
-		nom_variable * var = &ns.members[idx];
+		nom_variable * var = ns.members[idx];
 		f = var->external;
 	}
 	if (!f) {
@@ -367,7 +411,7 @@ void nom_close(frame * currentframe)
 		nom_struct ns = pop_struct(currentframe->data_stack);
 		int idx = -1;
 		for (int i = 0; i < ns.num_members; i++) {
-			if (!strcmp(ns.members[i].name, "file")) {
+			if (!strcmp(ns.members[i]->name, "file")) {
 				idx=i;
 				break;
 			}
@@ -376,7 +420,7 @@ void nom_close(frame * currentframe)
 			printf("Argument is not a file handle\n");
 			return;
 		}
-		nom_variable * var = &ns.members[idx];
+		nom_variable * var = ns.members[idx];
 		FILE * f = var->external;
 		fclose(f);
 	}
@@ -390,7 +434,7 @@ void nom_read(frame * currentframe)
 		nom_struct ns = pop_struct(currentframe->data_stack);
 		int idx = -1;
 		for (int i = 0; i < ns.num_members; i++) {
-			if (!strcmp(ns.members[i].name, "file")) {
+			if (!strcmp(ns.members[i]->name, "file")) {
 				idx=i;
 				break;
 			}
@@ -399,7 +443,7 @@ void nom_read(frame * currentframe)
 			printf("Argument is not a file handle\n");
 			return;
 		}
-		nom_variable * var = &ns.members[idx];
+		nom_variable * var = ns.members[idx];
 		FILE * fp = var->external;
 		long size=0;
 		fseek(fp, 0, SEEK_END); 
@@ -420,7 +464,7 @@ void nom_readline(frame * currentframe)
 		nom_struct ns = pop_struct(currentframe->data_stack);
 		int idx = -1;
 		for (int i = 0; i < ns.num_members; i++) {
-			if (!strcmp(ns.members[i].name, "file")) {
+			if (!strcmp(ns.members[i]->name, "file")) {
 				idx=i;
 				break;
 			}
@@ -429,7 +473,7 @@ void nom_readline(frame * currentframe)
 			printf("Argument is not a file handle\n");
 			return;
 		}
-		nom_variable * var = &ns.members[idx];
+		nom_variable * var = ns.members[idx];
 		FILE * fp = var->external;
 		char * line=NULL;
 		size_t len=0;

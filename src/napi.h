@@ -34,7 +34,7 @@ void nom_import_wrapper(frame * cf);
 //Imports a module and merges with current
 void nom_import_file(frame * cf, char * file);
 //Iterates through children to set var
-void nom_set_var(frame * cf, nom_variable n);
+void nom_set_var(frame * cf, nom_variable * n);
 //Launches a nom interpreter / REPL
 void nom_repl();
 //Registers a C function to the interpreter

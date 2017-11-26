@@ -1,5 +1,61 @@
+#Bubble Sort
+bubble_sort = function(arr, comp):
+	arr_size = size(arr)
+	for j=0, j < arr_size, j++:
+		for i = 0, i < (arr_size-1), i++:
+			if not comp(arr[i], arr[i+1]):
+				tmp = arr[i+1]
+				arr[i+1]=arr[i]
+				arr[i]=tmp
+			end
+		end
+	end
+end
+
+merge_sort = function(arr, comp):
+	s=size(arr)
+	if s>1:
+		mid = floor(s/2)
+		a=array()
+		for i=0, i < mid, i++:
+			a[i]=arr[i]
+		end
+		b=array()
+		for i=mid, i < s, i++:
+			b[i-mid]=arr[i]
+		end
+		merge_sort(a, comp)
+		merge_sort(b, comp)
+		i=0
+		j=0
+		k=0
+		ls = size(a)
+		rs = size(b)
+		while (i<ls) and (j<rs):
+			if comp(a[i], b[j]):
+				arr[k]=a[i]
+				i++
+			end
+			else:
+				arr[k]=b[j]
+				j++
+			end
+			k++
+		end
+		while i < ls:
+			arr[k]=a[i]
+			i++
+			k++
+		end
+		while j < rs:
+			arr[k]=b[j]
+			j++
+			k++
+		end
+	end
+end
+
 fh=open("test.txt", "r")
-bt=clock()
 str=read(fh)
 
 #Returns a substring given a start and end
@@ -32,73 +88,7 @@ alphabetical = function(str1, str2):
 	return 0
 end
 
-#Bubble Sort
-b_sort = function(arr, comp):
-	arr_size = size(arr)
-	sort = 1
-	while sort:
-		sort = 0
-		for i = 0, i < (arr_size-1), i++:
-			if comp(arr[i], arr[i+1]):
-				tmp = arr[i+1]
-				arr[i+1]=arr[i]
-				arr[i]=tmp
-				sort = 1
-			end
-		end
-	end
-end
-
-#Merge Sort
-merge = function(arr, p, q, r, comp ):
-	c=p
-	a=array()
-	for i=0, c<=q, i++:
-		a[i]=arr[c]
-		c++
-	end
-	b=array()
-	for i=0, c<=r, i++:
-		b[i]=arr[c]
-		c++
-	end
-	c=p
-	d=0
-	e=0
-	for c=p, (d<size(a)) and e < size(b) and (c <= r), c++:
-		if not comp(a[d], b[e]):
-			arr[c]=a[d]
-			d++
-		end
-		else:
-			arr[c]=b[e]
-			e++
-		end
-	end
-	for , d<size(a),d++:
-		arr[c]=a[d]
-		c++
-	end
-
-	for , e<size(b), e++:
-		arr[c]=b[e]
-		c++
-	end
-end
-mergeSort = function(arr, p, r, comp):
-	if p<r:
-		q=floor((p+r)/2)
-		mergeSort(arr, p, q, comp)
-		mergeSort(arr, q+1, r, comp)
-		merge(arr, p, q, r, comp)
-	end
-end
-
-m_sort = function(arr, comp):
-	arr_size = size(arr)
-	mergeSort(arr, 0, arr_size-1, comp)
-end
-
+a=array()
 c=0
 idx=0
 #Separates Words by Spaces
@@ -110,12 +100,27 @@ for i=0, i<size(str), i++:
 	a[c]=range(str, idx, i)
 	c++
 end
+print("Wordlist: ", a, "\n")
 
-sizea = size(a)
-m_sort(a, alphabetical)
-for i=0, i<sizea, i++:
-	print(a[i], "\n")
+copy = function(a):
+	b=array()
+	s = size(a)
+	for i=0, i < s, i++:
+		b[i]=a[i]
+	end
+	return b
 end
-t=clock()-bt
-print("Finished in ", t, " seconds\n")
+b=copy(a)
+print("\nSorting alphabetically...\n")
+bt = clock()
+merge_sort(a, alphabetical)
+t = clock() - bt
+print(a)
+print("\nMerge sorted in ", t, " seconds\n\n")
+bt = clock()
+bubble_sort(b, alphabetical)
+t = clock() - bt
+print(b)
+print("\nBubble sorted in ", t, " seconds\n")
+
 close(fh)

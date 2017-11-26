@@ -23,6 +23,7 @@
 #include "cinterp.h"
 
 //Functions in the nom standard library
+void nom_print_struct(nom_struct * ns);
 void nom_print(frame * currentframe);
 void nom_input(frame * currentframe);
 void nom_seed(frame * currentframe);

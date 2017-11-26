@@ -61,7 +61,7 @@ struct nom_variable
 	int num_references;
 	int num_members;
 	int member_ref;
-	nom_variable * members;
+	nom_variable ** members;
 	nom_variable * parent;
 };
 
@@ -96,12 +96,15 @@ struct frame
 	cinstr * instructions;
 	int num_instructions;
 	int instr_ptr;
-	nom_variable * variables;
+	nom_variable ** variables;
 	int num_variables;
 	void ** constants;
 	int num_constants;
 	int num_children;
 	gc * gcol;
+	//Holds idxs to prevent constant allocating 
+	int * idxs;
+	int num_idx;
 };
 
 typedef double nom_number;
@@ -130,7 +133,7 @@ typedef struct nom_struct
 {
 	int mem_ref;
 	int num_members;
-	nom_variable * members;
+	nom_variable ** members;
 } nom_struct;
 
 const static int nom_type_size[] = { sizeof(nom_string), sizeof(nom_number), sizeof(nom_boolean), sizeof(nom_func), 0 };
@@ -156,6 +159,7 @@ void destroy_frame(frame * frame);
 
 //Constant functions
 int add_const(frame * frame, void * val);
+int add_const_str(frame * frame, char * val);
 
 //Variable functions
 void resize_string(nom_string * str, char * nstr, int size);

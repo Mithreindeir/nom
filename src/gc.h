@@ -46,7 +46,9 @@ typedef struct gc
 gc * gc_init();
 void gc_destroy(gc * gc);
 void gc_add(gc * gc, void * ptr);
-void gc_free(gc * gc, void * ptr);
+//Use this function when you can guarantee that it is new like when it was just alloc'd
+void gc_add_new(gc * gc, void * ptr);
+void* gc_free(gc * gc, void * ptr);
 void gc_remove(gc * gc, void * ptr);
 void gc_replace(gc * gc, void * nptr, void * optr);
 

@@ -38,7 +38,8 @@ void push_instr(instr_list * instrl, int instr, int op);
 void compile(node * bop, frame * currentframe);
 //Pushes indexes of members for correct reference
 //int push_member_idx(node * node, instr_list * instrl, frame * currentframe);
-int push_member_idx(node * node, instr_list * instrl, frame * currentframe, nom_variable ** parent);
+int push_member_idx(node * node, instr_list * instrl, frame * currentframe, int nargs);
+int push_array_idx(node * node, instr_list * instrl, frame * currentframe, int nargs, int in_brackets);
 int push_member_str(node * node, instr_list * instrl, frame * currentframe, nom_variable ** parent);
 //Traverses an AST, and prints values
 void traverse(node * node);

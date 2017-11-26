@@ -14,7 +14,7 @@
 * appreciated but is not required.
 * 2. Altered source versions must be plainly marked as such, and must not be
 * misrepresented as being the original software.
-* 3. This notice may not be removed or altered from any source distribution.
+* 3. This notice may not be removed or altered from any source distribution->
 */
 
 #include "napi.h"
@@ -106,22 +106,17 @@ void nom_import_file(frame * cf, char * file)
 		buffer[length] = '\0';
 	}
 	frame * frame = frame_init();
-	frame->parent = cf;
-	frame_add_child(cf, frame);
+	frame->parent = NULL;
+	//frame_add_child(cf, frame);
 	frame->gcol=cf->gcol;
 	if (buffer)
 	{
-
 		int n = frame->num_variables;
-
 		int num_tokens = 0;
 		token * tokens = tokenize(buffer, &num_tokens);
 		node * bop = parse_string(tokens, num_tokens);
-
 		compile(bop, frame);
 		execute(frame);
-
-		//getch();
 		for (int i = 0; i < num_tokens; i++)
 		{
 			//printf("token: %s\t type: %d\n", tokens[i].tok, tokens[i].type);
@@ -129,25 +124,39 @@ void nom_import_file(frame * cf, char * file)
 		}
 		free(tokens);
 		free(buffer);
-
 		for(int i=n; i<frame->num_variables;i++) {
 			nom_set_var(cf, frame->variables[i]);
+			nom_var_add_ref(cf, frame->variables[i]);
+			frame->variables[i] = NULL;
 		}
+		for (int i = 0; i < frame->num_children; i++) {
+			if (frame->children[i] != frame) {
+				frame->children[i]->parent = cf;
+				frame_add_child(cf, frame->children[i]);
+			}
+		}
+		free(frame->children);
+		frame->children = NULL;
+		frame->num_children = 0;
+		frame->gcol = NULL;
+		exit_frame(frame);
 	}
 }
 
-void nom_set_var(frame * cf, nom_variable n)
+void nom_set_var(frame * cf, nom_variable * n)
 {
 	if (!cf) return;
 	for (int i = 0; i < cf->num_children; i++) {
 		nom_set_var(cf->children[i], n);
 	}
-	int idx = get_var_index(cf, n.name);
+	int idx = get_var_index(cf, n->name);
 	if (idx != -1) {
 		cf->variables[idx]=n;
 	}
 	else {
-		create_var(cf, n.name, n.type);
+		create_var(cf, n->name, n->type);
+		gc_free(cf->gcol, cf->variables[cf->num_variables - 1]->name);
+		gc_free(cf->gcol, cf->variables[cf->num_variables - 1]);
 		cf->variables[cf->num_variables - 1]=n;
 	}
 }
@@ -264,7 +273,7 @@ void nom_register_func(nom_interp * nom, char * name, nom_external_func func, in
 	nfunc->external = 1;
 	nfunc->func = func;
 	nfunc->arg_count = args;
-	nom_variable * nf = &nom->global_frame->variables[idx];
+	nom_variable * nf = nom->global_frame->variables[idx];
 	nf->value = nfunc;
 	nf->type = FUNC;
 
@@ -282,7 +291,7 @@ void nom_register_func_frame(frame * f, char * name, nom_external_func func, int
 	nfunc->external = 1;
 	nfunc->func = func;
 	nfunc->arg_count = args;
-	nom_variable * nf = &f->variables[idx];
+	nom_variable * nf = f->variables[idx];
 	nf->value = nfunc;
 	nf->type = FUNC;
 }

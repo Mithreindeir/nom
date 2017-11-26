@@ -1,44 +1,35 @@
-#Structures in nom can have function pointers as members that reference themselves using "self"
-deposit = function(v):
-	self.balance = self.balance + v
+#Structures in nom can have function pointers as members that reference themselves using "acc"
+deposit = function(acc, v):
+	acc.balance = acc.balance + v
 end
 
-withdraw = function(v):
-	if self.balance < v:
+withdraw = function(acc, v):
+	if acc.balance < v:
 		print("Insufficient funds\n")
 		return 0
 	end
-	self.balance = self.balance - v
+	acc.balance = acc.balance - v
 end
 
-show = function():
-	print("Name: ", self.name, " Balance: ", self.balance, " \n")
+show = function(acc):
+	print("Name: ", acc.name, " Balance: ", acc.balance, " \n")
 end
 
 new_acc = function(name, m):
 	acc.name = name
 	acc.balance = m
-	acc.deposit = deposit
-	acc.withdraw = withdraw
-	acc.show = show
 	return acc
 end
 
 #You can arbitrarily create arrays with any data types
+a = array()
 a[0] = new_acc("john", 100)
 a[1] = new_acc("mike", 1000)
 a[2] = new_acc("bill", 10000)
 
-#You cannot directly use arrays as structs eg "a[0].name" you first have to assign it to a variable
-x=a[0]
-y=a[1]
-z=a[2]
-x.withdraw(10)
-x.show()
-y.deposit(15)
-y.show()
-z.deposit(20)
-z.show()
+show(a[0])
+show(a[1])
+show(a[2])
 
 loop = 1
 while loop:
@@ -51,31 +42,26 @@ while loop:
 	elseif name == "bill":
 		num = 2
 	end
-	b=a[num]
 	print("What a action do you want to do?\n")
 	print("A: Withdraw\nB: Deposit\n")
 	action = input()
 	if action == "a" or action == "A":
 		print("How much?")
 		amount = input()
-		b.withdraw(amount)
+		withdraw(a[num], amount)
 	end
 	elseif action == "b" or action == "B":
 		print("How much?")
 		amount = input()
-		b.deposit(amount)
+		deposit(a[num], amount)
 	end
 	else:
 		loop = 0
 	end
-	b.show()
+	show(a[num])
 	print("\n")
 end
 
-x=a[0]
-y=a[1]
-z=a[2]
-
-x.show()
-y.show()
-z.show()
+print(a[0].balance, "\n")
+print(a[1].balance, "\n")
+print(a[2].balance, "\n")
