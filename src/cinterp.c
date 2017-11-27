@@ -450,11 +450,10 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 		//nom_var_free_struct(currentframe, ns);
 		return;
 	}
-	if (var->type != NONE) nom_var_free_members(currentframe, var);
+
 	for (int i = 0; i < ns.num_members; i++) {
 		int idx = get_var_index_local(var, ns.members[i]->name);
 		if (idx != -1) {
-			printf("%s\n", ns.members[i]->name);
 			var->members[idx] = ns.members[i];
 			//gc_add(currentframe->gcol, var->members[idx]);
 			if (ns.members[i]->num_members > 0) {
@@ -483,7 +482,7 @@ void copy_struct(frame * currentframe, nom_variable * var, nom_struct ns)
 				copy_struct(currentframe, var->members[idx], mns);
 			}
 		}
-	}
+	}	
 	nom_var_add_ref(currentframe, var);
 	var->type = STRUCT;
 }
@@ -737,11 +736,20 @@ void execute(frame * currentframe)
 				}
 			}
 			element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
-			if (e.type != STRUCT) {
+			if (e.type != STRUCT && var->type != STRUCT) {
 				change_type(currentframe, var, e.type);
-			} else {
+			} else if (var->type != STRUCT) {
 				if (e.type != STRUCT) var->value = gc_free(currentframe->gcol, var->value);
 				var->type = STRUCT;
+			} else if (e.type != STRUCT) {
+				nom_struct ns;
+				ns.members=var->members;
+				ns.num_members=var->num_members;
+				var->num_members = 0;
+				var->members = NULL;
+				var->value = NULL;
+				change_type(currentframe, var, e.type);
+				nom_var_free_struct(currentframe, ns);
 			}
 			if (e.type == STRUCT) {
 				nom_struct ns = pop_struct(currentframe->data_stack);
@@ -942,8 +950,10 @@ void execute(frame * currentframe)
 					}
 					if (v->type == STRUCT || v->num_members > 0) {
 						nom_struct ns = pop_struct(currentframe->data_stack);
+						v->members = ns.members;
+						v->num_members = ns.num_members;
 						//nom_var_add_struct(currentframe, ns);
-						copy_struct(currentframe, v, ns);
+						//copy_struct(currentframe, v, ns);
 					}
 				}
 				//Set variables in function to ones out of its scope
@@ -997,6 +1007,9 @@ void execute(frame * currentframe)
 				execute(f.frame); 
 				for (int i = 0; i < args; i++)
 				{
+					//printf("%s\n", f.frame->variables[(args - 1) - i]->name);
+					//f.frame->variables[(args - 1) - i] = NULL;
+					nom_var_add_ref(currentframe, f.frame->variables[(args - 1) - i]);
 					f.frame->variables[(args - 1) - i] = NULL;
 				}
 				f.frame->num_constants = 0;

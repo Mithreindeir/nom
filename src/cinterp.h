@@ -174,7 +174,6 @@ void nom_var_free_struct(frame * frame, nom_struct ns);
 void nom_var_add_struct(frame * frame, nom_struct ns);
 void nom_var_add_ref(frame * frame, nom_variable * var);
 
-
 void execute(frame * currentframe);
 stack * stack_init();
 void stack_resize(stack * stack, int size_bytes);

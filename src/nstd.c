@@ -110,21 +110,34 @@ void nom_input(frame * currentframe)
 	memcpy(mstr, str, s);
 	mstr[s] = '\0';
 	int len = 0;
-	int type = token_type(mstr, &len);
-
-	if (type == INT) {
-		push_number(currentframe->data_stack, atoi(mstr));
-		free(mstr);
+	int is_int = 1;
+	int is_str = 0;
+	int is_float = 0;
+	for (int i = 0; i < s-1; i++) {
+		if (mstr[i] == '.') {
+			is_float = 1;
+			is_int = 0;
+		} else if (!(mstr[i] >= 0x30 && mstr[i] <= 0x40) && mstr[i] != '-') {
+			is_str = 1;
+			is_int = 0;
+			is_float = 0;
+			break;
+		}
 	}
-	else if (type == FLOAT) {
-		push_number(currentframe->data_stack, atof(mstr));
-		free(mstr);
-	}
-	else {
+	if (is_str) {
 		mstr[s-1] = '\0';
 		gc_add(currentframe->gcol, mstr);
 		push_raw_string(currentframe->data_stack, mstr);
 	}
+	else if (is_int) {
+		push_number(currentframe->data_stack, atoi(mstr));
+		free(mstr);
+	}
+	else {
+		push_number(currentframe->data_stack, atof(mstr));
+		free(mstr);
+	}
+
 }
 
 //Seeds random function.
