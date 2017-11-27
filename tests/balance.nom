@@ -1,41 +1,38 @@
-#Structures in nom can have function pointers as members that reference themselves using "acc"
-deposit = function(acc, v):
-	acc.balance = acc.balance + v
-end
-
-withdraw = function(acc, v):
-	if acc.balance < v:
-		print("Insufficient funds\n")
-		return 0
-	end
-	acc.balance = acc.balance - v
-end
-
-show = function(acc):
-	print("Name: ", acc.name, " Balance: ", acc.balance, " \n")
-end
-
-new_acc = function(name, m):
+#Nom isn't a object oriented language, however if you choose you can easily replicate OOP
+var new_acc = function(name, m):
+	var acc = array()
 	acc.name = name
 	acc.balance = m
+	var acc.deposit = function(v):
+		self.balance = self.balance + v
+	end
+	var acc.withdraw = function(v):
+		if self.balance < v:
+			print("Insufficient funds\n")
+			return 0
+		end
+		self.balance = self.balance - v
+	end
+	var acc.show = function():
+		print("Name: ", self.name, " Balance: ", self.balance, " \n")
+	end
 	return acc
 end
-
 #You can arbitrarily create arrays with any data types
-a = array()
+var a = array()
 a[0] = new_acc("john", 100)
 a[1] = new_acc("mike", 1000)
 a[2] = new_acc("bill", 10000)
 
-show(a[0])
-show(a[1])
-show(a[2])
+a[0].show()
+a[1].show()
+a[2].show()
 
-loop = 1
+var loop = 1
 while loop:
 	print("What name is on the account?  ")
-	name = input()
-	num = 0
+	var name = input()
+	var num = 0
 	if name == "mike":
 		num = 1
 	end
@@ -44,21 +41,21 @@ while loop:
 	end
 	print("What a action do you want to do?\n")
 	print("A: Withdraw\nB: Deposit\n")
-	action = input()
+	var action = input()
 	if action == "a" or action == "A":
 		print("How much?")
-		amount = input()
-		withdraw(a[num], amount)
+		var amount = input()
+		a[num].withdraw( amount)
 	end
 	elseif action == "b" or action == "B":
 		print("How much?")
-		amount = input()
-		deposit(a[num], amount)
+		var amount = input()
+		a[num].deposit( amount)
 	end
 	else:
 		loop = 0
 	end
-	show(a[num])
+	a[num].show()
 	print("\n")
 end
 

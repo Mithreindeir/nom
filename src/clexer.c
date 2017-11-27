@@ -30,7 +30,7 @@ int max(int a, int b)
 	return a > b ? a : b;
 }
 int tcidx = 0;
-int col = 0, row = 0;
+int col = 0, row = 1;
 //Separates into tokens
 char * strtokm(char * s)
 {
@@ -181,6 +181,11 @@ int token_type(char * tok, int * len)
 	{
 		*len = 2;
 		return IF;
+	}
+	if (!strncmp(tok, "var", max(3,tlen)))
+	{
+		*len = 3;
+		return VAR;
 	}
 	else if (!strncmp(tok, "else", max(4, tlen)) || !strncmp(tok, "else:", 5))
 	{
@@ -466,7 +471,7 @@ int is_operator(token tok)
 		return 1;
 	if (tok.type == EQUAL)
 		return 1;
-	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC || tok.type == LNOT)
+	if (tok.type == VAR || tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC || tok.type == LNOT)
 		return 1;
 	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
 		return 1;
@@ -498,7 +503,7 @@ int token_precedence(token tok)
 		return 1;
 	if (tok.type == MULT || tok.type == DIVIDE || tok.type == MODULUS)
 		return 2;
-	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC || tok.type == LNOT)
+	if (tok.type == VAR || tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC || tok.type == LNOT)
 		return 3;
 	if (tok.type == DOT)
 		return 4;
@@ -508,7 +513,7 @@ int token_precedence(token tok)
 //Is the token right or left associative
 int token_associative(token tok)
 {
-	if (tok.type == UNARY_NEG || tok.type == LNOT)
+	if (tok.type == VAR || tok.type == UNARY_NEG || tok.type == LNOT)
 		return 0;
 	if (tok.type == RETURN)
 		return 0;
@@ -530,7 +535,7 @@ int token_idxs(token tok)
 		return 1;
 	if (tok.type == LESS || tok.type == GREATER || tok.type == LESS_OR_EQ || tok.type == GREATER_OR_EQ || tok.type == IS_EQUAL || tok.type == NOT_EQUAL)
 		return 2;
-	if (tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC || tok.type == LNOT)
+	if (tok.type == VAR || tok.type == UNARY_NEG || tok.type == INC || tok.type == DEC || tok.type == LNOT)
 		return 1;
 	if (tok.type == LAND || tok.type == LNAND || tok.type == LNOR || tok.type == LOR)
 		return 2;

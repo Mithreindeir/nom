@@ -73,6 +73,9 @@ int push_array_idx(node * node, instr_list * instrl, frame * currentframe, int n
 		push_instr(instrl, PUSH_IDX, i);
 		args++;
 	}
+	else if (node->val.type == VAR) {
+		push_instr(instrl, VAR_ALLOC, args);
+	}
 	else {
 		val_traverse(node, instrl, currentframe);
 		push_instr(instrl, ARR_LOAD, nargs+args);
@@ -91,6 +94,10 @@ int push_member_idx(node * node, instr_list * instrl, frame * currentframe, int 
 		//printf("LOADING: %s, %d\n", node->val.tok, i);
 		push_instr(instrl, PUSH_IDX, i);
 		args++;
+	}
+	else if (node->val.type == VAR) {
+		args += push_member_idx(node->next, instrl, currentframe, nargs+args);
+		push_instr(instrl, VAR_ALLOC, args);
 	}
 	else if (node->val.type == MEM_IDX) {
 		args += push_array_idx(node, instrl, currentframe, nargs+args, 0);
@@ -248,11 +255,16 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, LOAD_NAME, 1);
 		return;
 	}
+	else if (node->val.type == VAR)
+	{
+		int args = push_member_idx(node, instrl, currentframe, 0);
+		push_instr(instrl, LOAD_NAME, args);
+	}
 	else if (node->val.type == EQUAL)
 	{
 		//STORE_NAME
 		//push_instr(instrl, );
-		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT && node->left->val.type != MEM_IDX)
+		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT && node->left->val.type != MEM_IDX && node->left->val.type != VAR)
 		{
 			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->right->val.tok);
 			abort();

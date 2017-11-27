@@ -55,8 +55,8 @@ enum OPCODES
 	LOAD,	//Loads top of stack to other element
 	DUP,	//Duplicates top of stack
 	SWAP,	//Swaps topmost 2 elements
-	ARR_STORE,	//Stores into an array
-	ARR_LOAD,	//Loads an array member
+	VAR_ALLOC,	//Allocates a variable
+	ARR_LOAD,	//Changes array index into member index
 	//IO
 	PRINT,
 	//Variable handling

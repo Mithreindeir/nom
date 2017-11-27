@@ -612,18 +612,18 @@ void execute(frame * currentframe)
 			int vid = get_var_index(currentframe, id);
 			nom_variable * var = NULL;
 			if (vid==-1) {
-				if (vid == -1) {
-					printf("ERROR\n");
-					create_var(currentframe, id, NONE);
-					vid = currentframe->num_variables-1;
-					var = currentframe->variables[vid];
-				}
+				printf("%s\n", id);
+				runtime_error(" variable does not exist\n", 1);
 			} else var = currentframe->variables[vid];
 			int stridx = -1;
 			for (int i = c.idx - 2; i >= 0; i--) {
 				int vidx = idxs[i];
 				if (vidx < 0) {
 					vid = -(vidx+1);
+					if (vid >= var->num_members) {
+						printf("FATAL ERROR: IDX OUT OF BOUNDS IN ARR %s\n", var->name);
+						abort();
+					}
 				} else {
 					vid = get_var_index_local(var, currentframe->constants[vidx]);
 					if (vid==-1) {
@@ -690,12 +690,8 @@ void execute(frame * currentframe)
 			nom_variable * var = NULL;
 			int stridx = -1;
 			if (vid==-1) {
-				if (vid == -1) {
-					create_var(currentframe, id, NONE);
-					nom_var_add_ref(currentframe, var);
-					vid = currentframe->num_variables-1;
-					var = currentframe->variables[vid];
-				}
+				printf("%s\n", id);
+				runtime_error(" variable does not exist\n", 1);
 			} else var = currentframe->variables[vid];
 			for (int i = c.idx - 2; i >= 0; i--) {
 				int vidx = idxs[i];
@@ -777,6 +773,33 @@ void execute(frame * currentframe)
 				*((nom_func*)var->value) = pop_func(currentframe->data_stack);
 			}
 		}
+		else if (c.action == VAR_ALLOC)
+		{
+			if (currentframe->num_idx < c.idx) {
+				if (currentframe->num_idx == 0) {
+					currentframe->idxs = malloc(sizeof(int) * c.idx);
+				} else {
+					currentframe->idxs = realloc(currentframe->idxs,sizeof(int) * c.idx);
+				}
+				currentframe->num_idx = c.idx;
+			}
+			int * idxs = currentframe->idxs;
+			for (int i = 0; i < c.idx; i++) {
+				idxs[i] = (int)pop_number(currentframe->data_stack);
+			}
+			char * id=currentframe->constants[idxs[c.idx - 1]];
+			int vid = get_var_index(currentframe, id);
+			nom_variable * var = NULL;
+			int stridx = -1;
+			if (vid==-1) {
+				create_var(currentframe, id, NONE);
+				nom_var_add_ref(currentframe, currentframe->variables[currentframe->num_variables-1]);
+			}
+			for (int i = (c.idx-1); i >= 0; i--) {
+				push_number(currentframe->data_stack, idxs[i]);
+			}
+
+		}
 		else if (c.action == ARR_LOAD)
 		{
 			//if (currentframe->num_idx < c.idx) {
@@ -826,13 +849,21 @@ void execute(frame * currentframe)
 			 
 			for (int i = c.idx - 2; i >= 0; i--) {
 				int vidx = idxs[i];
-				vid = get_var_index_local(var, currentframe->constants[vidx]);
-				if (vid==-1) {
-					create_var_local(var, currentframe->constants[vidx], NONE);
-					gc_add(currentframe->gcol, var->members[var->num_members-1]);
-					vid=var->num_members-1;
+				if (vidx < 0) {
+					vid=-(vidx+1);
+					if (vid > var->num_members) {
+						printf("FATAL ERROR: IDX OUT OF BOUNDS IN ARR %s\n", var->name);
+						abort();
+					}
 				}
-
+				else {
+					vid = get_var_index_local(var, currentframe->constants[vidx]);
+					if (vid==-1) {
+						create_var_local(var, currentframe->constants[vidx], NONE);
+						gc_add(currentframe->gcol, var->members[var->num_members-1]);
+						vid=var->num_members-1;
+					}
+				}
 				var = var->members[vid];
 			}
 			free(idxs);
@@ -942,7 +973,6 @@ void execute(frame * currentframe)
 					}
 				}
 				//Set self variable
-				/*
 				if (var->parent) {
 					int sidx = get_var_index(f.frame, "self");
 					if (sidx != -1) {
@@ -963,7 +993,7 @@ void execute(frame * currentframe)
 						nom_var_add_ref(currentframe, v);
 					}
 				}
-				*/
+				
 				execute(f.frame); 
 				for (int i = 0; i < args; i++)
 				{
@@ -1012,6 +1042,12 @@ void execute(frame * currentframe)
 					//gc_add(currentframe->gcol, nstruct.members);
 					nom_var_add_struct(currentframe->parent, nstruct);
 					push_struct(currentframe->parent->data_stack, nstruct);
+				} 
+				else if (e.type == FUNC)
+				{
+					nom_func f;
+					store(currentframe->data_stack, &f, sizeof(nom_func), 0);
+					push_func(currentframe->parent->data_stack, f);
 				} 
 			}
 			return;
@@ -1369,6 +1405,10 @@ void add(frame * currentframe)
 void subtract(frame * currentframe)
 {
 	stack * stk = currentframe->data_stack;
+	int t1, t2;
+	t1 = stk->elements[stk->num_elements - 1].type;
+	t2 = stk->elements[stk->num_elements - 2].type;
+	if (t1 != NUM || t2 != NUM) runtime_error("Subtract only valid on numbers\n", 1);
 	nom_number a = pop_number(stk), b = pop_number(stk);
 	push_number(stk, b - a);
 }
@@ -1376,6 +1416,10 @@ void subtract(frame * currentframe)
 void multiply(frame * currentframe)
 {
 	stack * stk = currentframe->data_stack;
+	int t1, t2;
+	t1 = stk->elements[stk->num_elements - 1].type;
+	t2 = stk->elements[stk->num_elements - 2].type;
+	if (t1 != NUM || t2 != NUM) runtime_error("Multiply only valid on numbers\n", 1);
 	nom_number a = pop_number(stk), b = pop_number(stk);
 	push_number(stk, b * a);
 }
@@ -1383,6 +1427,10 @@ void multiply(frame * currentframe)
 void divide(frame * currentframe)
 {
 	stack * stk = currentframe->data_stack;
+	int t1, t2;
+	t1 = stk->elements[stk->num_elements - 1].type;
+	t2 = stk->elements[stk->num_elements - 2].type;
+	if (t1 != NUM || t2 != NUM) runtime_error("Divide only valid on numbers\n", 1);
 	nom_number a = pop_number(stk), b = pop_number(stk);
 	push_number(stk, b / a);
 }
@@ -1390,6 +1438,10 @@ void divide(frame * currentframe)
 void modulus(frame * currentframe)
 {
 	stack * stk = currentframe->data_stack;
+	int t1, t2;
+	t1 = stk->elements[stk->num_elements - 1].type;
+	t2 = stk->elements[stk->num_elements - 2].type;
+	if (t1 != NUM || t2 != NUM) runtime_error("Modulus only valid on numbers\n", 1);
 	nom_number a = pop_number(stk), b = pop_number(stk);
 	push_number(stk, (int)b % (int)a);
 }
@@ -1397,6 +1449,8 @@ void modulus(frame * currentframe)
 void negate(frame * currentframe)
 {
 	stack * stk = currentframe->data_stack;
+	int t1 = stk->elements[stk->num_elements - 1].type;
+	if (t1 != NUM) runtime_error("Unary negate only valid on numbers\n", 1);
 	nom_number a = pop_number(stk);
 	push_number(stk, -a);
 }

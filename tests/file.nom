@@ -1,10 +1,11 @@
 #Bubble Sort
-bubble_sort = function(arr, comp):
-	arr_size = size(arr)
-	for j=0, j < arr_size, j++:
-		for i = 0, i < (arr_size-1), i++:
+
+var bubble_sort = function(arr, comp):
+	var arr_size = size(arr)
+	for var j=0, j < arr_size, j++:
+		for var i = 0, i < (arr_size-1), i++:
 			if not comp(arr[i], arr[i+1]):
-				tmp = arr[i+1]
+				var tmp = arr[i+1]
 				arr[i+1]=arr[i]
 				arr[i]=tmp
 			end
@@ -12,25 +13,25 @@ bubble_sort = function(arr, comp):
 	end
 end
 
-merge_sort = function(arr, comp):
-	s=size(arr)
+var merge_sort = function(arr, comp):
+	var s=size(arr)
 	if s>1:
-		mid = floor(s/2)
-		a=array()
-		for i=0, i < mid, i++:
+		var mid = floor(s/2)
+		var a=array()
+		for var i=0, i < mid, i++:
 			a[i]=arr[i]
 		end
-		b=array()
-		for i=mid, i < s, i++:
+		var b=array()
+		for var i=mid, i < s, i++:
 			b[i-mid]=arr[i]
 		end
 		merge_sort(a, comp)
 		merge_sort(b, comp)
-		i=0
-		j=0
-		k=0
-		ls = size(a)
-		rs = size(b)
+		var i=0
+		var j=0
+		var k=0
+		var ls = size(a)
+		var rs = size(b)
 		while (i<ls) and (j<rs):
 			if comp(a[i], b[j]):
 				arr[k]=a[i]
@@ -55,29 +56,29 @@ merge_sort = function(arr, comp):
 	end
 end
 
-fh=open("test.txt", "r")
-str=read(fh)
+var fh=open("test.txt", "r")
+var str=read(fh)
 
 #Returns a substring given a start and end
-range = function(str1, low, high):
-	expr = string()
-	s = high-low
-	expr = reserve(expr, s)
-	for i=low, i<high, i++:
+var range = function(str1, low, high):
+	var expr = string()
+	var s = high-low
+	var expr = reserve(expr, s)
+	for var i=low, i<high, i++:
 		expr[i-low] = str1[i]
 	end
 	return expr
 end
 
 #Alphabetical comparison function
-alphabetical = function(str1, str2):
-	low1 = size(str1)
-	low2 = size(str2)
-	low = low2
+var alphabetical = function(str1, str2):
+	var low1 = size(str1)
+	var low2 = size(str2)
+	var low = low2
 	if low1 < low2:
 		low=low1
 	end
-	for i=0,i<low,i++:
+	for var i=0,i<low,i++:
 		if str1[i] < str2[i]:
 			return 1
 		end
@@ -88,12 +89,12 @@ alphabetical = function(str1, str2):
 	return 0
 end
 
-a=array()
-c=0
-idx=0
+var a=array()
+var c=0
+var idx=0
 #Separates Words by Spaces
-for i=0, i<size(str), i++:
-	idx=i
+for var i=0, i<size(str), i++:
+	var idx=i
 	while str[i] != " " and i < size(str) and str[i] != "\n":
 		i++
 	end
@@ -102,19 +103,19 @@ for i=0, i<size(str), i++:
 end
 print("Wordlist: ", a, "\n")
 
-copy = function(a):
-	b=array()
-	s = size(a)
-	for i=0, i < s, i++:
+var copy = function(a):
+	var b=array()
+	var s = size(a)
+	for var i=0, i < s, i++:
 		b[i]=a[i]
 	end
 	return b
 end
-b=copy(a)
+var b=copy(a)
 print("\nSorting alphabetically...\n")
-bt = clock()
+var bt = clock()
 merge_sort(a, alphabetical)
-t = clock() - bt
+var t = clock() - bt
 print(a)
 print("\nMerge sorted in ", t, " seconds\n\n")
 bt = clock()
