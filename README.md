@@ -11,7 +11,7 @@ To install on linux, run the install.sh script. Any program you make will requir
 Example factorial program written in Nom:
 
 
-    factorial = function(n):
+    var factorial = function(n):
       if n <= 1:
         return n
       end
@@ -20,7 +20,7 @@ Example factorial program written in Nom:
       end
     end
     
-    f = factorial(5)
+    var f = factorial(5)
     print(f)
 
 ## Nom vm
@@ -47,28 +47,28 @@ Loops
     while condition:
         #do this
     end
-    for i=start, i<end, i++:
+    for var i=start, i<end, i++:
         #Do something
     end
 
 Functions
 
-    foo = function(arg):
+    var foo = function(arg):
         #Do things
     end
     
     foo(5)
 Objects
     
+    var foo = array()
     foo.a = 5
     foo.b = "Dog"
-    b = foo
+    var b = foo
     print(b.a, " ", b.b, "\n")
 Arrays
 
+    var arr = array()
     arr[0] = "Dog"
     arr[1] = 1
-    #Arrays that hold objects cannot directly reference their members (use temp var)
-    obj.a = "abcdef"
-    arr[2] = obj
-    s=size(arr)
+    arr[2].a = "abcdef"
+    var s=size(arr)
