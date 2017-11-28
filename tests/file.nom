@@ -17,11 +17,11 @@ var merge_sort = function(arr, comp):
 	var s=size(arr)
 	if s>1:
 		var mid = floor(s/2)
-		var a=array()
+		var a=[]
 		for var i=0, i < mid, i++:
 			a[i]=arr[i]
 		end
-		var b=array()
+		var b=[]
 		for var i=mid, i < s, i++:
 			b[i-mid]=arr[i]
 		end
@@ -89,7 +89,7 @@ var alphabetical = function(str1, str2):
 	return 0
 end
 
-var a=array()
+var a=[]
 var c=0
 var idx=0
 #Separates Words by Spaces
@@ -104,7 +104,7 @@ end
 print("Wordlist: ", a, "\n")
 
 var copy = function(a):
-	var b=array()
+	var b = []
 	var s = size(a)
 	for var i=0, i < s, i++:
 		b[i]=a[i]

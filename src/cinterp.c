@@ -272,10 +272,8 @@ void create_var(frame * currentframe, char * name, int type)
 	var->name = STRDUP(name);
 	var->type = NONE;
 	var->value = NULL;
-	var->num_references = 1;
 	var->num_members = 0;
 	var->members = NULL;
-	var->member_ref = 1;
 	var->parent = NULL;
 	var->external = NULL;
 
@@ -330,10 +328,8 @@ void create_var_local(nom_variable * lvar, char * name, int type)
 	var->name = STRDUP(name);
 	var->type = NONE;
 	var->value = NULL;
-	var->num_references = 1;
 	var->num_members = 0;
 	var->members = NULL;
-	var->member_ref = 1;
 	var->parent = lvar;
 	var->external = NULL;
 
@@ -619,7 +615,8 @@ void execute(frame * currentframe)
 				int vidx = idxs[i];
 				if (vidx < 0) {
 					vid = -(vidx+1);
-					if (vid >= var->num_members) {
+					if (vid > var->num_members && 0) {
+						printf("%d %d\n", vid, var->num_members);
 						printf("FATAL ERROR: IDX OUT OF BOUNDS IN ARR %s\n", var->name);
 						abort();
 					}
@@ -808,6 +805,68 @@ void execute(frame * currentframe)
 			}
 
 		}
+		else if (c.action == ARR_INI)
+		{
+			nom_struct ns;
+			ns.members=NULL;
+			ns.num_members = c.idx;
+			if (c.idx > 0) ns.members = malloc(sizeof(nom_variable*) * c.idx);
+			for (int i = 0; i < c.idx; i++) {
+				nom_variable * var = malloc(sizeof(nom_variable));
+				var->name = NULL;
+				char buff[10];
+				snprintf(buff, 10, "%d", i);
+				var->name = STRDUP(buff);
+				var->type = NONE;
+				var->value = NULL;
+				var->num_members = 0;
+				var->members = NULL;
+				var->parent = NULL;
+				var->external = 0;
+				element e = currentframe->data_stack->elements[currentframe->data_stack->num_elements - 1];
+				if (e.type != STRUCT && var->type != STRUCT) {
+					change_type(currentframe, var, e.type);
+				} else if (var->type != STRUCT) {
+					if (e.type != STRUCT) var->value = gc_free(currentframe->gcol, var->value);
+					var->type = STRUCT;
+				} else if (e.type != STRUCT) {
+					nom_struct ns;
+					ns.members=var->members;
+					ns.num_members=var->num_members;
+					var->num_members = 0;
+					var->members = NULL;
+					var->value = NULL;
+					change_type(currentframe, var, e.type);
+					nom_var_free_struct(currentframe, ns);
+				}
+				if (e.type == STRUCT) {
+					nom_struct ns = pop_struct(currentframe->data_stack);
+					//nom_var_add_struct(currentframe, ns);
+					copy_struct(currentframe, var, ns);
+
+				}
+				else if (var->type == NUM) {
+					*((nom_number*)var->value) = pop_number(currentframe->data_stack);
+				}
+				else if (var->type == BOOL) {
+					*((nom_boolean*)var->value) = pop_bool(currentframe->data_stack);
+				}
+				else if (var->type == STR)
+				{
+					nom_string str = pop_string(currentframe->data_stack);
+					*((nom_string*)var->value) = str;
+				}
+				else if (var->type == FUNC)
+				{
+					*((nom_func*)var->value) = pop_func(currentframe->data_stack);
+				}
+				gc_add(currentframe->gcol, var);
+				gc_add(currentframe->gcol, var->name);
+				ns.members[i]=var;
+			}
+			gc_add(currentframe->gcol, ns.members);
+			push_struct(currentframe->data_stack, ns);
+		}
 		else if (c.action == ARR_LOAD)
 		{
 			//if (currentframe->num_idx < c.idx) {
@@ -859,7 +918,8 @@ void execute(frame * currentframe)
 				int vidx = idxs[i];
 				if (vidx < 0) {
 					vid=-(vidx+1);
-					if (vid > var->num_members) {
+					if (vid > var->num_members && 0) {
+						printf("%d\n", vid);
 						printf("FATAL ERROR: IDX OUT OF BOUNDS IN ARR %s\n", var->name);
 						abort();
 					}
@@ -906,7 +966,6 @@ void execute(frame * currentframe)
 					nom_variable * v = oldf->variables[i];
 					create_var(newf, v->name, v->type);
 					newf->variables[newf->num_variables-1]->num_members = v->num_members;
-					newf->variables[newf->num_variables-1]->member_ref = 1;
 					//LEAK
 					
 					if (v->num_members > 0) {
@@ -973,13 +1032,10 @@ void execute(frame * currentframe)
 					if (rv && rv->type == FUNC)
 					{
 						v->type = rv->type;
-						v->num_references++;
 						v->value = rv->value;
 						gc_add(currentframe->gcol, v->value);
 						v->members = rv->members;
 						v->num_members = rv->num_members;
-						v->member_ref = rv->member_ref;
-
 					}
 				}
 				//Set self variable
@@ -1009,8 +1065,10 @@ void execute(frame * currentframe)
 				{
 					//printf("%s\n", f.frame->variables[(args - 1) - i]->name);
 					//f.frame->variables[(args - 1) - i] = NULL;
-					nom_var_add_ref(currentframe, f.frame->variables[(args - 1) - i]);
-					f.frame->variables[(args - 1) - i] = NULL;
+					if (f.frame->variables[(args - 1) - i]->type == STRUCT) {
+						nom_var_add_ref(currentframe, f.frame->variables[(args - 1) - i]);
+						f.frame->variables[(args - 1) - i] = NULL;
+					}
 				}
 				f.frame->num_constants = 0;
 				f.frame->num_instructions = 0;

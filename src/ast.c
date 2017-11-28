@@ -255,13 +255,16 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 						}
 						free(top);
 					}
+				} else {
+					tok.type = ARR_INIT;;
+					tokens[i].type = ARR_INIT;					
 				}
 			}
 			op_stack_push(operatorstack, node_init_op(tok));
 		}
 		else if (tok.type == COMMA)
 		{
-			while (operatorstack->size > 0 && !is_conditional(op_stack_gettop(operatorstack)->val) && op_stack_gettop(operatorstack)->val.type != LPAREN &&  op_stack_gettop(operatorstack)->val.type != FUNC_CALL)
+			while (operatorstack->size > 0 && !is_conditional(op_stack_gettop(operatorstack)->val) && op_stack_gettop(operatorstack)->val.type != LPAREN && op_stack_gettop(operatorstack)->val.type != ARR_INIT &&  op_stack_gettop(operatorstack)->val.type != FUNC_CALL)
 			{
 				node * top = op_stack_pop(operatorstack);
 				int num_idxs = token_idxs(top->val);
@@ -313,7 +316,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				}
 				free(top);
 			}
-
 			op_stack_push(operatorstack, node_init_op(tok));
 
 		}
@@ -488,7 +490,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				func = 0;
 			}
 			else {
-				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != LBRACK)
+				while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type != ARR_INIT)
 				{
 					node * top = op_stack_pop(operatorstack);
 					int num_idxs = token_idxs(top->val);
@@ -507,11 +509,40 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 					}
 					free(top);
 				}
-				if (operatorstack->size == 0)
-				{
-					syntax_error(tokens[i].tok, tokens[i].col, tokens[i].row, "NO MATCHING PARENTHESES BLOCK");
+				//if (operatorstack->size == 0)
+				//{
+				//	syntax_error(tokens[i].tok, tokens[i].col, tokens[i].row, "NO MATCHING PARENTHESES BLOCK");
+				//}
+				//free(op_stack_pop(operatorstack));
+				int nest = 0;
+				int args = 1;
+				if (i > 0) {
+					if (tokens[i-1].type == ARR_INIT)
+						args=0;
 				}
-				free(op_stack_pop(operatorstack));
+				for (int j = i; j >= start; j--)
+				{
+					token t = tokens[j];
+					if (t.type == ARR_INIT) {
+						nest--;
+						if (nest <= 0) {
+							break;
+						}
+					}
+					if (t.type == COMMA)
+						args++;
+					if (t.type == RBRACK)
+						nest++;
+				}
+				node * arr_init = op_stack_pop(operatorstack);
+				arr_init->num_branches = args;
+				arr_init->branches = malloc(sizeof(node*) * (args));
+				arr_init->type = MULTI;
+
+				for (int j=0;j<args;j++) {
+					arr_init->branches[j] = op_stack_pop(expressionstack);
+				}
+				op_stack_push(expressionstack, arr_init);
 			}
 		}
 		else if (tok.type == RPAREN)

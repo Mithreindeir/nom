@@ -342,10 +342,8 @@ void nom_open(frame * currentframe)
 			var->name = STRDUP("file");
 			var->type = NONE;
 			var->value = NULL;
-			var->num_references = 1;
 			var->num_members = 0;
 			var->members = NULL;
-			var->member_ref = 1;
 			var->parent = NULL;
 			var->external = f;
 			ns.members[0] = var;

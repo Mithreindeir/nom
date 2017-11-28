@@ -164,6 +164,19 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 		push_instr(instrl, PUSH_FUNC, add_const(currentframe, func));
 		return;
 	}
+	else if (node->val.type == ARR_INIT)
+	{
+		int args = 0;
+		for (int i = 0; i < node->num_branches; i++)
+		{
+			if (node->branches[i]) {
+				val_traverse(node->branches[i], instrl, currentframe);				
+			}
+			args++;
+		}
+		push_instr(instrl, ARR_INI, args);
+		return;
+	}
 	else if (node->val.type == FUNC_CALL)
 	{
 		int args = 0;
@@ -172,7 +185,6 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 			if (node->branches[i]) {
 				val_traverse(node->branches[i], instrl, currentframe);				
 			}
-
 			args++;
 		}
 		nom_number * val = malloc(sizeof(nom_number));

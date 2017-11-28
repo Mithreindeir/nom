@@ -79,7 +79,8 @@ enum TOKEN_TYPES
 	FUNC_CALL,
 	MEM_IDX,
 	ARR_IDX,
-	VAR
+	VAR,
+	ARR_INIT
 };
 
 typedef struct token

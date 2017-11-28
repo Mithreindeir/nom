@@ -58,9 +58,7 @@ struct nom_variable
 	//Can have external pointer for use with C. Not touched by garbage collection
 	void * external;
 	nom_type type;
-	int num_references;
 	int num_members;
-	int member_ref;
 	nom_variable ** members;
 	nom_variable * parent;
 };

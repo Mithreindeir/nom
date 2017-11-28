@@ -57,6 +57,7 @@ enum OPCODES
 	SWAP,	//Swaps topmost 2 elements
 	VAR_ALLOC,	//Allocates a variable
 	ARR_LOAD,	//Changes array index into member index
+	ARR_INI,
 	//IO
 	PRINT,
 	//Variable handling
