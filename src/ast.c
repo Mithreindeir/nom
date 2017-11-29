@@ -304,7 +304,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 					node * etop = op_stack_pop(expressionstack);
 					node * netop = op_stack_pop(expressionstack);
 					//if (top->val.type == DOT)
-					//	printf("dot:%s left: %s right: %s\n", top->val.tok, netop->val.tok, etop->val.tok);
 					op_stack_push(expressionstack, node_init_binary(top->val, netop, etop));
 
 				}
@@ -484,7 +483,6 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 				func_call->type = BINARY;
 
 				func_call->right = op_stack_pop(expressionstack);
-
 				func_call->left = op_stack_pop(expressionstack);
 				op_stack_push(expressionstack, func_call);
 				func = 0;

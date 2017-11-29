@@ -57,6 +57,7 @@ void  compile(node * bop, frame * currentframe)
 int push_array_idx(node * node, instr_list * instrl, frame * currentframe, int nargs, int in_brackets)
 {
 	int args = 0;
+	//printf("wat %s\n", node->val.tok);
 	if (node->val.type == MEM_IDX) {
 		if (!node->left || !node->right) syntax_error(node->val.tok, node->val.col, node->val.row, "Unable to find index");
 		args += push_array_idx(node->left, instrl, currentframe, nargs+args, 0);
@@ -88,6 +89,7 @@ int push_array_idx(node * node, instr_list * instrl, frame * currentframe, int n
 
 int push_member_idx(node * node, instr_list * instrl, frame * currentframe, int nargs)
 {
+	//printf("vv %s %d\n", node->val.tok, node->val.type);
 	int args = 0;
 	if (node->val.type == IDENTIFIER) {
 		int i = add_const_str(currentframe, STRDUP(node->val.tok));
@@ -298,11 +300,8 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->left->val.tok);
 			abort();
 		}
-		else
-		{
-			int args = push_array_idx(node, instrl, currentframe, 0, 0);
-			push_instr(instrl, LOAD_NAME, args);
-		}	
+		int args = push_array_idx(node, instrl, currentframe, 0, 0);
+		push_instr(instrl, LOAD_NAME, args);
 		return;
 	}
 	else if (node->val.type == INC)
