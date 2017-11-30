@@ -4,7 +4,9 @@
 [![Build Status](https://travis-ci.org/Mithreindeir/nom.svg?branch=master)](https://travis-ci.org/Mithreindeir/Nom)
 
 
-Nom lang is a dynamically typed lightweight functional language focusing on simplicity and embeddability.
+Nom lang is a dynamically typed lightweight functional language focusing on simplicity and embeddability. It is lexically scoped, however only functions are considered code blocks. At the moment automatic memory managment is limited to reference counting, so avoid circular references. The Standard Library is currently being implemented, and not all functionality is there.
+
+## Install
 To install on linux, run the install.sh script. Any program you make will require you to type "nom program_name" or just add #!/usr/bin/nom to the beginning of the scripts to specify which interpreter to use. REPL isn't well tested. Examples are in tests folder.
 
 
