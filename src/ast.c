@@ -238,13 +238,12 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 			if (i > start)
 			{
 				token t2 = tokens[i - 1];
-				if (t2.type == IDENTIFIER) {
+				if (t2.type == IDENTIFIER || t2.type == RBRACK) {
 					func = 1;
 					tok.type = MEM_IDX;
 					tokens[i].type = MEM_IDX;
 					while (operatorstack->size > 0 && op_stack_gettop(operatorstack)->val.type == DOT) {
 						node * top = op_stack_pop(operatorstack);
-
 						int num_idxs = token_idxs(top->val);
 						if (num_idxs == 2)
 						{
@@ -527,7 +526,7 @@ node * single_ast(token * tokens, int start, int num_tokens, int * tokens_used)
 							break;
 						}
 					}
-					if (t.type == COMMA)
+					if (t.type == COMMA && nest == 1)
 						args++;
 					if (t.type == RBRACK)
 						nest++;

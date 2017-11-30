@@ -295,7 +295,7 @@ void val_traverse(node * node, instr_list * instrl, frame * currentframe)
 	}
 	else if (node->val.type == MEM_IDX)
 	{
-		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT)
+		if (node->left->val.type != IDENTIFIER && node->left->val.type != DOT && node->left->val.type != MEM_IDX)
 		{
 			printf("LEFT HAND VALUE %s IS NOT CONSTANT\n", node->left->val.tok);
 			abort();
