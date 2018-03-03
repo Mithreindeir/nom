@@ -1,4 +1,4 @@
-fact = function(n):
+var fact = function(n):
   if n <= 1:
     return 1
   end
@@ -7,6 +7,6 @@ fact = function(n):
   end
 end
 
-for i=2,i<10,i++:
+for var i=2,i<10,i++:
   print("The factorial of ", i, " is ", fact(i), "\n")
 end
